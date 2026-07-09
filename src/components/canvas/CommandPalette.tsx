@@ -121,7 +121,7 @@ export function CommandPalette() {
       <div className="absolute inset-0 bg-charcoal/30 backdrop-blur-sm" />
 
       <div
-        className="relative w-[520px] bg-card border border-border rounded-[12px] shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] overflow-hidden"
+        className="relative w-[min(520px,calc(100vw-1.5rem))] bg-card border border-border rounded-[12px] shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}

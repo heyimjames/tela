@@ -165,7 +165,7 @@ export function InlineAIPrompt() {
   const isEditMode = mode === 'edit' && activeLayer?.type === 'text'
 
   return (
-    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 w-[560px]">
+    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 w-[min(560px,calc(100vw-1.5rem))]">
       <div className="bg-white border border-border rounded-[12px] shadow-[0_8px_30px_-4px_rgba(17,17,17,0.15)] overflow-hidden">
         {/* Mode indicator */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">

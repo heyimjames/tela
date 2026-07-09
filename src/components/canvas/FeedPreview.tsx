@@ -76,11 +76,23 @@ export function FeedPreview({ onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const doc = useDesignStore((s) => s.document)
 
+  // Track viewport width so the mock card fits on a phone instead of overflowing.
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   const config = FEED_CONFIG[feedType]
   const isStory = isStoryFormat(doc.format.width, doc.format.height)
 
-  // For stories, use a narrower card to keep proportions realistic
-  const cardWidth = isStory ? Math.round(config.maxWidth * 0.65) : config.maxWidth
+  // For stories, use a narrower card to keep proportions realistic; on small
+  // screens, cap the card to the available viewport width.
+  const cardWidth = Math.min(
+    isStory ? Math.round(config.maxWidth * 0.65) : config.maxWidth,
+    vw - 32,
+  )
   const maxAdHeight = isStory ? 520 : 600
 
   const { adWidth, adHeight } = getAdDisplayDimensions(
