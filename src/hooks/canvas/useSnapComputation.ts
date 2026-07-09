@@ -225,8 +225,9 @@ export function useSnapComputation() {
       }
 
       // Smart padding snap: equalize distance to closest edges of containing layers
-      // Works with ANY edge pair (top-left, top-right, left-bottom, etc.) not just parallel edges
-      if (uiState.smartPadding) {
+      // Works with ANY edge pair (top-left, top-right, left-bottom, etc.) not just parallel edges.
+      // Always on in Basic (a guardrail); a toggle in Pro.
+      if (uiState.smartPadding || uiState.appMode !== 'pro') {
         const PADDING_THRESHOLD = 15
 
         const containers = [

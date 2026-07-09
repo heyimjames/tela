@@ -3,6 +3,7 @@ import { BRAND_PALETTE, BRAND_GROUPS, getTokensByGroup } from '@/brand/palette'
 import type { BrandColor } from '@/types/design'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { ChevronDown, ChevronRight, Pipette } from 'lucide-react'
+import { useIsProMode } from '@/hooks/useIsProMode'
 
 // EyeDropper API — supported in Chromium; feature-detected below.
 interface EyeDropperResult { sRGBHex: string }
@@ -21,10 +22,13 @@ interface Props {
 }
 
 export function BrandColorPicker({ value, onChange, label }: Props) {
+  const isPro = useIsProMode()
+  // Basic locks colour to the curated brand tokens — no full palette, no custom
+  // eyedropper — so you can't pick a clashing colour.
   const [simplified, setSimplified] = useState(true)
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
-  const canPick = typeof window !== 'undefined' && 'EyeDropper' in window
+  const canPick = isPro && typeof window !== 'undefined' && 'EyeDropper' in window
   const pickFromScreen = async () => {
     if (!window.EyeDropper) return
     try {
@@ -44,7 +48,8 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
     })
   }
 
-  const visibleGroups = simplified
+  // In Basic, always the core groups (the toggle is hidden).
+  const visibleGroups = (simplified || !isPro)
     ? BRAND_GROUPS.filter((g) => CORE_GROUPS.has(g.id))
     : BRAND_GROUPS
 
@@ -73,12 +78,14 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
             <Pipette className="w-3.5 h-3.5" />
           </button>
         )}
-        <button
-          className="text-[11px] text-primary hover:underline cursor-pointer shrink-0"
-          onClick={() => setSimplified(!simplified)}
-        >
-          {simplified ? 'All colours' : 'Simplified'}
-        </button>
+        {isPro && (
+          <button
+            className="text-[11px] text-primary hover:underline cursor-pointer shrink-0"
+            onClick={() => setSimplified(!simplified)}
+          >
+            {simplified ? 'All colours' : 'Simplified'}
+          </button>
+        )}
       </div>
 
       {/* Palette groups */}

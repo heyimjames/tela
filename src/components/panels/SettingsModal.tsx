@@ -150,13 +150,13 @@ function GeneralSettings() {
               <span className="text-[14px] font-semibold">Basic</span>
             </div>
             <p className="text-[12px] text-muted-foreground leading-relaxed">
-              Guided experience with templates, auto-alignment, and brand guardrails. Perfect for non-designers.
+              Helps you make something that looks good — fewer options, and it keeps things tidy for you.
             </p>
             <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground/70">
-              <li>Template-first workflow</li>
-              <li>Auto-snap to grid</li>
-              <li>Simplified colour palette</li>
-              <li>AI copy suggestions</li>
+              <li>Brand colours only</li>
+              <li>Text sizes that fit together</li>
+              <li>Everything lines up on its own</li>
+              <li>Just the essentials</li>
             </ul>
           </button>
 
@@ -174,13 +174,13 @@ function GeneralSettings() {
               <span className="text-[14px] font-semibold">Pro</span>
             </div>
             <p className="text-[12px] text-muted-foreground leading-relaxed">
-              Full design tool with complete control. Layers, effects, gradients, custom positioning.
+              The full toolset with complete control — for when you know what you're doing.
             </p>
             <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground/70">
-              <li>All tools & layer types</li>
-              <li>Free positioning</li>
-              <li>OKLCH gradients & effects</li>
-              <li>AI design generation</li>
+              <li>Any colour, custom picker</li>
+              <li>Any text size &amp; spacing</li>
+              <li>Gradients, shadows &amp; effects</li>
+              <li>Every tool &amp; layer type</li>
             </ul>
           </button>
         </div>
@@ -269,6 +269,7 @@ function CanvasSettings() {
   const smartPadding = useUIStore((s) => s.smartPadding)
   const toggleSnap = useUIStore((s) => s.toggleSnap)
   const toggleSmartPadding = useUIStore((s) => s.toggleSmartPadding)
+  const isPro = useUIStore((s) => s.appMode) === 'pro'
   const nudgeSmall = useUIStore((s) => s.nudgeSmall)
   const nudgeLarge = useUIStore((s) => s.nudgeLarge)
   const setNudgeSmall = useUIStore((s) => s.setNudgeSmall)
@@ -276,56 +277,69 @@ function CanvasSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-[14px] font-medium text-foreground">Snapping</h3>
+      {!isPro && (
+        <p className="text-[13px] text-muted-foreground leading-relaxed">
+          Basic keeps things tidy for you — layers line up and space themselves automatically. Switch to Pro on the General tab for full control.
+        </p>
+      )}
 
-        <SettingsToggle
-          label="Snap to alignment guides"
-          description="Layers snap to canvas edges, centres, and other layers"
-          value={snapToGrid}
-          onChange={toggleSnap}
-        />
+      {/* Snapping is always on in Basic (a guardrail), so these toggles are Pro-only. */}
+      {isPro && (
+        <div className="space-y-4">
+          <h3 className="text-[14px] font-medium text-foreground">Snapping</h3>
 
-        <SettingsToggle
-          label="Smart padding equalization"
-          description="When moving layers inside containers, snap to equal distances from edges"
-          value={smartPadding}
-          onChange={toggleSmartPadding}
-        />
-      </div>
+          <SettingsToggle
+            label="Snap to alignment guides"
+            description="Layers snap to canvas edges, centres, and other layers"
+            value={snapToGrid}
+            onChange={toggleSnap}
+          />
 
-      <div className="border-t border-border pt-6 space-y-4">
-        <h3 className="text-[14px] font-medium text-foreground">Nudge</h3>
-        <p className="text-[12px] text-muted-foreground">How far arrow keys move a selection. Hold Shift for the large amount.</p>
-        <div className="grid grid-cols-2 gap-4">
-          <NudgeField label="Arrow" value={nudgeSmall} onChange={setNudgeSmall} />
-          <NudgeField label="Shift + Arrow" value={nudgeLarge} onChange={setNudgeLarge} />
+          <SettingsToggle
+            label="Smart padding equalization"
+            description="When moving layers inside containers, snap to equal distances from edges"
+            value={smartPadding}
+            onChange={toggleSmartPadding}
+          />
         </div>
-      </div>
+      )}
 
-      <div className="border-t border-border pt-6 space-y-4">
-        <h3 className="text-[14px] font-medium text-foreground">Defaults</h3>
-        <p className="text-[12px] text-muted-foreground">Default settings for new elements.</p>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-[12px] text-muted-foreground">
-            <span className="block font-medium text-foreground mb-1">Default font size</span>
-            32px
-          </div>
-          <div className="text-[12px] text-muted-foreground">
-            <span className="block font-medium text-foreground mb-1">Default border radius</span>
-            7px
-          </div>
-          <div className="text-[12px] text-muted-foreground">
-            <span className="block font-medium text-foreground mb-1">Pixel rounding</span>
-            Always (whole pixels only)
-          </div>
-          <div className="text-[12px] text-muted-foreground">
-            <span className="block font-medium text-foreground mb-1">Export DPI</span>
-            2x default
+      {isPro && (
+        <div className="border-t border-border pt-6 space-y-4">
+          <h3 className="text-[14px] font-medium text-foreground">Nudge</h3>
+          <p className="text-[12px] text-muted-foreground">How far arrow keys move a selection. Hold Shift for the large amount.</p>
+          <div className="grid grid-cols-2 gap-4">
+            <NudgeField label="Arrow" value={nudgeSmall} onChange={setNudgeSmall} />
+            <NudgeField label="Shift + Arrow" value={nudgeLarge} onChange={setNudgeLarge} />
           </div>
         </div>
-      </div>
+      )}
+
+      {isPro && (
+        <div className="border-t border-border pt-6 space-y-4">
+          <h3 className="text-[14px] font-medium text-foreground">Defaults</h3>
+          <p className="text-[12px] text-muted-foreground">Default settings for new elements.</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-[12px] text-muted-foreground">
+              <span className="block font-medium text-foreground mb-1">Default font size</span>
+              32px
+            </div>
+            <div className="text-[12px] text-muted-foreground">
+              <span className="block font-medium text-foreground mb-1">Default border radius</span>
+              7px
+            </div>
+            <div className="text-[12px] text-muted-foreground">
+              <span className="block font-medium text-foreground mb-1">Pixel rounding</span>
+              Always (whole pixels only)
+            </div>
+            <div className="text-[12px] text-muted-foreground">
+              <span className="block font-medium text-foreground mb-1">Export DPI</span>
+              2x default
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

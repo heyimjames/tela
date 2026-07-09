@@ -22,6 +22,12 @@ const TEXT_TRANSFORMS = [
   { label: 'aa', value: 'lowercase' as const },
 ]
 
+// A harmonious type scale. In Basic, font sizes snap to these so text sizes
+// relate to each other instead of landing on arbitrary values.
+const TYPE_SCALE = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72, 96, 120]
+const snapToTypeScale = (v: number) =>
+  TYPE_SCALE.reduce((best, s) => (Math.abs(s - v) < Math.abs(best - v) ? s : best), TYPE_SCALE[0])
+
 interface Props {
   layer: TextLayer
 }
@@ -87,7 +93,8 @@ export function TextPropertiesPanel({ layer }: Props) {
         max={120}
         step={1}
         format={(v) => `${v}px`}
-        onChange={(fontSize) => updateLayer<TextLayer>(layer.id, { fontSize })}
+        // Basic snaps to a harmonious type scale so sizes fit together; Pro is free.
+        onChange={(fontSize) => updateLayer<TextLayer>(layer.id, { fontSize: isPro ? fontSize : snapToTypeScale(fontSize) })}
       />
 
       {/* Font weight */}
