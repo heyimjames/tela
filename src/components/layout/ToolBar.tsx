@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { getBrandColor } from '@/brand/palette'
 import { TemplateBrowser } from '@/components/panels/TemplateBrowser'
+import { LayoutPicker } from '@/components/panels/LayoutPicker'
 import { useIsProMode } from '@/hooks/useIsProMode'
 import { measureImportedSvg } from '@/engine/svgMeasure'
 import {
-  MousePointer2, Type, ImageIcon, Square, Palette, FileCode, Hand, LayoutTemplate, MessageCircle,
+  MousePointer2, Type, ImageIcon, Square, Palette, FileCode, Hand, LayoutTemplate, LayoutGrid, MessageCircle,
 } from 'lucide-react'
 import type { ShapeLayer, GradientLayer, ImageLayer, SvgLayer } from '@/types/design'
 
@@ -13,6 +14,7 @@ export function ToolBar() {
   const tool = useDesignStore((s) => s.tool)
   const addLayer = useDesignStore((s) => s.addLayer)
   const [templateBrowserOpen, setTemplateBrowserOpen] = useState(false)
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false)
   const isPro = useIsProMode()
 
   const handleAddImage = () => {
@@ -76,6 +78,14 @@ export function ToolBar() {
       })}
       <div className="flex-1" />
       <button
+        title="Layouts"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-none text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[color,background-color,transform] active:scale-[0.96] cursor-pointer"
+        onClick={() => setLayoutPickerOpen(true)}
+      >
+        <LayoutGrid className="w-[16px] h-[16px]" />
+        <span className="hidden sm:inline">Layouts</span>
+      </button>
+      <button
         title="Templates"
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-none text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[color,background-color,transform] active:scale-[0.96] cursor-pointer"
         onClick={() => setTemplateBrowserOpen(true)}
@@ -84,6 +94,7 @@ export function ToolBar() {
         <span className="hidden sm:inline">Templates</span>
       </button>
       {templateBrowserOpen && <TemplateBrowser onClose={() => setTemplateBrowserOpen(false)} />}
+      {layoutPickerOpen && <LayoutPicker onClose={() => setLayoutPickerOpen(false)} />}
     </div>
   )
 }
