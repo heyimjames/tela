@@ -2,7 +2,6 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { contrastRatio } from '@/lib/contrast'
 import { BrandColorPicker } from '@/components/panels/BrandColorPicker'
 import { SliderField } from '@/components/controls/SliderField'
-import { Input } from '@/components/ui/input'
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 import { getTextBounds, createMeasureContext } from '@/engine/textMeasure'
 import { useIsProMode } from '@/hooks/useIsProMode'
@@ -365,13 +364,17 @@ export function TextPropertiesPanel({ layer }: Props) {
                 pushSnapshot()
                 updateLayer<TextLayer>(layer.id, { textSizing: opt.value })
 
-                // Auto-size immediately when switching
+                // Auto-size immediately when switching.
                 if (opt.value !== 'fixed') {
                   const ctx = createMeasureContext()
-                  const bounds = getTextBounds(ctx, layer)
                   if (opt.value === 'auto-width') {
+                    // De-wrap: measure the natural (unwrapped) width, not the
+                    // current wrapped box, so the text collapses to one line.
+                    const bounds = getTextBounds(ctx, { ...layer, width: 100000 })
                     updateLayer<TextLayer>(layer.id, { width: Math.round(bounds.width + 8) })
                   } else {
+                    // Auto-height keeps the width and grows/shrinks vertically.
+                    const bounds = getTextBounds(ctx, layer)
                     updateLayer<TextLayer>(layer.id, { height: Math.round(bounds.height + 4) })
                   }
                 }
@@ -385,10 +388,12 @@ export function TextPropertiesPanel({ layer }: Props) {
           className="text-[12px] text-primary hover:underline cursor-pointer"
           onClick={() => {
             pushSnapshot()
-            const canvas = document.createElement('canvas')
-            const ctx = canvas.getContext('2d')!
-            const bounds = getTextBounds(ctx, layer)
+            const ctx = createMeasureContext()
+            // De-wrap to the text's natural size AND lock it to auto-width, so it
+            // stays trimmed (one line, hugging the text) as you keep editing.
+            const bounds = getTextBounds(ctx, { ...layer, width: 100000 })
             updateLayer<TextLayer>(layer.id, {
+              textSizing: 'auto-width',
               width: Math.round(bounds.width + 8),
               height: Math.round(bounds.height + 4),
             })

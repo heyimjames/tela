@@ -91,7 +91,7 @@ export function TextEditOverlay({ zoom }: Props) {
   return (
     <textarea
       ref={textareaRef}
-      className="absolute outline-none resize-none"
+      className="absolute resize-none"
       style={{
         left: x,
         top: y,
@@ -105,10 +105,13 @@ export function TextEditOverlay({ zoom }: Props) {
         letterSpacing: `${letterSpacingPx}px`,
         lineHeight: lineHeightValue,
         textTransform: displayTransform,
-        // Match canvas rendering
+        // Match canvas rendering. Use an *outline* (drawn outside the box, no
+        // layout impact) rather than a border — a border with box-sizing:border-box
+        // would inset the text 2px and make it jump on entering/leaving edit mode.
         padding: '0',
         margin: '0',
-        border: '2px solid #0017c7',
+        outline: '2px solid #0017c7',
+        outlineOffset: '0px',
         borderRadius: '2px',
         background: 'rgba(255,255,255,0.15)',
         zIndex: 100,
@@ -124,6 +127,10 @@ export function TextEditOverlay({ zoom }: Props) {
         scrollbarWidth: 'none',
       }}
       defaultValue={layer.content}
+      // Commit live so the box re-hugs as you type — an auto-width text grows
+      // with its text instead of clipping inside the old width until blur. The
+      // textarea stays uncontrolled (defaultValue), so the caret never jumps.
+      onChange={(e) => updateLayer<TextLayer>(layer.id, { content: e.target.value })}
       onBlur={commit}
       onKeyDown={handleKeyDown}
       // Prevent canvas interactions while editing
