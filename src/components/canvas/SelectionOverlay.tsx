@@ -1,10 +1,9 @@
 import { motion } from 'motion/react'
 import { useDesignStore } from '@/store/useDesignStore'
+import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 
-const HANDLE_SIZE = 8
-const HANDLE_HALF = HANDLE_SIZE / 2
-const ROTATE_HANDLE_R = 5 // radius of the round rotation handle
 const ROTATE_HANDLE_OFFSET = 22 // px above the top edge (screen space)
+const ROTATE_HANDLE_R = 5 // radius of the round rotation handle
 
 interface Props {
   zoom: number
@@ -28,6 +27,11 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
   const selectedLayerIds = useDesignStore((s) => s.selectedLayerIds)
   const layers = useDesignStore((s) => s.document.layers)
   const autoLayouts = useDesignStore((s) => s.document.autoLayouts)
+  // Finger-friendly, circular handles on touch/pen; small squares on mouse.
+  const coarse = useCoarsePointer()
+  const HANDLE_SIZE = coarse ? 18 : 8
+  const HANDLE_HALF = HANDLE_SIZE / 2
+  const HANDLE_RX = coarse ? HANDLE_HALF : 1
 
   const selectedLayers = layers.filter((l) => selectedLayerIds.has(l.id) && l.type !== 'background')
   if (selectedLayers.length === 0) return null
@@ -91,7 +95,7 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
                 key={handle.id}
                 x={handle.cx - HANDLE_HALF} y={handle.cy - HANDLE_HALF}
                 width={HANDLE_SIZE} height={HANDLE_SIZE}
-                fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={1}
+                fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={HANDLE_RX}
                 className="pointer-events-auto"
                 style={{ cursor: handle.cursor, transformBox: 'fill-box', transformOrigin: 'center' }}
                 initial={{ scale: 0, opacity: 0 }}
@@ -133,7 +137,7 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
                   key={handle.id}
                   x={handle.cx - HANDLE_HALF} y={handle.cy - HANDLE_HALF}
                   width={HANDLE_SIZE} height={HANDLE_SIZE}
-                  fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={1}
+                  fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={HANDLE_RX}
                   className="pointer-events-auto" style={{ cursor: handle.cursor }}
                   onPointerDown={(e) => { e.stopPropagation(); onGroupResizeStart(handle.id, e) }}
                 />

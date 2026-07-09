@@ -144,6 +144,13 @@ await window.tela.dispatch({ op: 'addText', text: 'Design once.', x: 80, y: 140,
 await window.tela.dispatch({ op: 'addShape', shape: 'pill', x: 80, y: 260, width: 240, height: 60, colorToken: 'ember-500' })
 ```
 
+## Roadmap
+
+Tela is desktop-first today, with touch pinch-zoom/pan and finger-sized handles
+already in place. The plan for a first-class **mobile web** experience —
+bottom-sheet property editing, a contextual selection toolbar, and an add bar —
+is tracked in [`docs/mobile.md`](docs/mobile.md).
+
 ## License
 
 [MIT](LICENSE). The bundled Inter font is licensed under the [SIL Open Font License](https://github.com/rsms/inter/blob/master/LICENSE.txt).

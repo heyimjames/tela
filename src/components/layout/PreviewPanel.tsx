@@ -245,6 +245,28 @@ export function PreviewPanel() {
     prevFrameCount.current = frames.length
   }, [frames.length, hasFrames, fitToFrames])
 
+  // Mobile layout settles after mount (the viewport can resize as browser chrome
+  // appears), so the initial fit above can run against a zero/wrong-sized
+  // container and leave the design off-screen. Fit exactly once, as soon as the
+  // container reports a real size. The guard means it never refits later and
+  // fights the user; on desktop the size is already correct so it's a no-op.
+  const didInitialFit = useRef(false)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || didInitialFit.current) return
+    const ro = new ResizeObserver(() => {
+      const r = el.getBoundingClientRect()
+      const hasContent = (useWorkspaceStore.getState().getActivePage()?.frames?.length ?? 0) > 0
+      if (r.width > 0 && r.height > 0 && hasContent && !didInitialFit.current) {
+        didInitialFit.current = true
+        fitToFrames()
+        ro.disconnect()
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fitToFrames])
+
   // Zoom toward a screen point (cursor or viewport centre), keeping the world
   // point under that screen point fixed. Frames live in a world whose origin is
   // the container centre shifted by panOffset, so: screen = centre + pan + world*z.
@@ -326,6 +348,56 @@ export function PreviewPanel() {
     }
     el.addEventListener('wheel', handler, { passive: false })
     return () => el.removeEventListener('wheel', handler)
+  }, [zoomAtPoint])
+
+  // Touch pinch-zoom + two-finger pan (mobile / tablet). Single-finger touches
+  // fall through to the pointer-based select/drag handlers. Zoom anchors to the
+  // pinch midpoint via zoomAtPoint; the midpoint's movement drives the pan.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    let pinch: { lastDist: number; lastMidX: number; lastMidY: number } | null = null
+    const dist = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+    const midX = (a: Touch, b: Touch) => (a.clientX + b.clientX) / 2
+    const midY = (a: Touch, b: Touch) => (a.clientY + b.clientY) / 2
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return
+      const [a, b] = [e.touches[0], e.touches[1]]
+      pinch = { lastDist: dist(a, b), lastMidX: midX(a, b), lastMidY: midY(a, b) }
+      e.preventDefault()
+    }
+    const onMove = (e: TouchEvent) => {
+      if (!pinch || e.touches.length < 2) return
+      e.preventDefault()
+      const [a, b] = [e.touches[0], e.touches[1]]
+      const d = dist(a, b)
+      const mx = midX(a, b)
+      const my = midY(a, b)
+      if (pinch.lastDist > 0) {
+        const z = useDesignStore.getState().zoom
+        zoomAtPoint(z * (d / pinch.lastDist), mx, my)
+      }
+      const p = useDesignStore.getState().panOffset
+      useDesignStore.getState().setPanOffset({ x: p.x + (mx - pinch.lastMidX), y: p.y + (my - pinch.lastMidY) })
+      pinch.lastDist = d
+      pinch.lastMidX = mx
+      pinch.lastMidY = my
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinch = null
+    }
+
+    el.addEventListener('touchstart', onStart, { passive: false })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('touchcancel', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchcancel', onEnd)
+    }
   }, [zoomAtPoint])
 
   // --- Frame label drag (moves the frame, or the whole selection, in world space) ---
@@ -723,7 +795,8 @@ export function PreviewPanel() {
         className="flex-1 overflow-hidden relative"
         onPointerDown={onContainerPointerDown}
         onContextMenu={handleContainerContextMenu}
-        style={hasFrames ? undefined : { display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        // touch-action: none lets us own pinch/pan gestures instead of the browser.
+        style={{ touchAction: 'none', ...(hasFrames ? {} : { display: 'flex', alignItems: 'center', justifyContent: 'center' }) }}
       >
         {hasFrames ? (
           // --- Multi-frame world ---
