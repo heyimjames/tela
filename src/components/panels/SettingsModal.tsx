@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useUIStore, type AppMode } from '@/store/useUIStore'
 import { useAIStore } from '@/store/useAIStore'
+import { AI_ENABLED } from '@/lib/aiApi'
 import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +43,7 @@ export function SettingsModal() {
             { id: 'ai' as SettingsTab, label: 'AI Assistant', icon: Wand2 },
             { id: 'canvas' as SettingsTab, label: 'Canvas & Tools', icon: Mouse },
             { id: 'appearance' as SettingsTab, label: 'Appearance', icon: Palette },
-          ]).map((t) => {
+          ].filter((t) => t.id !== 'ai' || AI_ENABLED)).map((t) => {
             const Icon = t.icon
             return (
               <button

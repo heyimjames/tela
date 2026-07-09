@@ -19,8 +19,8 @@ export function LeftSidebar() {
       const detail = (e as CustomEvent).detail as Tab
       setTab(detail)
     }
-    window.addEventListener('jj-dock-left-tab', handler)
-    return () => window.removeEventListener('jj-dock-left-tab', handler)
+    window.addEventListener('tela-dock-left-tab', handler)
+    return () => window.removeEventListener('tela-dock-left-tab', handler)
   }, [])
 
   const tabs: Array<{ id: Tab; icon: typeof Layers; label: string }> = [

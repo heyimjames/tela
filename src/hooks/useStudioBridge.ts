@@ -14,7 +14,7 @@ import { useRouterStore, type Route } from '@/store/useRouterStore'
  * embedded (top-level window). Messages are same-origin and origin-validated.
  */
 
-const SOURCE = 'jj-canvas'
+const SOURCE = 'tela-canvas'
 type View = 'editor' | 'files'
 
 function viewForRoute(route: Route): View {

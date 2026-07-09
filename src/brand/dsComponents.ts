@@ -726,7 +726,7 @@ export const DS_COMPONENTS: DSComponentDef[] = [
   // Avatars
   avatarDef('avatar-sm', 'Avatar — sm', 32, 'AB'),
   avatarDef('avatar-md', 'Avatar — md', 48, 'AB'),
-  avatarDef('avatar-lg', 'Avatar — lg', 64, 'JJ'),
+  avatarDef('avatar-lg', 'Avatar — lg', 64, 'AB'),
   avatarPhotoDef('avatar-photo', 'Avatar — photo', 64),
 
   // Banners

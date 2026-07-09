@@ -1,6 +1,7 @@
 import { useUIStore } from '@/store/useUIStore'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useIsProMode } from '@/hooks/useIsProMode'
+import { AI_ENABLED } from '@/lib/aiApi'
 import {
   Layers,
   Blocks,
@@ -22,7 +23,7 @@ export function FloatingDock() {
   const isPro = useIsProMode()
 
   const setLeftTab = (tab: LeftTab) => {
-    window.dispatchEvent(new CustomEvent('jj-dock-left-tab', { detail: tab }))
+    window.dispatchEvent(new CustomEvent('tela-dock-left-tab', { detail: tab }))
   }
 
   const handleRightTab = (tab: RightTab) => {
@@ -41,15 +42,18 @@ export function FloatingDock() {
     { id: 'icons', icon: IconsIcon, label: 'Icons', proOnly: true },
   ]
 
-  const allRightItems: Array<{ id: RightTab; icon: React.ElementType; label: string; proOnly?: boolean }> = [
+  const allRightItems: Array<{ id: RightTab; icon: React.ElementType; label: string; proOnly?: boolean; aiOnly?: boolean }> = [
     { id: 'inspector', icon: SlidersHorizontal, label: 'Inspector' },
     { id: 'export', icon: Download, label: 'Export' },
     { id: 'auto-resize', icon: Scaling, label: 'Resize' },
-    { id: 'ai', icon: Wand2, label: 'AI' },
+    // Only shown when an AI endpoint is configured (VITE_AI_API_ORIGIN).
+    { id: 'ai', icon: Wand2, label: 'AI', aiOnly: true },
   ]
 
   const leftItems = isPro ? allLeftItems : allLeftItems.filter((i) => !i.proOnly)
-  const rightItems = isPro ? allRightItems : allRightItems.filter((i) => !i.proOnly)
+  const rightItems = allRightItems.filter(
+    (i) => (isPro || !i.proOnly) && (AI_ENABLED || !i.aiOnly),
+  )
 
   return (
     <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 bg-card border border-border rounded-[7px] p-1 shadow-[var(--shadow-subtle)]">

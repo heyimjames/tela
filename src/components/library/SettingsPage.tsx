@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouterStore } from '@/store/useRouterStore'
 import { useUIStore, type AppMode } from '@/store/useUIStore'
 import { useAIStore } from '@/store/useAIStore'
+import { AI_ENABLED } from '@/lib/aiApi'
 import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +43,7 @@ export function SettingsPage() {
             { id: 'ai' as Tab, label: 'AI Assistant', icon: Wand2 },
             { id: 'canvas' as Tab, label: 'Canvas & Tools', icon: Mouse },
             { id: 'appearance' as Tab, label: 'Appearance', icon: Palette },
-          ]).map((t) => {
+          ].filter((t) => t.id !== 'ai' || AI_ENABLED)).map((t) => {
             const Icon = t.icon
             return (
               <button

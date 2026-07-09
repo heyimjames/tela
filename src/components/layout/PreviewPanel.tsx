@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { relayoutActiveFrame } from '@/store/useAIStore'
+import { AI_ENABLED } from '@/lib/aiApi'
 import { getBrandColor } from '@/brand/palette'
 import { useContextMenuStore, type ContextMenuItem } from '@/store/useContextMenuStore'
 import type { Layer } from '@/types/design'
@@ -65,6 +66,8 @@ function ReformatNudge() {
     if (prevId.current === format.id) return
     prevId.current = format.id
     if (contentCount === 0) return
+    // The nudge only offers AI re-layout, so skip it when AI is not configured.
+    if (!AI_ENABLED) return
     setVisible(true)
     const t = setTimeout(() => setVisible(false), 8000)
     return () => clearTimeout(t)

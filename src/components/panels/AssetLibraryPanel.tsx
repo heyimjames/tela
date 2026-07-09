@@ -139,7 +139,7 @@ export function AssetLibraryPanel() {
               draggable
               onClick={() => handleAddToCanvas(asset)}
               onDragStart={(e) => {
-                e.dataTransfer.setData('application/jj-asset', JSON.stringify({
+                e.dataTransfer.setData('application/tela-asset', JSON.stringify({
                   id: asset.id,
                   name: asset.name,
                   type: asset.type,
