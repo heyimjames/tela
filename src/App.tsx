@@ -4,6 +4,7 @@ import { LeftSidebar } from '@/components/layout/LeftSidebar'
 import { RightSidebar } from '@/components/layout/RightSidebar'
 import { PreviewPanel } from '@/components/layout/PreviewPanel'
 import { MobileControlSheet } from '@/components/layout/MobileControlSheet'
+import { MobileTextEditor } from '@/components/canvas/MobileTextEditor'
 import { HomePage } from '@/components/library/HomePage'
 import { SettingsPage } from '@/components/library/SettingsPage'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -64,6 +65,7 @@ function EditorView() {
       <PreviewPanel />
       <RightSidebar />
       <MobileControlSheet />
+      <MobileTextEditor />
       <CommandPalette />
       <ContextMenu />
       <SettingsModal />

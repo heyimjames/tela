@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Layers, SlidersHorizontal, Copy, Trash2 } from 'lucide-react'
+import { Layers, SlidersHorizontal, Copy, Trash2, Type } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
 import { LayerListPanel } from '@/components/panels/LayerListPanel'
 import { LayerInspector } from '@/components/panels/LayerInspector'
@@ -47,6 +47,7 @@ export function MobileControlSheet() {
   const activeLayer = useDesignStore((s) => s.document.layers.find((l) => l.id === s.activeLayerId) ?? null)
   const selectedCount = useDesignStore((s) => s.selectedLayerIds.size)
   const editable = !!activeLayer && activeLayer.type !== 'background'
+  const isText = activeLayer?.type === 'text'
   const hasSelection = selectedCount > 0
 
   const duplicateSelection = () => {
@@ -73,8 +74,13 @@ export function MobileControlSheet() {
             {/* Selection actions — spring in only when something is selected
                 (progressive disclosure): Edit properties, Duplicate, Delete. */}
             <AnimatePresence>
+              {isText && activeLayer && (
+                <ClusterButton key="text" label="Edit text" onClick={() => useDesignStore.getState().setEditingTextLayerId(activeLayer.id)} variant="primary">
+                  <Type className="w-5 h-5" />
+                </ClusterButton>
+              )}
               {editable && (
-                <ClusterButton key="edit" label="Edit properties" onClick={() => setDrawer('inspector')} variant="primary">
+                <ClusterButton key="edit" label="Edit properties" onClick={() => setDrawer('inspector')}>
                   <SlidersHorizontal className="w-5 h-5" />
                 </ClusterButton>
               )}

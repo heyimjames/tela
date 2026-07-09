@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useDesignStore } from '@/store/useDesignStore'
+import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 import { FONT_FAMILY } from '@/engine/textMeasure'
 import type { TextLayer } from '@/types/design'
 
@@ -16,6 +17,8 @@ export function TextEditOverlay({ zoom }: Props) {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isCommitting = useRef(false)
+  // On touch, MobileTextEditor takes over with a fullscreen field instead.
+  const coarse = useCoarsePointer()
 
   const layer = editingTextLayerId
     ? (layers.find((l) => l.id === editingTextLayerId) as TextLayer | undefined)
@@ -66,7 +69,7 @@ export function TextEditOverlay({ zoom }: Props) {
     e.stopPropagation()
   }, [commit])
 
-  if (!layer) return null
+  if (!layer || coarse) return null
 
   // Calculate overlay position and styling to match canvas render exactly
   const x = layer.x * zoom
