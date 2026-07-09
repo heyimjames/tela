@@ -12,8 +12,8 @@ name: Deploy to GitHub Pages
 # /<repo>/. Change it below if you rename the repo or use a custom domain.
 
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
