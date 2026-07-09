@@ -25,9 +25,16 @@ import {
   Archive,
   Settings,
   Sparkles,
+  FolderInput,
+  Check,
 } from 'lucide-react'
 import { cardGradient } from '@/lib/cardGradient'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
 import type { DesignFile, DesignFrame, Folder } from '@/types/fileSystem'
+
+// dataTransfer MIME for dragging a file card onto a folder (desktop).
+const FILE_DND = 'application/tela-file'
 import type { Frame } from '@/types/workspace'
 import type { Layer } from '@/types/design'
 
@@ -57,6 +64,7 @@ export function HomePage() {
   const createFolder = useFileStore((s) => s.createFolder)
   const deleteFolder = useFileStore((s) => s.deleteFolder)
   const renameFolder = useFileStore((s) => s.renameFolder)
+  const moveFileToFolder = useFileStore((s) => s.moveFileToFolder)
   const navigate = useRouterStore((s) => s.navigate)
 
   const [filter, setFilter] = useState<FilterTab>('all')
@@ -67,6 +75,7 @@ export function HomePage() {
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null)
   // Delete is confirmed through a modal rather than firing immediately.
   const [pendingDelete, setPendingDelete] = useState<{ kind: 'file' | 'folder'; id: string; name: string } | null>(null)
+  const [movingFileId, setMovingFileId] = useState<string | null>(null)
 
   const confirmDelete = () => {
     if (!pendingDelete) return
@@ -165,6 +174,7 @@ export function HomePage() {
             label="Files"
             active={!activeFolderId}
             onClick={() => setActiveFolderId(null)}
+            onDropFile={(id) => moveFileToFolder(id, null)}
           />
           <NavItem
             icon={Clock}
@@ -192,7 +202,7 @@ export function HomePage() {
                   active={activeFolderId === folder.id}
                   onClick={() => setActiveFolderId(folder.id)}
                   onDelete={() => setPendingDelete({ kind: 'folder', id: folder.id, name: folder.name })}
-                  onRename={(name) => renameFolder(folder.id, name)}
+                  onDropFile={(id) => moveFileToFolder(id, folder.id)}
                 />
               ))}
             </div>
@@ -364,6 +374,7 @@ export function HomePage() {
                   onEditValueChange={setEditValue}
                   onDuplicate={() => duplicateFile(file.id)}
                   onDelete={() => setPendingDelete({ kind: 'file', id: file.id, name: file.name })}
+                  onMove={() => setMovingFileId(file.id)}
                   timeAgo={timeAgo}
                 />
               ))}
@@ -377,6 +388,7 @@ export function HomePage() {
                   onOpen={() => handleOpenFile(file.id)}
                   onDuplicate={() => duplicateFile(file.id)}
                   onDelete={() => setPendingDelete({ kind: 'file', id: file.id, name: file.name })}
+                  onMove={() => setMovingFileId(file.id)}
                   timeAgo={timeAgo}
                 />
               ))}
@@ -404,7 +416,81 @@ export function HomePage() {
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+
+      <MoveToFolderPicker
+        file={movingFileId ? files.find((f) => f.id === movingFileId) ?? null : null}
+        folders={folders}
+        onMove={(folderId) => { if (movingFileId) moveFileToFolder(movingFileId, folderId); setMovingFileId(null) }}
+        onClose={() => setMovingFileId(null)}
+      />
     </div>
+  )
+}
+
+// Move a file to a folder (or the top level). A bottom sheet on mobile, a
+// compact centred modal on desktop — same list either way.
+function MoveToFolderPicker({
+  file, folders, onMove, onClose,
+}: {
+  file: DesignFile | null
+  folders: Folder[]
+  onMove: (folderId: string | null) => void
+  onClose: () => void
+}) {
+  const isMobile = useIsMobile()
+  if (!file) return null
+
+  const currentId = file.folderId ?? null
+  const rows = (
+    <div className="py-1">
+      <MoveRow label="Top level" icon={FileText} active={currentId === null} onClick={() => onMove(null)} />
+      {folders.map((f) => (
+        <MoveRow key={f.id} label={f.name} icon={FolderOpen} active={currentId === f.id} onClick={() => onMove(f.id)} />
+      ))}
+      {folders.length === 0 && (
+        <p className="px-4 py-3 text-[13px] text-muted-foreground">No folders yet — create one from the sidebar first.</p>
+      )}
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open onOpenChange={(o) => !o && onClose()}>
+        <DrawerContent>
+          <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-0.5">
+            <DrawerTitle className="p-0 text-[16px] font-semibold text-foreground">Move “{file.name}”</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="h-10 rounded-full bg-muted px-4 text-[13px] font-medium text-foreground transition-transform active:scale-[0.96]">Cancel</button>
+            </DrawerClose>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)] no-scrollbar">{rows}</div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="relative w-full max-w-[380px] rounded-[16px] bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 py-3 border-b border-border text-[14px] font-semibold text-foreground truncate">Move “{file.name}” to…</div>
+        <div className="max-h-[50vh] overflow-y-auto">{rows}</div>
+      </div>
+    </div>
+  )
+}
+
+function MoveRow({ label, icon: Icon, active, onClick }: { label: string; icon: React.ElementType; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      className={`w-full flex items-center gap-2.5 px-4 h-11 text-[14px] transition-colors ${active ? 'text-primary font-medium' : 'text-foreground hover:bg-muted/50'}`}
+      onClick={onClick}
+      disabled={active}
+    >
+      <Icon className="w-4 h-4 shrink-0 text-muted-foreground" />
+      <span className="flex-1 text-left truncate">{label}</span>
+      {active && <Check className="w-4 h-4 text-primary" />}
+    </button>
   )
 }
 
@@ -416,22 +502,26 @@ function NavItem({
   active,
   onClick,
   onDelete,
-  onRename,
+  onDropFile,
 }: {
   icon: React.ElementType
   label: string
   active?: boolean
   onClick: () => void
   onDelete?: () => void
-  onRename?: (name: string) => void
+  onDropFile?: (fileId: string) => void
 }) {
+  const [dragOver, setDragOver] = useState(false)
   return (
     <button
       className={`
         group w-full flex items-center gap-2.5 px-3 py-2 rounded-[5px] text-[14px] transition-colors cursor-pointer
-        ${active ? 'bg-muted/60 text-foreground font-medium' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}
+        ${dragOver ? 'ring-2 ring-primary ring-inset bg-primary/5 text-foreground' : active ? 'bg-muted/60 text-foreground font-medium' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}
       `}
       onClick={onClick}
+      onDragOver={onDropFile ? (e) => { if (e.dataTransfer.types.includes(FILE_DND)) { e.preventDefault(); setDragOver(true) } } : undefined}
+      onDragLeave={onDropFile ? () => setDragOver(false) : undefined}
+      onDrop={onDropFile ? (e) => { e.preventDefault(); const id = e.dataTransfer.getData(FILE_DND); if (id) onDropFile(id); setDragOver(false) } : undefined}
     >
       <Icon className="w-4 h-4 shrink-0" />
       <span className="flex-1 text-left truncate">{label}</span>
@@ -496,7 +586,7 @@ function FolderCard({
       ) : (
         <>
           <span className="text-[14px] text-foreground font-medium truncate flex-1">{folder.name}</span>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity shrink-0">
             <button
               aria-label="Rename folder"
               className="p-1 hover:bg-muted rounded-[3px] cursor-pointer"
@@ -531,6 +621,7 @@ function FileCard({
   onEditValueChange,
   onDuplicate,
   onDelete,
+  onMove,
   timeAgo,
 }: {
   file: DesignFile
@@ -543,6 +634,7 @@ function FileCard({
   onEditValueChange: (v: string) => void
   onDuplicate: () => void
   onDelete: () => void
+  onMove: () => void
   timeAgo: (d: string) => string
 }) {
   const isEditing = editingId === file.id
@@ -571,6 +663,8 @@ function FileCard({
     <div
       className="group bg-card border border-border rounded-[12px] overflow-hidden cursor-pointer hover:shadow-[0_2px_8px_-2px_rgba(17,17,17,0.08)] transition-[box-shadow] duration-200"
       onClick={onOpen}
+      draggable={!file.isScratchpad && !isEditing}
+      onDragStart={(e) => { e.dataTransfer.setData(FILE_DND, file.id); e.dataTransfer.effectAllowed = 'move' }}
     >
       {/* Thumbnail */}
       <div className="aspect-[4/3] bg-[#ebe9e1] relative overflow-hidden">
@@ -584,9 +678,12 @@ function FileCard({
 
         {/* Hover actions */}
         {!file.isScratchpad && (
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
             <button aria-label="Rename" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onStartEdit() }} title="Rename">
               <Pencil className="w-3 h-3 text-muted-foreground" />
+            </button>
+            <button aria-label="Move to folder" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onMove() }} title="Move to folder">
+              <FolderInput className="w-3 h-3 text-muted-foreground" />
             </button>
             <button aria-label="Duplicate" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onDuplicate() }} title="Duplicate">
               <Copy className="w-3 h-3 text-muted-foreground" />
@@ -631,18 +728,22 @@ function FileListRow({
   onOpen,
   onDuplicate,
   onDelete,
+  onMove,
   timeAgo,
 }: {
   file: DesignFile
   onOpen: () => void
   onDuplicate: () => void
   onDelete: () => void
+  onMove: () => void
   timeAgo: (d: string) => string
 }) {
   return (
     <div
       className="group flex items-center gap-4 px-4 py-3 rounded-[7px] cursor-pointer hover:bg-muted/30 transition-colors"
       onClick={onOpen}
+      draggable={!file.isScratchpad}
+      onDragStart={(e) => { e.dataTransfer.setData(FILE_DND, file.id); e.dataTransfer.effectAllowed = 'move' }}
     >
       <FileText className="w-5 h-5 text-muted-foreground/40 shrink-0" />
       <div className="flex-1 min-w-0">
@@ -656,7 +757,10 @@ function FileListRow({
         {timeAgo(file.updatedAt)}
       </span>
       {!file.isScratchpad && (
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity shrink-0">
+          <button aria-label="Move to folder" className="p-1 hover:bg-muted rounded-[3px] cursor-pointer" onClick={(e) => { e.stopPropagation(); onMove() }} title="Move to folder">
+            <FolderInput className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
           <button aria-label="Duplicate" className="p-1 hover:bg-muted rounded-[3px] cursor-pointer" onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
             <Copy className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
