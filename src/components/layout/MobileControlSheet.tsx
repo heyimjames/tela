@@ -42,8 +42,16 @@ function ClusterButton({
   )
 }
 
+// iOS-style detents: a medium height and a (near) full height. Sheets open at
+// medium and can be dragged up to large.
+const DETENTS: number[] = [0.55, 0.92]
+
 export function MobileControlSheet() {
   const [drawer, setDrawer] = useState<'layers' | 'inspector' | null>(null)
+  const [propSnap, setPropSnap] = useState<number | string | null>(DETENTS[0])
+  const [layerSnap, setLayerSnap] = useState<number | string | null>(DETENTS[0])
+  const openInspector = () => { setPropSnap(DETENTS[0]); setDrawer('inspector') }
+  const openLayers = () => { setLayerSnap(DETENTS[0]); setDrawer('layers') }
   const activeLayer = useDesignStore((s) => s.document.layers.find((l) => l.id === s.activeLayerId) ?? null)
   const selectedCount = useDesignStore((s) => s.selectedLayerIds.size)
   const editable = !!activeLayer && activeLayer.type !== 'background'
@@ -80,7 +88,7 @@ export function MobileControlSheet() {
                 </ClusterButton>
               )}
               {editable && (
-                <ClusterButton key="edit" label="Edit properties" onClick={() => setDrawer('inspector')}>
+                <ClusterButton key="edit" label="Edit properties" onClick={openInspector}>
                   <SlidersHorizontal className="w-5 h-5" />
                 </ClusterButton>
               )}
@@ -100,7 +108,7 @@ export function MobileControlSheet() {
             <button
               aria-label="Layers"
               className="h-11 w-11 flex items-center justify-center bg-foreground text-background rounded-full shadow-lg transition-transform active:scale-[0.96]"
-              onClick={() => setDrawer('layers')}
+              onClick={openLayers}
             >
               <Layers className="w-5 h-5" />
             </button>
@@ -108,21 +116,22 @@ export function MobileControlSheet() {
         )}
       </AnimatePresence>
 
-      {/* Layers drawer — content-hugging up to ~72vh, scrolls beyond. */}
-      <Drawer open={drawer === 'layers'} onOpenChange={(open) => !open && setDrawer(null)}>
-        <DrawerContent>
+      {/* Layers drawer — opens at the medium detent, drag up to large. The body
+          is flex-1/min-h-0 so the header stays pinned and scrolling works. */}
+      <Drawer open={drawer === 'layers'} onOpenChange={(open) => !open && setDrawer(null)} snapPoints={DETENTS} activeSnapPoint={layerSnap} setActiveSnapPoint={setLayerSnap}>
+        <DrawerContent className="mt-0 h-[92vh] max-h-none">
           <SheetHeader title="Layers" />
-          <div className="overflow-y-auto max-h-[72vh] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
             <LayerListPanel />
           </div>
         </DrawerContent>
       </Drawer>
 
       {/* Properties drawer — the shared inspector, on demand. */}
-      <Drawer open={drawer === 'inspector'} onOpenChange={(open) => !open && setDrawer(null)}>
-        <DrawerContent>
+      <Drawer open={drawer === 'inspector'} onOpenChange={(open) => !open && setDrawer(null)} snapPoints={DETENTS} activeSnapPoint={propSnap} setActiveSnapPoint={setPropSnap}>
+        <DrawerContent className="mt-0 h-[92vh] max-h-none">
           <SheetHeader title={activeLayer?.name ?? 'Properties'} />
-          <div className="mobile-inspector overflow-y-auto max-h-[82vh] px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
+          <div className="mobile-inspector flex-1 min-h-0 overflow-y-auto px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
             {activeLayer ? <LayerInspector layer={activeLayer} /> : null}
           </div>
         </DrawerContent>
@@ -135,7 +144,7 @@ export function MobileControlSheet() {
 // with a ≥40px hit area. Tapping down / dragging the sheet also dismisses.
 function SheetHeader({ title }: { title: string }) {
   return (
-    <div className="flex items-center justify-between px-4 pb-3 pt-0.5">
+    <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-0.5">
       <DrawerTitle className="p-0 text-[16px] font-semibold text-foreground">{title}</DrawerTitle>
       <DrawerClose asChild>
         <button className="h-10 rounded-full bg-muted px-4 text-[13px] font-medium text-foreground transition-transform active:scale-[0.96]">
