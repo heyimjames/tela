@@ -144,8 +144,8 @@ export function HomePage() {
 
   return (
     <div className="h-dvh flex bg-background">
-      {/* Left sidebar */}
-      <aside className="w-[220px] bg-card border-r border-border flex flex-col shrink-0">
+      {/* Left sidebar (desktop) */}
+      <aside className="hidden md:flex w-[220px] bg-card border-r border-border flex-col shrink-0">
         {/* User */}
         <div className="px-4 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
@@ -213,15 +213,51 @@ export function HomePage() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
+        {/* Mobile top bar — brand + nav pills + settings (replaces the sidebar) */}
+        <div className="md:hidden sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border">
+          <div className="flex items-center justify-between px-4 h-14">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#3e4576] flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">
+                  {BRAND.productName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-[15px] font-semibold text-foreground">{BRAND.productName}</span>
+            </div>
+            <button
+              aria-label="Settings"
+              className="h-10 w-10 flex items-center justify-center rounded-full text-muted-foreground active:bg-muted/50"
+              onClick={() => navigate({ page: 'settings' })}
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex gap-1.5 px-4 pb-2.5 overflow-x-auto no-scrollbar">
+            {[
+              { label: 'Files', active: !activeFolderId && filter === 'all', on: () => { setFilter('all'); setActiveFolderId(null) } },
+              { label: 'Recents', active: filter === 'recents', on: () => { setFilter('recents'); setActiveFolderId(null) } },
+              { label: 'Templates', active: false, on: () => {/* TODO: template browser */} },
+            ].map((t) => (
+              <button
+                key={t.label}
+                className={`shrink-0 px-3.5 h-9 rounded-full text-[13px] font-medium transition-colors ${t.active ? 'bg-foreground text-background' : 'bg-muted/50 text-muted-foreground active:bg-muted'}`}
+                onClick={t.on}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Header */}
-        <div className="px-8 pt-8 pb-4">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-[28px] font-semibold text-foreground tracking-tight">
+        <div className="px-4 md:px-8 pt-4 md:pt-8 pb-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+            <h1 className="text-[22px] md:text-[28px] font-semibold text-foreground tracking-tight">
               {activeFolderId ? folders.find((f) => f.id === activeFolderId)?.name ?? 'Files' : 'Files'}
             </h1>
             <div className="flex items-center gap-2">
-              {/* Filters */}
-              <div className="flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
+              {/* Filters (desktop) */}
+              <div className="hidden md:flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
                 {(['all', 'recents'] as const).map((tab) => (
                   <button
                     key={tab}
@@ -233,8 +269,8 @@ export function HomePage() {
                 ))}
               </div>
 
-              {/* View toggle */}
-              <div className="flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
+              {/* View toggle (desktop) */}
+              <div className="hidden md:flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
                 <button aria-label="Grid view" className={`p-1.5 rounded-[4px] ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('grid')}>
                   <LayoutGrid className="w-4 h-4 text-muted-foreground" />
                 </button>
@@ -244,10 +280,10 @@ export function HomePage() {
               </div>
 
               {/* Search */}
-              <div className="relative w-[200px]">
+              <div className="relative flex-1 md:flex-none md:w-[200px]">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
                 <Input
-                  className="pl-9 h-8 text-[13px] rounded-[5px]"
+                  className="pl-9 h-10 md:h-8 text-[13px] rounded-[5px]"
                   placeholder="Search files"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -255,12 +291,13 @@ export function HomePage() {
               </div>
 
               {/* New file */}
-              <Button size="sm" className="rounded-[5px] gap-1.5" onClick={() => {
+              <Button size="sm" className="h-10 md:h-8 rounded-[5px] gap-1.5 shrink-0" onClick={() => {
                 const id = createFile('Untitled', activeFolderId)
                 handleOpenFile(id)
               }}>
                 <Plus className="w-4 h-4" />
-                New file
+                <span className="hidden sm:inline">New file</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </div>
           </div>
