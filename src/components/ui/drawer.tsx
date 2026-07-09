@@ -2,7 +2,11 @@ import { type ComponentProps } from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import { cn } from '@/lib/utils'
 
-const Drawer = DrawerPrimitive.Root
+// Scale the page back (iOS-style depth) behind every sheet by default. Requires
+// a [data-vaul-drawer-wrapper] element around the app (see App.tsx).
+function Drawer(props: ComponentProps<typeof DrawerPrimitive.Root>) {
+  return <DrawerPrimitive.Root shouldScaleBackground {...props} />
+}
 const DrawerTrigger = DrawerPrimitive.Trigger
 const DrawerPortal = DrawerPrimitive.Portal
 const DrawerClose = DrawerPrimitive.Close

@@ -84,9 +84,13 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      {route.page === 'library' && <HomePage />}
-      {route.page === 'settings' && <SettingsPage />}
-      {(route.page === 'editor' || route.page === 'editor-standalone' || route.page === 'project') && <EditorView />}
+      {/* vaul scales this wrapper back (and rounds its corners) when a sheet opens,
+          revealing the dark #root behind it — the iOS "page pushed back" depth. */}
+      <div data-vaul-drawer-wrapper="" className="bg-background">
+        {route.page === 'library' && <HomePage />}
+        {route.page === 'settings' && <SettingsPage />}
+        {(route.page === 'editor' || route.page === 'editor-standalone' || route.page === 'project') && <EditorView />}
+      </div>
     </TooltipProvider>
   )
 }

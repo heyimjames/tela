@@ -142,6 +142,8 @@
   }
   #root {
     height: 100dvh;
+    /* Dark backdrop revealed when a sheet scales the app back (iOS depth). */
+    background-color: #000;
   }
   /* Balanced headings — no lonely last word (make-interfaces #10) */
   h1, h2, h3, h4 {

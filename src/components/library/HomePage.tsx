@@ -3,6 +3,8 @@ import { useFileStore } from '@/store/useFileStore'
 import { useRouterStore } from '@/store/useRouterStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useDesignStore } from '@/store/useDesignStore'
+import { useUIStore } from '@/store/useUIStore'
+import { SettingsModal } from '@/components/panels/SettingsModal'
 import { renderThumbnail } from '@/engine/thumbnail'
 import { getBrandColor } from '@/brand/palette'
 import { BRAND } from '@/brand/brand.config'
@@ -237,7 +239,7 @@ export function HomePage() {
             <button
               aria-label="Settings"
               className="h-10 w-10 flex items-center justify-center rounded-full text-muted-foreground active:bg-muted/50"
-              onClick={() => navigate({ page: 'settings' })}
+              onClick={() => useUIStore.getState().setSettingsOpen(true)}
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -423,6 +425,9 @@ export function HomePage() {
         onMove={(folderId) => { if (movingFileId) moveFileToFolder(movingFileId, folderId); setMovingFileId(null) }}
         onClose={() => setMovingFileId(null)}
       />
+
+      {/* Settings — a bottom sheet on mobile (opened by the top-bar gear), a modal on desktop. */}
+      <SettingsModal />
     </div>
   )
 }
