@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { nanoid } from 'nanoid'
 import { DESIGN_TEMPLATES, TEMPLATE_CATEGORIES } from '@/brand/templates'
 import { DEFAULT_FORMAT } from '@/brand/formats'
@@ -7,7 +7,8 @@ import type { DesignDocument } from '@/types/design'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useRouterStore } from '@/store/useRouterStore'
 import { useProjectStore } from '@/store/useProjectStore'
-import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
 import { Layout, X } from 'lucide-react'
 
 interface Props {
@@ -18,29 +19,111 @@ interface Props {
 export function TemplateBrowser({ projectId, onClose }: Props) {
   const [category, setCategory] = useState<string>('all')
   const navigate = useRouterStore((s) => s.navigate)
+  const isMobile = useIsMobile()
+  // Animate the mobile sheet in on mount, and out before unmounting.
+  const [sheetOpen, setSheetOpen] = useState(false)
+  useEffect(() => { setSheetOpen(true) }, [])
 
   const filtered = category === 'all'
     ? DESIGN_TEMPLATES
     : DESIGN_TEMPLATES.filter((t) => t.category === category)
 
+  const openDoc = (doc: DesignDocument) => {
+    useDesignStore.setState({ document: doc })
+    if (projectId) {
+      const designId = useProjectStore.getState().addDesign(projectId, doc)
+      navigate({ page: 'editor', projectId, designId })
+    } else {
+      navigate({ page: 'editor-standalone' })
+    }
+    onClose()
+  }
+
   const handleSelect = (templateId: string) => {
     const template = DESIGN_TEMPLATES.find((t) => t.id === templateId)
     if (!template) return
+    openDoc(template.create())
+  }
 
-    const doc = template.create()
+  const startBlank = () => {
+    const now = new Date().toISOString()
+    openDoc({
+      id: nanoid(),
+      name: 'Untitled Ad',
+      format: DEFAULT_FORMAT,
+      layers: [{
+        id: nanoid(), type: 'background', name: 'Background',
+        visible: true, locked: false, opacity: 1,
+        x: 0, y: 0, width: DEFAULT_FORMAT.width, height: DEFAULT_FORMAT.height,
+        rotation: 0, zIndex: 0,
+        fill: { type: 'solid', color: getBrandColor('cloud') },
+      }],
+      createdAt: now, updatedAt: now,
+    })
+  }
 
-    if (projectId) {
-      // Add to project and open in editor
-      const designId = useProjectStore.getState().addDesign(projectId, doc)
-      useDesignStore.setState({ document: doc })
-      navigate({ page: 'editor', projectId, designId })
-    } else {
-      // Standalone — just load into editor
-      useDesignStore.setState({ document: doc })
-      navigate({ page: 'editor-standalone' })
-    }
+  const categories = ['all', ...TEMPLATE_CATEGORIES.map((c) => c.id)]
+  const catLabel = (id: string) => id === 'all' ? 'All' : (TEMPLATE_CATEGORIES.find((c) => c.id === id)?.label ?? id)
 
-    onClose()
+  const cards = (
+    <div className="grid grid-cols-2 gap-3 md:gap-4">
+      {filtered.map((template) => (
+        <button
+          key={template.id}
+          className="group text-left bg-white border border-border rounded-[7px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
+          onClick={() => handleSelect(template.id)}
+        >
+          <div className="aspect-[1.6/1] bg-muted/50 flex items-center justify-center">
+            <span className="text-[12px] text-muted-foreground/40">{template.formatId.replace('-', ' ')}</span>
+          </div>
+          <div className="p-3">
+            <div className="text-[14px] font-medium text-foreground mb-0.5">{template.name}</div>
+            <div className="text-[12px] text-muted-foreground">{template.description}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  )
+
+  // Mobile: bottom sheet with category pills + a grid, and a blank-canvas action.
+  if (isMobile) {
+    return (
+      <Drawer open={sheetOpen} onOpenChange={(o) => { setSheetOpen(o); if (!o) window.setTimeout(onClose, 250) }}>
+        <DrawerContent className="mt-0 h-[92vh] max-h-none">
+          <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-0.5">
+            <DrawerTitle className="flex items-center gap-2 p-0 text-[16px] font-semibold text-foreground">
+              <Layout className="w-4 h-4 text-primary" />Templates
+            </DrawerTitle>
+            <DrawerClose asChild>
+              <button className="h-10 rounded-full bg-muted px-4 text-[13px] font-medium text-foreground transition-transform active:scale-[0.96]">Done</button>
+            </DrawerClose>
+          </div>
+          <div className="flex shrink-0 gap-1.5 px-4 pb-3 overflow-x-auto no-scrollbar">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`shrink-0 px-3.5 h-9 rounded-full text-[13px] font-medium transition-colors ${category === c ? 'bg-foreground text-background' : 'bg-muted/50 text-muted-foreground active:bg-muted'}`}
+              >
+                {catLabel(c)}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
+            {cards}
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-[14px] text-muted-foreground">No templates in this category yet.</div>
+            )}
+            <button
+              onClick={startBlank}
+              className="mt-4 w-full h-12 rounded-[10px] border border-border bg-white text-[14px] font-medium text-foreground transition-transform active:scale-[0.98]"
+            >
+              Start with a blank canvas
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
   }
 
   return (
@@ -109,31 +192,7 @@ export function TemplateBrowser({ projectId, onClose }: Props) {
         <div className="px-6 py-3 border-t border-border flex justify-between items-center">
           <button
             className="text-[13px] text-primary hover:underline cursor-pointer"
-            onClick={() => {
-              // Start with blank
-              const now = new Date().toISOString()
-              const doc: DesignDocument = {
-                id: nanoid(),
-                name: 'Untitled Ad',
-                format: DEFAULT_FORMAT,
-                layers: [{
-                  id: nanoid(), type: 'background', name: 'Background',
-                  visible: true, locked: false, opacity: 1,
-                  x: 0, y: 0, width: DEFAULT_FORMAT.width, height: DEFAULT_FORMAT.height,
-                  rotation: 0, zIndex: 0,
-                  fill: { type: 'solid', color: getBrandColor('cloud') },
-                }],
-                createdAt: now, updatedAt: now,
-              }
-              useDesignStore.setState({ document: doc })
-              if (projectId) {
-                const designId = useProjectStore.getState().addDesign(projectId, doc)
-                navigate({ page: 'editor', projectId, designId })
-              } else {
-                navigate({ page: 'editor-standalone' })
-              }
-              onClose()
-            }}
+            onClick={startBlank}
           >
             Start with blank canvas
           </button>
