@@ -552,13 +552,15 @@ export function useCanvasInteraction(
         applyGroupResize(groupResizeRef.current, dx, dy, e.shiftKey)
       } else if (drag.type === 'rotate') {
         // Rotate around the layer center: current pointer angle vs. the angle at
-        // grab time, added to the layer's starting rotation. Shift snaps to 15°.
+        // grab time, added to the layer's starting rotation. On touch we auto-snap
+        // to 45° (no modifier keys on a phone); on mouse, Shift snaps to 15°.
         const p = getDesignCoords(e.clientX, e.clientY)
         const cx = drag.centerX ?? 0
         const cy = drag.centerY ?? 0
         const pointerAngle = (Math.atan2(p.y - cy, p.x - cx) * 180) / Math.PI
         let deg = (drag.startRotation ?? 0) + (pointerAngle - (drag.startPointerAngle ?? 0))
-        if (e.shiftKey) deg = Math.round(deg / 15) * 15
+        if (e.pointerType === 'touch') deg = Math.round(deg / 45) * 45
+        else if (e.shiftKey) deg = Math.round(deg / 15) * 15
         deg = ((deg % 360) + 360) % 360
         useDesignStore.getState().updateLayer(drag.layerId, { rotation: Math.round(deg) })
       }
