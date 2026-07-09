@@ -47,7 +47,7 @@ function IconButton({ icon: Icon, label, active, onClick, danger }: {
       // Blur after click so the button doesn't retain focus and swallow / confuse
       // canvas keyboard shortcuts (e.g. Backspace to delete a selection).
       onClick={(e) => { e.currentTarget.blur(); onClick() }}
-      className={`flex h-9 w-9 max-md:h-11 max-md:w-11 items-center justify-center rounded-[10px] transition-[color,background-color,transform] duration-150 active:scale-[0.92] cursor-pointer ${
+      className={`flex h-9 w-9 max-md:h-11 max-md:w-11 items-center justify-center rounded-[10px] transition-[color,background-color,transform] duration-150 active:scale-[0.96] cursor-pointer ${
         active
           ? 'bg-primary/12 text-primary'
           : danger
@@ -93,7 +93,9 @@ export function FloatingToolbar() {
       />
       <IconButton icon={ImageIcon} label="Image" onClick={addImageViaPicker} />
 
-      {/* Contextual actions — spring in only when there's a selection. */}
+      {/* Contextual actions — spring in only when there's a selection. On mobile
+          these live in the bottom-left selection cluster (MobileControlSheet)
+          instead, so the toolbar stays add-tools only and never overflows. */}
       <AnimatePresence initial={false}>
         {selectedCount > 0 && (
           <motion.div
@@ -101,7 +103,7 @@ export function FloatingToolbar() {
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 30, bounce: 0 }}
-            className="flex items-center gap-1 overflow-hidden"
+            className="flex items-center gap-1 overflow-hidden max-md:hidden"
           >
             <div className="mx-0.5 h-5 w-px shrink-0 bg-border" />
             <IconButton icon={Copy} label="Duplicate (⌘D)" onClick={duplicateSelection} />

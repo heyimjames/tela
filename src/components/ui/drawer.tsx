@@ -26,12 +26,16 @@ function DrawerContent({
       <DrawerOverlay />
       <DrawerPrimitive.Content
         className={cn(
-          'fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[85vh] flex-col rounded-t-2xl bg-card',
+          // Depth via layered shadow (not a border); softer 20px top radius.
+          'fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[92vh] flex-col rounded-t-[20px] bg-card shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-12px_36px_rgba(0,0,0,0.14)]',
           className,
         )}
         {...props}
       >
-        <div className="mx-auto mt-3 mb-2 h-1 w-8 rounded-full bg-muted-foreground/20" />
+        {/* Grab handle inside a ≥40px-tall hit area so it's easy to drag. */}
+        <div className="mx-auto flex h-6 w-16 shrink-0 touch-none items-center justify-center pt-1">
+          <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+        </div>
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
