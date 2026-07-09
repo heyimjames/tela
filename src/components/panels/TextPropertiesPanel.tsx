@@ -2,7 +2,7 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { contrastRatio } from '@/lib/contrast'
 import { BrandColorPicker } from '@/components/panels/BrandColorPicker'
 import { SliderField } from '@/components/controls/SliderField'
-import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import { AlignLeft, AlignCenter, AlignRight, Square, MoveHorizontal, MoveVertical } from 'lucide-react'
 import { getTextBounds, createMeasureContext } from '@/engine/textMeasure'
 import { useIsProMode } from '@/hooks/useIsProMode'
 import type { TextLayer, FontWeight, TextWrap, TextSizing, TextRole } from '@/types/design'
@@ -342,65 +342,47 @@ export function TextPropertiesPanel({ layer }: Props) {
       </div>
       )}
 
-      {/* Text Sizing — Pro only */}
+      {/* Resizing — Figma-style segmented control (Pro only). Icons + tooltips;
+          Auto width hugs the text on one line (de-wraps), Auto height keeps the
+          width and fits the box to the wrapped text. */}
       {isPro && (
       <div className="space-y-1.5">
-        <label className="text-[13px] text-muted-foreground font-normal">Sizing</label>
+        <label className="text-[13px] text-muted-foreground font-normal">Resizing</label>
         <div className="flex gap-1">
           {([
-            { label: 'Fixed', value: 'fixed' as TextSizing },
-            { label: 'Auto W', value: 'auto-width' as TextSizing },
-            { label: 'Auto H', value: 'auto-height' as TextSizing },
-          ]).map((opt) => (
-            <button
-              key={opt.value}
-              className={`
-                flex-1 py-1.5 text-[12px] rounded-[5px] transition-colors duration-150 cursor-pointer
-                ${(layer.textSizing ?? 'fixed') === opt.value
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'}
-              `}
-              onClick={() => {
-                pushSnapshot()
-                updateLayer<TextLayer>(layer.id, { textSizing: opt.value })
-
-                // Auto-size immediately when switching.
-                if (opt.value !== 'fixed') {
-                  const ctx = createMeasureContext()
-                  if (opt.value === 'auto-width') {
-                    // De-wrap: measure the natural (unwrapped) width, not the
-                    // current wrapped box, so the text collapses to one line.
-                    const bounds = getTextBounds(ctx, { ...layer, width: 100000 })
-                    updateLayer<TextLayer>(layer.id, { width: Math.round(bounds.width + 8) })
-                  } else {
-                    // Auto-height keeps the width and grows/shrinks vertically.
-                    const bounds = getTextBounds(ctx, layer)
+            { label: 'Fixed size', value: 'fixed', Icon: Square },
+            { label: 'Auto width', value: 'auto-width', Icon: MoveHorizontal },
+            { label: 'Auto height', value: 'auto-height', Icon: MoveVertical },
+          ] as { label: string; value: TextSizing; Icon: typeof Square }[]).map(({ label, value, Icon }) => {
+            const active = (layer.textSizing ?? 'fixed') === value
+            return (
+              <button
+                key={value}
+                title={label}
+                aria-label={label}
+                className={`flex-1 flex items-center justify-center py-1.5 rounded-[5px] transition-colors duration-150 cursor-pointer ${
+                  active ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+                onClick={() => {
+                  pushSnapshot()
+                  updateLayer<TextLayer>(layer.id, { textSizing: value })
+                  if (value === 'auto-width') {
+                    // De-wrap to the natural (unwrapped) width so it collapses to
+                    // one line and hugs the text on both axes.
+                    const bounds = getTextBounds(createMeasureContext(), { ...layer, width: 100000 })
+                    updateLayer<TextLayer>(layer.id, { width: Math.round(bounds.width + 8), height: Math.round(bounds.height + 4) })
+                  } else if (value === 'auto-height') {
+                    // Keep the width; fit the height to the wrapped text.
+                    const bounds = getTextBounds(createMeasureContext(), layer)
                     updateLayer<TextLayer>(layer.id, { height: Math.round(bounds.height + 4) })
                   }
-                }
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+                }}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            )
+          })}
         </div>
-        <button
-          className="text-[12px] text-primary hover:underline cursor-pointer"
-          onClick={() => {
-            pushSnapshot()
-            const ctx = createMeasureContext()
-            // De-wrap to the text's natural size AND lock it to auto-width, so it
-            // stays trimmed (one line, hugging the text) as you keep editing.
-            const bounds = getTextBounds(ctx, { ...layer, width: 100000 })
-            updateLayer<TextLayer>(layer.id, {
-              textSizing: 'auto-width',
-              width: Math.round(bounds.width + 8),
-              height: Math.round(bounds.height + 4),
-            })
-          }}
-        >
-          Trim to text
-        </button>
       </div>
       )}
 

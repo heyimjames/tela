@@ -8,6 +8,16 @@ interface Props {
   zoom: number
 }
 
+/**
+ * Inline text editor. It renders a contentEditable box styled *identically* to
+ * the scene's TextNode — same font metrics, wrap, and (critically) the same
+ * `text-box-trim` cap trim — so what you edit is pixel-for-pixel what renders.
+ *
+ * A plain <textarea> can't apply text-box-trim, so its untrimmed line box is
+ * taller than the trimmed layer height: the text looked bigger and its bottom
+ * got clipped by the box on entering edit. A contentEditable block trims like
+ * the canvas and auto-grows, so there's no jump and nothing is clipped.
+ */
 export function TextEditOverlay({ zoom }: Props) {
   const editingTextLayerId = useDesignStore((s) => s.editingTextLayerId)
   const layers = useDesignStore((s) => s.document.layers)
@@ -15,7 +25,7 @@ export function TextEditOverlay({ zoom }: Props) {
   const setEditingTextLayerId = useDesignStore((s) => s.setEditingTextLayerId)
   const pushSnapshot = useDesignStore((s) => s.pushSnapshot)
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
   const isCommitting = useRef(false)
   // On touch, MobileTextEditor takes over with a fullscreen field instead.
   const coarse = useCoarsePointer()
@@ -24,21 +34,21 @@ export function TextEditOverlay({ zoom }: Props) {
     ? (layers.find((l) => l.id === editingTextLayerId) as TextLayer | undefined)
     : null
 
-  // Focus textarea on enter — place cursor at end rather than select-all
-  // so the user can click inside to position their cursor
+  // Seed the text and place the caret at the end on enter — write it imperatively
+  // so React never re-sets the node's content (which would fight the caret).
   useEffect(() => {
-    if (!layer || !textareaRef.current) return
-
-    const el = textareaRef.current
-    // Small delay to ensure DOM is ready
+    if (!layer || !ref.current) return
+    const el = ref.current
+    el.textContent = layer.content
     requestAnimationFrame(() => {
       el.focus()
-      // Place cursor at end instead of selecting all text
-      const len = el.value.length
-      el.setSelectionRange(len, len)
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      range.collapse(false)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
     })
-
-    // Push snapshot when starting to edit
     pushSnapshot()
     isCommitting.current = false
   }, [layer?.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -46,15 +56,8 @@ export function TextEditOverlay({ zoom }: Props) {
   const commit = useCallback(() => {
     if (isCommitting.current) return
     isCommitting.current = true
-
-    if (!textareaRef.current || !layer) {
-      setEditingTextLayerId(null)
-      return
-    }
-
-    const newContent = textareaRef.current.value
-    if (newContent !== layer.content) {
-      updateLayer<TextLayer>(layer.id, { content: newContent })
+    if (ref.current && layer && ref.current.innerText !== layer.content) {
+      updateLayer<TextLayer>(layer.id, { content: ref.current.innerText })
     }
     setEditingTextLayerId(null)
   }, [layer, updateLayer, setEditingTextLayerId])
@@ -64,76 +67,80 @@ export function TextEditOverlay({ zoom }: Props) {
       e.preventDefault()
       commit()
     }
-    // Allow Enter for newlines (no commit on Enter — use Escape or click outside)
-    // Stop propagation so keyboard shortcuts don't fire while typing
+    // Stop propagation so canvas keyboard shortcuts don't fire while typing.
     e.stopPropagation()
   }, [commit])
 
+  // Paste as plain text — never carry markup into a text layer.
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text/plain')
+    document.execCommand('insertText', false, text)
+  }, [])
+
   if (!layer || coarse) return null
 
-  // Calculate overlay position and styling to match canvas render exactly
   const x = layer.x * zoom
   const y = layer.y * zoom
   const w = layer.width * zoom
   const fontSize = layer.fontSize * zoom
-  const lineHeightValue = layer.lineHeight
-  const letterSpacingPx = layer.letterSpacing * fontSize
+  const autoWidth = (layer.textSizing ?? 'fixed') === 'auto-width'
 
-  // Apply text transform to show what user will see
-  const displayTransform = layer.textTransform === 'uppercase'
-    ? 'uppercase' as const
-    : layer.textTransform === 'lowercase'
-      ? 'lowercase' as const
-      : 'none' as const
+  const decoration =
+    [layer.underline && 'underline', layer.strikethrough && 'line-through']
+      .filter(Boolean)
+      .join(' ') || undefined
 
-  const h = layer.height * zoom
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: x,
+    top: y,
+    // Auto-width never wraps (grows sideways, one line); everything else wraps
+    // at the box width. Height is always auto so the text is never clipped.
+    width: autoWidth ? 'max-content' : w,
+    minWidth: autoWidth ? w : undefined,
+    fontFamily: FONT_FAMILY,
+    fontSize,
+    fontWeight: layer.fontWeight,
+    color: layer.color.hex,
+    textAlign: layer.textAlign,
+    // letterSpacing is a font-size multiplier (matches textMeasure/scene render).
+    letterSpacing: `${layer.letterSpacing * fontSize}px`,
+    lineHeight: layer.lineHeight,
+    textTransform: layer.textTransform,
+    textDecoration: decoration,
+    whiteSpace: autoWidth ? 'pre' : 'pre-wrap',
+    wordBreak: 'break-word',
+    margin: 0,
+    padding: 0,
+    // Outline (not border) so the text box isn't inset — text stays put.
+    outline: '2px solid #0017c7',
+    outlineOffset: '0px',
+    borderRadius: '2px',
+    background: 'rgba(255,255,255,0.15)',
+    caretColor: layer.color.hex,
+    zIndex: 100,
+    cursor: 'text',
+  }
+  // Match the scene's cap trim exactly, so the editor's line box is the same
+  // height as the rendered (and stored) layer height. CSSProperties lacks types
+  // for these, hence the assign.
+  if ((layer.verticalTrim ?? 'cap') === 'cap') {
+    Object.assign(style, { textBoxTrim: 'trim-both', textBoxEdge: 'cap alphabetic' })
+  }
 
   return (
-    <textarea
-      ref={textareaRef}
-      className="absolute resize-none"
-      style={{
-        left: x,
-        top: y,
-        width: w,
-        height: h,
-        fontFamily: FONT_FAMILY,
-        fontSize,
-        fontWeight: layer.fontWeight,
-        color: layer.color.hex,
-        textAlign: layer.textAlign,
-        letterSpacing: `${letterSpacingPx}px`,
-        lineHeight: lineHeightValue,
-        textTransform: displayTransform,
-        // Match canvas rendering. Use an *outline* (drawn outside the box, no
-        // layout impact) rather than a border — a border with box-sizing:border-box
-        // would inset the text 2px and make it jump on entering/leaving edit mode.
-        padding: '0',
-        margin: '0',
-        outline: '2px solid #0017c7',
-        outlineOffset: '0px',
-        borderRadius: '2px',
-        background: 'rgba(255,255,255,0.15)',
-        zIndex: 100,
-        cursor: 'text',
-        // Prevent browser default textarea styling
-        overflow: 'hidden',
-        wordWrap: 'break-word',
-        whiteSpace: 'pre-wrap',
-        boxSizing: 'border-box',
-        // Match canvas text rendering baseline
-        verticalAlign: 'top',
-        // Prevent scrollbars
-        scrollbarWidth: 'none',
-      }}
-      defaultValue={layer.content}
-      // Commit live so the box re-hugs as you type — an auto-width text grows
-      // with its text instead of clipping inside the old width until blur. The
-      // textarea stays uncontrolled (defaultValue), so the caret never jumps.
-      onChange={(e) => updateLayer<TextLayer>(layer.id, { content: e.target.value })}
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      style={style}
+      // Commit live so the box re-hugs as you type (auto-width grows sideways,
+      // auto-height grows down) instead of clipping until blur.
+      onInput={(e) => updateLayer<TextLayer>(layer.id, { content: (e.target as HTMLDivElement).innerText })}
       onBlur={commit}
       onKeyDown={handleKeyDown}
-      // Prevent canvas interactions while editing
+      onPaste={handlePaste}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     />

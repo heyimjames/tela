@@ -2,7 +2,17 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { SliderField } from '@/components/controls/SliderField'
 import { ScalarInput } from '@/components/controls/ScalarInput'
 import { Lock, Unlock, FlipHorizontal2, FlipVertical2 } from 'lucide-react'
-import type { Layer } from '@/types/design'
+import type { Layer, TextLayer } from '@/types/design'
+
+// A muted "Hug" tag shown on an auto-sized text axis, Figma-style — the field
+// still shows the computed size, the tag marks that the axis hugs its content.
+function HugTag() {
+  return (
+    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-medium text-muted-foreground/70">
+      Hug
+    </span>
+  )
+}
 
 interface Props {
   layer: Layer
@@ -15,6 +25,11 @@ export function PositionSizePanel({ layer }: Props) {
   if (layer.type === 'background') return null
 
   const locked = layer.aspectRatioLocked ?? false
+
+  // Text auto-sizing drives the axes: auto-width hugs both, auto-height hugs H.
+  const sizing = layer.type === 'text' ? (layer as TextLayer).textSizing ?? 'fixed' : 'fixed'
+  const wHug = sizing === 'auto-width'
+  const hHug = sizing === 'auto-width' || sizing === 'auto-height'
 
   return (
     <div className="space-y-3 pt-3 mt-3 border-t border-border">
@@ -40,15 +55,18 @@ export function PositionSizePanel({ layer }: Props) {
       <div className="flex items-end gap-2">
         <div className="flex-1 space-y-1">
           <label className="text-[12px] text-muted-foreground">W</label>
-          <ScalarInput className="h-8 text-[13px] tabular-nums" value={layer.width} min={1}
-            onCommit={(w) => {
-              if (locked && layer.width > 0) {
-                const ratio = layer.height / layer.width
-                updateLayer(layer.id, { width: w, height: Math.round(w * ratio) })
-              } else {
-                updateLayer(layer.id, { width: w })
-              }
-            }} />
+          <div className="relative">
+            <ScalarInput className={`h-8 text-[13px] tabular-nums ${wHug ? 'pr-9' : ''}`} value={layer.width} min={1}
+              onCommit={(w) => {
+                if (locked && layer.width > 0) {
+                  const ratio = layer.height / layer.width
+                  updateLayer(layer.id, { width: w, height: Math.round(w * ratio) })
+                } else {
+                  updateLayer(layer.id, { width: w })
+                }
+              }} />
+            {wHug && <HugTag />}
+          </div>
         </div>
 
         {/* Lock toggle */}
@@ -69,15 +87,18 @@ export function PositionSizePanel({ layer }: Props) {
 
         <div className="flex-1 space-y-1">
           <label className="text-[12px] text-muted-foreground">H</label>
-          <ScalarInput className="h-8 text-[13px] tabular-nums" value={layer.height} min={1}
-            onCommit={(h) => {
-              if (locked && layer.height > 0) {
-                const ratio = layer.width / layer.height
-                updateLayer(layer.id, { height: h, width: Math.round(h * ratio) })
-              } else {
-                updateLayer(layer.id, { height: h })
-              }
-            }} />
+          <div className="relative">
+            <ScalarInput className={`h-8 text-[13px] tabular-nums ${hHug ? 'pr-9' : ''}`} value={layer.height} min={1}
+              onCommit={(h) => {
+                if (locked && layer.height > 0) {
+                  const ratio = layer.width / layer.height
+                  updateLayer(layer.id, { height: h, width: Math.round(h * ratio) })
+                } else {
+                  updateLayer(layer.id, { height: h })
+                }
+              }} />
+            {hHug && <HugTag />}
+          </div>
         </div>
       </div>
 

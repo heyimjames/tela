@@ -32,6 +32,12 @@ function fitAutoWidthText(layer: TextLayer): { width: number; height: number } {
   return { width: Math.ceil(bounds.width) + 4, height: Math.ceil(bounds.height) + 2 }
 }
 
+// Auto-height keeps the width and grows/shrinks the box to fit the wrapped text.
+function fitAutoHeightText(layer: TextLayer): { height: number } {
+  const bounds = getTextBounds(createMeasureContext(), layer)
+  return { height: Math.ceil(bounds.height) + 2 }
+}
+
 function _syncBackToFrame() {
   // Debounce to avoid hammering workspace store on rapid mutations
   if (_syncScheduled) return
@@ -459,17 +465,21 @@ export const useDesignStore = create<DesignStore>()(
         layers: s.document.layers.map((l) => {
           if (l.id !== id) return l
           let merged = { ...l, ...snapped } as Layer
-          // Auto-width text re-hugs when its text/font changes — but not on an
-          // explicit resize (an explicit width/height means the user is sizing it).
-          if (
-            merged.type === 'text' &&
-            (merged as TextLayer).textSizing === 'auto-width' &&
-            snapped.width === undefined && snapped.height === undefined &&
-            ('content' in snapped || 'fontSize' in snapped || 'fontWeight' in snapped ||
+          // Auto-sized text re-hugs when its text/font changes — but not on an
+          // explicit resize of that axis (setting height means the user is sizing
+          // it). Auto-width hugs both axes; auto-height keeps the width the user
+          // set and only re-fits the height (also when the width is dragged).
+          if (merged.type === 'text' && snapped.height === undefined) {
+            const tl = merged as TextLayer
+            const contentChanged =
+              'content' in snapped || 'fontSize' in snapped || 'fontWeight' in snapped ||
               'letterSpacing' in snapped || 'textTransform' in snapped || 'lineHeight' in snapped ||
-              'verticalTrim' in snapped)
-          ) {
-            merged = { ...merged, ...fitAutoWidthText(merged as TextLayer) }
+              'verticalTrim' in snapped
+            if (tl.textSizing === 'auto-width' && snapped.width === undefined && contentChanged) {
+              merged = { ...merged, ...fitAutoWidthText(tl) }
+            } else if (tl.textSizing === 'auto-height' && (contentChanged || 'width' in snapped)) {
+              merged = { ...merged, ...fitAutoHeightText(tl) }
+            }
           }
           return merged
         }),
