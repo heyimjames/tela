@@ -1,7 +1,7 @@
 // --- Streaming SSE parser for the Canvas AI endpoint ---
 //
 // Calls the configured AI endpoint (see lib/aiApi.ts), which forwards to your
-// LLMClient endpoint. The stream is a minimal, provider-agnostic SSE format:
+// LLM provider. The stream is a minimal, provider-agnostic SSE format:
 // one `data: {"text": "<delta>"}` line per chunk, a terminal `data: [DONE]`,
 // and `data: {"error": "..."}` if generation fails. No provider credential is
 // used here.

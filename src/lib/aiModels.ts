@@ -1,9 +1,6 @@
-// The AI model choices shown in Settings. The Canvas backend
-// (`backend_service/.../canvas_ai.py`) maps this string to an LLMLevel by
-// keyword — "haiku" → small, "opus" → large, anything else → medium — and never
-// forwards the raw id to a provider. So the exact id only needs to carry the
-// right keyword; we still use the current, correct model ids for accurate
-// labels and future-proofing.
+// The AI model choices shown in Settings. This id is sent to your AI endpoint
+// (see lib/aiApi.ts) as the `model` field; how it maps to a concrete provider
+// model is up to your proxy. The default ids are current, correct model names.
 
 export interface AIModelOption {
   id: string

@@ -12,11 +12,11 @@ import { SAMPLE_AVATAR_URL } from '@/brand/avatars'
  * NON-INTERACTIVE: they're composited pixels the user arranges to mock up a
  * design, never live controls.
  *
- * Values mirror the DS tokens resolved from `frontend/design-system/tokens`:
- *   --ds-radius-small               → 5px
- *   --ds-color-bg-button-primary    → charcoal #100f0f / white text
- *   --ds-color-bg-button-secondary  → charcoal @5% (≈ stone) / charcoal text
- *   --ds-font-size small/body/big   → 13 / 15 / 17 px
+ * Values follow a small design-system convention:
+ *   radius small                    → 5px
+ *   button primary                  → charcoal #100f0f / white text
+ *   button secondary                → charcoal @5% (≈ stone) / charcoal text
+ *   font size small/body/big        → 13 / 15 / 17 px
  *   button heights sm/md/lg         → 32 / 40 / 48 px
  */
 
