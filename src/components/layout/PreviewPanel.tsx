@@ -350,42 +350,74 @@ export function PreviewPanel() {
     return () => el.removeEventListener('wheel', handler)
   }, [zoomAtPoint])
 
-  // Touch pinch-zoom + two-finger pan (mobile / tablet). Single-finger touches
-  // fall through to the pointer-based select/drag handlers. Zoom anchors to the
-  // pinch midpoint via zoomAtPoint; the midpoint's movement drives the pan.
+  // All canvas touch gestures live here so they never fight the mouse path:
+  //   • two fingers          → pinch-zoom + pan (anchored to the pinch midpoint)
+  //   • one finger on empty   → pan the canvas; a tap (no movement) deselects
+  //   • one finger on a layer → falls through to the pointer-based move/select
+  // (Marquee drag-select stays a mouse-only affordance — see onContainerPointerDown.)
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     let pinch: { lastDist: number; lastMidX: number; lastMidY: number } | null = null
+    let pan: { startX: number; startY: number; panX: number; panY: number; moved: boolean } | null = null
     const dist = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
     const midX = (a: Touch, b: Touch) => (a.clientX + b.clientX) / 2
     const midY = (a: Touch, b: Touch) => (a.clientY + b.clientY) / 2
 
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 2) return
-      const [a, b] = [e.touches[0], e.touches[1]]
-      pinch = { lastDist: dist(a, b), lastMidX: midX(a, b), lastMidY: midY(a, b) }
-      e.preventDefault()
+      if (e.touches.length === 2) {
+        pan = null
+        const [a, b] = [e.touches[0], e.touches[1]]
+        pinch = { lastDist: dist(a, b), lastMidX: midX(a, b), lastMidY: midY(a, b) }
+        e.preventDefault()
+        return
+      }
+      // One finger on the empty canvas background pans; a tap deselects. A touch
+      // that lands on a layer/frame has a child as target and is left to the
+      // pointer handlers (drag = move, tap = select).
+      if (e.touches.length === 1 && e.target === el) {
+        const p = useDesignStore.getState().panOffset
+        const t = e.touches[0]
+        pan = { startX: t.clientX, startY: t.clientY, panX: p.x, panY: p.y, moved: false }
+      }
     }
     const onMove = (e: TouchEvent) => {
-      if (!pinch || e.touches.length < 2) return
-      e.preventDefault()
-      const [a, b] = [e.touches[0], e.touches[1]]
-      const d = dist(a, b)
-      const mx = midX(a, b)
-      const my = midY(a, b)
-      if (pinch.lastDist > 0) {
-        const z = useDesignStore.getState().zoom
-        zoomAtPoint(z * (d / pinch.lastDist), mx, my)
+      if (pinch && e.touches.length >= 2) {
+        e.preventDefault()
+        const [a, b] = [e.touches[0], e.touches[1]]
+        const d = dist(a, b)
+        const mx = midX(a, b)
+        const my = midY(a, b)
+        if (pinch.lastDist > 0) {
+          const z = useDesignStore.getState().zoom
+          zoomAtPoint(z * (d / pinch.lastDist), mx, my)
+        }
+        const p = useDesignStore.getState().panOffset
+        useDesignStore.getState().setPanOffset({ x: p.x + (mx - pinch.lastMidX), y: p.y + (my - pinch.lastMidY) })
+        pinch.lastDist = d
+        pinch.lastMidX = mx
+        pinch.lastMidY = my
+        return
       }
-      const p = useDesignStore.getState().panOffset
-      useDesignStore.getState().setPanOffset({ x: p.x + (mx - pinch.lastMidX), y: p.y + (my - pinch.lastMidY) })
-      pinch.lastDist = d
-      pinch.lastMidX = mx
-      pinch.lastMidY = my
+      if (pan && e.touches.length === 1) {
+        const t = e.touches[0]
+        const dx = t.clientX - pan.startX
+        const dy = t.clientY - pan.startY
+        if (!pan.moved && Math.hypot(dx, dy) < 6) return
+        pan.moved = true
+        e.preventDefault()
+        useDesignStore.getState().setPanOffset({ x: pan.panX + dx, y: pan.panY + dy })
+      }
     }
     const onEnd = (e: TouchEvent) => {
       if (e.touches.length < 2) pinch = null
+      if (e.touches.length === 0) {
+        if (pan && !pan.moved) {
+          useDesignStore.getState().deselectAll()
+          useWorkspaceStore.getState().setSelectedFrames([])
+        }
+        pan = null
+      }
     }
 
     el.addEventListener('touchstart', onStart, { passive: false })
@@ -556,6 +588,9 @@ export function PreviewPanel() {
   }, [onMarqueeMove])
 
   const onContainerPointerDown = useCallback((e: React.PointerEvent) => {
+    // Marquee drag-select is mouse-only; touch empty-canvas drag pans instead
+    // (handled by the touch-gesture effect above).
+    if (e.pointerType !== 'mouse') return
     // Only an empty-background press starts a marquee; frame bodies/labels handle their own.
     if (e.target !== containerRef.current) return
     if (e.button !== 0) return
