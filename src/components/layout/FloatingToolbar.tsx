@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { getBrandColor } from '@/brand/palette'
 import { MousePointer2, Type, Square, ImageIcon, Pencil, Copy, Trash2 } from 'lucide-react'
+import { haptic } from '@/lib/haptics'
 import type { ComponentType } from 'react'
 
 /**
@@ -44,6 +45,7 @@ function IconButton({ icon: Icon, label, active, onClick, danger }: {
       type="button"
       title={label}
       aria-label={label}
+      onPointerDown={() => haptic(danger ? 'medium' : 'light')}
       // Blur after click so the button doesn't retain focus and swallow / confuse
       // canvas keyboard shortcuts (e.g. Backspace to delete a selection).
       onClick={(e) => { e.currentTarget.blur(); onClick() }}

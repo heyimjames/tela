@@ -5,6 +5,7 @@ import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui
 import { LayerListPanel } from '@/components/panels/LayerListPanel'
 import { LayerInspector } from '@/components/panels/LayerInspector'
 import { useDesignStore } from '@/store/useDesignStore'
+import { haptic } from '@/lib/haptics'
 
 /**
  * Mobile-only control cluster (bottom-left corner, clearing the centred
@@ -35,6 +36,7 @@ function ClusterButton({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.6, y: 6 }}
       transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+      onPointerDown={() => haptic(variant === 'danger' ? 'medium' : 'light')}
       onClick={onClick}
     >
       {children}
@@ -108,6 +110,7 @@ export function MobileControlSheet() {
             <button
               aria-label="Layers"
               className="h-11 w-11 flex items-center justify-center bg-foreground text-background rounded-full shadow-lg transition-transform active:scale-[0.96]"
+              onPointerDown={() => haptic()}
               onClick={openLayers}
             >
               <Layers className="w-5 h-5" />
