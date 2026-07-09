@@ -194,3 +194,28 @@ img:not([data-no-outline]) {
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
 }
+
+/* Mobile property sheet: the desktop inspector packs many small controls, so
+   on touch we floor every control to a comfortable tap target (make-interfaces
+   §16, ≥40px) and bump control/label text for legibility. Scoped to the sheet
+   so desktop density is untouched. */
+@media (max-width: 767px) {
+  .mobile-inspector select,
+  .mobile-inspector input,
+  .mobile-inspector textarea {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .mobile-inspector button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  /* Segmented / pill button labels read too small at 11–12px on a phone. */
+  .mobile-inspector button {
+    font-size: 14px;
+  }
+  /* A touch more breathing room between control groups. */
+  .mobile-inspector > * + * {
+    margin-top: 0.25rem;
+  }
+}

@@ -116,7 +116,7 @@ export function MobileControlSheet() {
       <Drawer open={drawer === 'inspector'} onOpenChange={(open) => !open && setDrawer(null)}>
         <DrawerContent>
           <SheetHeader title={activeLayer?.name ?? 'Properties'} />
-          <div className="overflow-y-auto max-h-[82vh] px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
+          <div className="mobile-inspector overflow-y-auto max-h-[82vh] px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
             {activeLayer ? <LayerInspector layer={activeLayer} /> : null}
           </div>
         </DrawerContent>
