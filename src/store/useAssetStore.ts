@@ -129,7 +129,7 @@ export const useAssetStore = create<AssetStore>()(
       },
     }),
     {
-      name: 'canvas-studio-assets',
+      name: 'tela-assets',
     },
   ),
 )

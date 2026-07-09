@@ -49,7 +49,7 @@ export const useAIStore = create<AIStore>()(
       setLastError: (err) => set({ lastError: err }),
     }),
     {
-      name: 'canvas-studio-ai',
+      name: 'tela-ai',
       partialize: (state) => ({
         model: state.model,
         productName: state.productName,

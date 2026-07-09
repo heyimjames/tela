@@ -229,6 +229,6 @@ export const useFileStore = create<FileStore>()(
       getSubFolders: (parentId) => get().folders.filter((f) => f.parentId === parentId),
       getScratchpad: () => get().files.find((f) => f.isScratchpad) ?? createScratchpadFile(),
     }),
-    { name: 'canvas-studio-files' },
+    { name: 'tela-files' },
   ),
 )

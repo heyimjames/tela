@@ -412,7 +412,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       },
     }),
     {
-      name: 'canvas-studio-workspace',
+      name: 'tela-workspace',
       version: 2,
       partialize: (state) => ({
         workspace: state.workspace,

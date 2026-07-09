@@ -77,7 +77,7 @@ export default function App() {
   // Sync navigation with a parent /studio host when embedded (no-op standalone).
   useStudioBridge()
 
-  // Expose the command bus to a parent window / agent harness (and window.canvasStudio).
+  // Expose the command bus to a parent window / agent harness (and window.tela).
   useEffect(() => installAgentRpc(), [])
 
   return (

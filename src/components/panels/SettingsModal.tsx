@@ -167,7 +167,7 @@ function GeneralSettings() {
               // same-origin iframe inside a host app, so localStorage.clear() would
               // wipe the host app's data too.
               Object.keys(localStorage)
-                .filter((k) => k.startsWith('canvas-studio-'))
+                .filter((k) => k.startsWith('tela-'))
                 .forEach((k) => localStorage.removeItem(k))
               window.location.reload()
             }

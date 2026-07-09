@@ -3,7 +3,7 @@ import { dispatch, getSchema } from './commands'
 /**
  * Agent RPC bridge. Lets a parent window (a host app, or an agent harness driving the
  * iframe) run canvas commands over postMessage, and also exposes a direct
- * `window.canvasStudio` handle for same-window scripting / devtools.
+ * `window.tela` handle for same-window scripting / devtools.
  *
  * Wire protocol (both directions tagged with source SOURCE):
  *   in : { source, type:'command', id, command:{ op, ...args } }
@@ -15,7 +15,7 @@ import { dispatch, getSchema } from './commands'
  * so the blast radius is confined to the current design document.
  */
 
-const SOURCE = 'canvas-studio-agent'
+const SOURCE = 'tela-agent'
 
 interface CommandMessage {
   source: string
@@ -32,8 +32,8 @@ export function installAgentRpc(): () => void {
   if (typeof window === 'undefined') return () => {}
 
   // Direct handle: an agent scripting the page (or you, in devtools) can call
-  // window.canvasStudio.dispatch({ op:'getSchema' }) without postMessage plumbing.
-  ;(window as unknown as { canvasStudio: unknown }).canvasStudio = { dispatch, getSchema }
+  // window.tela.dispatch({ op:'getSchema' }) without postMessage plumbing.
+  ;(window as unknown as { tela: unknown }).tela = { dispatch, getSchema }
 
   const onMessage = async (e: MessageEvent) => {
     if (!isCommandMessage(e.data)) return

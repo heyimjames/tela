@@ -1,5 +1,5 @@
 {
-  "name": "canvas-studio",
+  "name": "tela",
   "version": "0.1.0",
   "description": "A fast, local-first design canvas for social & ad creatives — brandable, no backend required. Built with React, Zustand and Tailwind.",
   "license": "MIT",
@@ -16,13 +16,13 @@
     "zustand",
     "figma-alternative"
   ],
-  "homepage": "https://github.com/your-org/canvas-studio",
+  "homepage": "https://github.com/your-org/tela",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/canvas-studio.git"
+    "url": "https://github.com/your-org/tela.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/canvas-studio/issues"
+    "url": "https://github.com/your-org/tela/issues"
   },
   "scripts": {
     "dev": "vite",

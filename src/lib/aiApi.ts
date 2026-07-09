@@ -1,19 +1,19 @@
 /**
  * Endpoint + fetch helper for the optional AI Assist feature.
  *
- * Canvas Studio ships with NO backend. The AI panel is a thin client that POSTs
+ * Tela ships with NO backend. The AI panel is a thin client that POSTs
  * to an endpoint you provide, so you can proxy to Anthropic, OpenAI, or any
  * provider from your own server and keep API keys out of the browser. Configure:
  *
  *   VITE_AI_API_ORIGIN   base origin, e.g. https://your-api.example.com
- *   VITE_AI_API_PATH     request path (default: /api/canvas-ai)
+ *   VITE_AI_API_PATH     request path (default: /api/tela-ai)
  *
  * When `VITE_AI_API_ORIGIN` is unset the AI features stay dormant (`AI_ENABLED`
  * is false) and the app is fully usable without them. The request/response
  * contract is documented in `docs/ai-endpoint.md`.
  */
 const AI_ORIGIN = (import.meta.env.VITE_AI_API_ORIGIN as string | undefined) ?? "";
-const AI_PATH = (import.meta.env.VITE_AI_API_PATH as string | undefined) ?? "/api/canvas-ai";
+const AI_PATH = (import.meta.env.VITE_AI_API_PATH as string | undefined) ?? "/api/tela-ai";
 
 /** True when an AI endpoint has been configured. Gate AI UI on this. */
 export const AI_ENABLED = AI_ORIGIN !== "";

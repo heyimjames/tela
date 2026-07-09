@@ -7,7 +7,7 @@
  */
 export const BRAND = {
   /** Product name shown in the header, document titles, and exports. */
-  productName: 'Canvas Studio',
+  productName: 'Tela',
 
   /** Social handle used in the live post preview (no leading @). */
   socialHandle: 'yourbrand',

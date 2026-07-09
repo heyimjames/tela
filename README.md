@@ -1,4 +1,4 @@
-# Canvas Studio
+# Tela
 
 A fast, local-first design canvas for social and ad creatives. Design once, export to every format. No account, no backend, no lock-in — your work lives in your browser.
 
@@ -6,7 +6,7 @@ Built with React 19, Zustand, and Tailwind CSS 4. Rendering runs on a custom SVG
 
 > **Status:** source-available showcase. Fork it, self-host it, rebrand it. Issues and PRs are welcome but there's no roadmap commitment.
 
-![Canvas Studio](docs/screenshot.png)
+![Tela](docs/screenshot.png)
 
 ## Features
 
@@ -18,7 +18,7 @@ Built with React 19, Zustand, and Tailwind CSS 4. Rendering runs on a custom SVG
 - **Export** — PNG / JPG / WebP at 1x / 2x / 3x, plus one-click auto-resize to every ad format.
 - **Local-first** — every project persists to `localStorage`. Nothing leaves the browser.
 - **Optional AI Assist** — bring your own endpoint (proxy to Anthropic, OpenAI, or anything) to generate and edit designs from a prompt. Off by default.
-- **Scriptable** — drive the canvas from the parent window or devtools via `window.canvasStudio.dispatch(...)`.
+- **Scriptable** — drive the canvas from the parent window or devtools via `window.tela.dispatch(...)`.
 
 ## Quick start
 
@@ -51,12 +51,12 @@ Starter templates are plain data in [`src/brand/templates.ts`](src/brand/templat
 
 ## AI Assist (optional)
 
-Canvas Studio ships with no backend and no API keys in the browser. The AI panel is a thin client that POSTs to an endpoint **you** run, so your provider key stays server-side. Enable it with two env vars:
+Tela ships with no backend and no API keys in the browser. The AI panel is a thin client that POSTs to an endpoint **you** run, so your provider key stays server-side. Enable it with two env vars:
 
 ```bash
 # .env.local
 VITE_AI_API_ORIGIN=https://your-api.example.com
-VITE_AI_API_PATH=/api/canvas-ai        # optional, this is the default
+VITE_AI_API_PATH=/api/tela-ai        # optional, this is the default
 ```
 
 When `VITE_AI_API_ORIGIN` is unset the AI features stay dormant and the app is fully usable without them. The request/response contract your endpoint must implement is documented in [`docs/ai-endpoint.md`](docs/ai-endpoint.md).
@@ -92,7 +92,7 @@ src/
   engine/     layout, rendering (SVG + Canvas-2D), text measurement, export
   store/      Zustand stores (design, workspace, files, assets, AI, router)
   components/ canvas surface, panels, inspector, library, UI primitives
-  agent/      window.canvasStudio scripting bridge (RPC over postMessage)
+  agent/      window.tela scripting bridge (RPC over postMessage)
   types/      shared TypeScript types
 ```
 

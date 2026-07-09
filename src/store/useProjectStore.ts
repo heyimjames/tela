@@ -320,7 +320,7 @@ export const useProjectStore = create<ProjectStore>()(
       },
     }),
     {
-      name: 'canvas-studio-projects',
+      name: 'tela-projects',
     },
   ),
 )

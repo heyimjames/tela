@@ -1040,7 +1040,7 @@ export const useDesignStore = create<DesignStore>()(
   },
     }),
     {
-      name: 'canvas-studio-design',
+      name: 'tela-design',
       version: 3,
       partialize: (state) => ({
         document: state.document,

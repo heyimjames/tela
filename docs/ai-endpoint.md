@@ -1,9 +1,9 @@
 # AI Assist endpoint contract
 
-Canvas Studio's AI panel is a thin client. It never talks to an LLM provider
+Tela's AI panel is a thin client. It never talks to an LLM provider
 directly and never holds an API key. Instead it POSTs to an endpoint **you**
 run, which you point it at with `VITE_AI_API_ORIGIN` (+ optional
-`VITE_AI_API_PATH`, default `/api/canvas-ai`). Your endpoint injects the real
+`VITE_AI_API_PATH`, default `/api/tela-ai`). Your endpoint injects the real
 provider key server-side and relays the model's output back.
 
 This keeps credentials off the client and lets you use any provider, add auth,
@@ -63,7 +63,7 @@ code if the body isn't JSON).
 ## Minimal proxy example (Anthropic, streaming)
 
 ```ts
-// POST /api/canvas-ai  (Node / any framework)
+// POST /api/tela-ai  (Node / any framework)
 import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
