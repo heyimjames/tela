@@ -16,13 +16,13 @@
     "zustand",
     "figma-alternative"
   ],
-  "homepage": "https://github.com/your-org/tela",
+  "homepage": "https://github.com/heyimjames/tela",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/tela.git"
+    "url": "https://github.com/heyimjames/tela.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/tela/issues"
+    "url": "https://github.com/heyimjames/tela/issues"
   },
   "scripts": {
     "dev": "vite",
