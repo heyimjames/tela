@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useUIStore, type AppMode } from '@/store/useUIStore'
 import { useAIStore } from '@/store/useAIStore'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
 import { AI_ENABLED } from '@/lib/aiApi'
 import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
@@ -18,10 +20,58 @@ import {
 
 type SettingsTab = 'general' | 'ai' | 'canvas' | 'appearance'
 
+const SETTINGS_TABS: { id: SettingsTab; label: string; icon: typeof Settings }[] = [
+  { id: 'general', label: 'General', icon: Settings },
+  { id: 'ai', label: 'AI Assistant', icon: Wand2 },
+  { id: 'canvas', label: 'Canvas & Tools', icon: Mouse },
+  { id: 'appearance', label: 'Appearance', icon: Palette },
+]
+
 export function SettingsModal() {
   const open = useUIStore((s) => s.settingsOpen)
   const setOpen = useUIStore((s) => s.setSettingsOpen)
   const [tab, setTab] = useState<SettingsTab>('general')
+  const isMobile = useIsMobile()
+
+  const tabs = SETTINGS_TABS.filter((t) => t.id !== 'ai' || AI_ENABLED)
+  const body = (
+    <>
+      {tab === 'general' && <GeneralSettings />}
+      {tab === 'ai' && <AISettings />}
+      {tab === 'canvas' && <CanvasSettings />}
+      {tab === 'appearance' && <AppearanceSettings />}
+    </>
+  )
+
+  // Mobile: a bottom sheet with the tabs as a horizontal pill row.
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={(o) => !o && setOpen(false)}>
+        <DrawerContent>
+          <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-0.5">
+            <DrawerTitle className="p-0 text-[16px] font-semibold text-foreground">Settings</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="h-10 rounded-full bg-muted px-4 text-[13px] font-medium text-foreground transition-transform active:scale-[0.96]">Done</button>
+            </DrawerClose>
+          </div>
+          <div className="flex shrink-0 gap-1.5 px-4 pb-3 overflow-x-auto no-scrollbar">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`shrink-0 px-3.5 h-9 rounded-full text-[13px] font-medium transition-colors ${tab === t.id ? 'bg-foreground text-background' : 'bg-muted/50 text-muted-foreground active:bg-muted'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="mobile-inspector flex-1 min-h-0 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar">
+            {body}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
 
   if (!open) return null
 
@@ -38,12 +88,7 @@ export function SettingsModal() {
           <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium px-3 py-2">
             Settings
           </div>
-          {([
-            { id: 'general' as SettingsTab, label: 'General', icon: Settings },
-            { id: 'ai' as SettingsTab, label: 'AI Assistant', icon: Wand2 },
-            { id: 'canvas' as SettingsTab, label: 'Canvas & Tools', icon: Mouse },
-            { id: 'appearance' as SettingsTab, label: 'Appearance', icon: Palette },
-          ].filter((t) => t.id !== 'ai' || AI_ENABLED)).map((t) => {
+          {tabs.map((t) => {
             const Icon = t.icon
             return (
               <button
@@ -72,10 +117,7 @@ export function SettingsModal() {
             </button>
           </div>
 
-          {tab === 'general' && <GeneralSettings />}
-          {tab === 'ai' && <AISettings />}
-          {tab === 'canvas' && <CanvasSettings />}
-          {tab === 'appearance' && <AppearanceSettings />}
+          {body}
         </div>
       </div>
     </div>
