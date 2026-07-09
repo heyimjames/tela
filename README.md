@@ -1,12 +1,49 @@
 # Tela
 
-**A fast, local-first design canvas for social and ad creatives.** Design once, export to every format — no account, no backend, no lock-in. Your work lives in your browser.
+**An open-source, local-first design canvas for social & ad creatives — a brandable, self-hostable Figma / Canva alternative.** Design once, export to every format. No account, no backend, no lock-in: your work lives in your browser.
 
 _Tela_ is Portuguese for both **canvas** and **screen**.
 
-![Tela](docs/screenshot.png)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+![Tela — the editor](docs/editor.png)
 
 > **Status:** source-available showcase. Fork it, self-host it, rebrand it. Issues and PRs are welcome, but there's no roadmap commitment.
+
+## What you can do
+
+- **Start from a template or a blank canvas.** Pick a LinkedIn / Instagram / Facebook layout and edit it, or begin empty.
+- **Add and edit any element** — headlines and body text, shapes (rectangle, ellipse, pill, line), images (upload or drag & drop), SVG icons with recolouring, gradients, and freehand pen / highlighter drawing.
+- **Compose like a designer** — drag, resize, rotate, align & distribute, snap to guides, group and nest with **Auto Layout**, duplicate, reorder, lock, and hide layers.
+- **Style with your brand** — colours from a themeable token palette, OKLCH gradients, corner radius, drop shadow & blur, and animated WebGL shader backgrounds.
+- **Design once, publish everywhere** — switch a design between formats (feed, story, banner…) and **auto-resize** it across every ad size in one click.
+- **Preview & export** — see your creative inside a real social-post mock, then export to **PNG / JPG / WebP** at 1×–3×.
+- **Work offline, own your data** — everything saves to your browser. No account, nothing leaves the device.
+- **Use it on your phone** — pinch-zoom, drag-to-pan, finger-sized handles, and iOS-style bottom sheets with detents.
+- **(Optional) generate with AI** — wire up your own endpoint and describe an ad to have AI compose or re-lay-it-out.
+
+## Screenshots
+
+| The editor | Your files |
+| --- | --- |
+| ![Editor](docs/editor.png) | ![Library](docs/library.png) |
+| Layers, canvas, and a live properties inspector | Local-first file library — nothing leaves your browser |
+
+**Start from a template**
+
+![Templates](docs/templates.png)
+
+**On mobile** — fully usable on a phone: touch gestures, a contextual selection toolbar, and property editing in a bottom sheet.
+
+<p align="left">
+  <img src="docs/mobile-library.png" width="30%" alt="Mobile — files" />
+  <img src="docs/mobile-editor.png" width="30%" alt="Mobile — editor" />
+  <img src="docs/mobile-properties.png" width="30%" alt="Mobile — property sheet" />
+</p>
 
 ## What it is
 
@@ -144,12 +181,13 @@ await window.tela.dispatch({ op: 'addText', text: 'Design once.', x: 80, y: 140,
 await window.tela.dispatch({ op: 'addShape', shape: 'pill', x: 80, y: 260, width: 240, height: 60, colorToken: 'ember-500' })
 ```
 
-## Roadmap
+## Mobile web
 
-Tela is desktop-first today, with touch pinch-zoom/pan and finger-sized handles
-already in place. The plan for a first-class **mobile web** experience —
-bottom-sheet property editing, a contextual selection toolbar, and an add bar —
-is tracked in [`docs/mobile.md`](docs/mobile.md).
+Tela works on a phone, not just a desktop. Touch pinch-zoom and two-finger pan,
+finger-sized selection handles, a contextual selection toolbar, property editing
+in an **iOS-style bottom sheet with detents**, fullscreen text editing, and
+sheet-based Settings / Templates are all in place. The design notes and remaining
+polish are tracked in [`docs/mobile.md`](docs/mobile.md).
 
 ## License
 
