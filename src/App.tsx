@@ -53,7 +53,7 @@ function EditorView() {
   }, [])
 
   return (
-    <div className="h-dvh grid grid-rows-[auto_auto_1fr] grid-cols-[1fr] md:grid-cols-[280px_1fr_300px] overflow-hidden">
+    <div className="h-dvh grid grid-rows-[auto_auto_1fr] grid-cols-[minmax(0,1fr)] md:grid-cols-[280px_minmax(0,1fr)_300px] overflow-hidden">
       <div className="col-span-full">
         <TopBar />
       </div>

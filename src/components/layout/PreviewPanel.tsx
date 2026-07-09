@@ -804,12 +804,19 @@ export function PreviewPanel() {
             itself word by word. Kept light: you see this often, so the delight
             stays subtle (design-with-taste frequency curve). */}
         {contentLayerCount === 0 && tool === 'select' && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-8 text-center select-none">
-            <p className="text-[15px] font-medium text-foreground/70">
+          // Type scales with the frame (design-space sizes × zoom) so it reads as
+          // part of the frame, not a fixed screen overlay — with a small floor so
+          // it stays legible when zoomed far out.
+          <div
+            className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center select-none"
+            style={{ gap: Math.max(4, 8 * zoom), padding: `0 ${Math.max(16, 56 * zoom)}px` }}
+          >
+            <p className="font-medium text-foreground/70" style={{ fontSize: Math.max(11, Math.round(30 * zoom)), lineHeight: 1.2 }}>
               <RevealWords text="A frame full of potential." />
             </p>
             <motion.p
-              className="text-[13px] text-muted-foreground/55"
+              className="text-muted-foreground/55"
+              style={{ fontSize: Math.max(9, Math.round(19 * zoom)), lineHeight: 1.3 }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.34, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -823,7 +830,7 @@ export function PreviewPanel() {
   )
 
   return (
-    <div className="flex flex-col h-full bg-[#e8e8e2] overflow-hidden relative">
+    <div className="flex flex-col h-full min-w-0 bg-[#e8e8e2] overflow-hidden relative">
       {/* Canvas area */}
       <div
         ref={containerRef}
