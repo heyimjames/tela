@@ -115,6 +115,8 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* No grey flash on tap (native-web tell #4). */
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground font-sans;
@@ -127,6 +129,9 @@
     text-rendering: optimizeLegibility;
     /* Avoid orphans in body copy (make-interfaces #10) */
     text-wrap: pretty;
+    /* Kill the ~300ms tap delay and the long-press share callout (native-web §7). */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
   }
   html {
     @apply font-sans;
@@ -137,6 +142,19 @@
   /* Balanced headings — no lonely last word (make-interfaces #10) */
   h1, h2, h3, h4 {
     text-wrap: balance;
+  }
+  /* Chrome is UI — never selectable. Content stays selectable. (native-web §7) */
+  button, [role="button"], nav, header, label, .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* Inputs must be ≥16px or iOS zooms the viewport on focus (native-web §7). */
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
+  /* In an installed PWA, stop the whole-page rubber-band / pull-to-refresh. */
+  @media (display-mode: standalone) {
+    html, body { overscroll-behavior: none; }
   }
 }
 
@@ -204,7 +222,8 @@ img:not([data-no-outline]) {
   .mobile-inspector input,
   .mobile-inspector textarea {
     min-height: 44px;
-    font-size: 15px;
+    /* Must be ≥16px, or iOS zooms the viewport when the field focuses. */
+    font-size: 16px;
   }
   .mobile-inspector button {
     min-height: 40px;
