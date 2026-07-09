@@ -21,7 +21,7 @@ _Tela_ is Portuguese for both **canvas** and **screen**.
 - **Compose like a designer** — drag, resize, rotate, align & distribute, snap to guides, group and nest with **Auto Layout**, duplicate, reorder, lock, and hide layers.
 - **Style with your brand** — colours from a themeable token palette, OKLCH gradients, corner radius, drop shadow & blur, and animated WebGL shader backgrounds.
 - **Design once, publish everywhere** — switch a design between formats (feed, story, banner…) and **auto-resize** it across every ad size in one click.
-- **Preview & export** — see your creative inside a real social-post mock, then export to **PNG / JPG / WebP** at 1×–3×.
+- **Export** — render your design to **PNG / JPG / WebP** at 1×–3×.
 - **Work offline, own your data** — everything saves to your browser. No account, nothing leaves the device.
 - **Use it on your phone** — pinch-zoom, drag-to-pan, finger-sized handles, and iOS-style bottom sheets with detents.
 - **(Optional) generate with AI** — wire up your own endpoint and describe an ad to have AI compose or re-lay-it-out.
@@ -68,7 +68,6 @@ It's also built to be **made yours**: the entire brand identity — name, colour
 - **Auto Layout** — flexbox-style layout on any group: direction, gap, padding, alignment. Groups nest, and resizing the container never scales its contents.
 - **Full layer model** — text, images, shapes, SVG (with recolouring), OKLCH gradients, freehand pen/highlighter, and backgrounds (solid, gradient, image, or animated WebGL shader).
 - **Direct-manipulation editing** — drag, resize, rotate, snap-to-alignment, marquee select, alt-drag duplicate, distance measurement, inline text editing.
-- **Live social previews** — see your creative inside a real LinkedIn / Instagram / Facebook post mock before you ship it.
 - **Export** — PNG / JPG / WebP at 1×/2×/3×, plus one-click auto-resize to every format.
 - **Themeable brand system** — a token-based palette and a design-system component library, all swappable from config.
 - **Zero backend** — static bundle, `localStorage` persistence, instant load.
