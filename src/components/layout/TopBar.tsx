@@ -67,7 +67,7 @@ export function TopBar() {
   }, [versionsOpen])
 
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center px-5 gap-4 shrink-0">
+    <header className="h-14 bg-card border-b border-border flex items-center px-2.5 md:px-5 gap-1.5 md:gap-4 shrink-0">
       {/* Back to Files */}
       <button
         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
@@ -147,7 +147,7 @@ export function TopBar() {
       </div>
 
       {/* Save Version */}
-      <div className="relative" ref={versionsRef}>
+      <div className="relative hidden md:block" ref={versionsRef}>
         <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
