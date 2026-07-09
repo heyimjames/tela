@@ -227,6 +227,10 @@ function CanvasSettings() {
   const smartPadding = useUIStore((s) => s.smartPadding)
   const toggleSnap = useUIStore((s) => s.toggleSnap)
   const toggleSmartPadding = useUIStore((s) => s.toggleSmartPadding)
+  const nudgeSmall = useUIStore((s) => s.nudgeSmall)
+  const nudgeLarge = useUIStore((s) => s.nudgeLarge)
+  const setNudgeSmall = useUIStore((s) => s.setNudgeSmall)
+  const setNudgeLarge = useUIStore((s) => s.setNudgeLarge)
 
   return (
     <div className="space-y-6">
@@ -246,6 +250,15 @@ function CanvasSettings() {
           value={smartPadding}
           onChange={toggleSmartPadding}
         />
+      </div>
+
+      <div className="border-t border-border pt-6 space-y-4">
+        <h3 className="text-[14px] font-medium text-foreground">Nudge</h3>
+        <p className="text-[12px] text-muted-foreground">How far arrow keys move a selection. Hold Shift for the large amount.</p>
+        <div className="grid grid-cols-2 gap-4">
+          <NudgeField label="Arrow" value={nudgeSmall} onChange={setNudgeSmall} />
+          <NudgeField label="Shift + Arrow" value={nudgeLarge} onChange={setNudgeLarge} />
+        </div>
       </div>
 
       <div className="border-t border-border pt-6 space-y-4">
@@ -312,6 +325,25 @@ function AppearanceSettings() {
 }
 
 // --- Shared components ---
+
+function NudgeField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  return (
+    <label className="block">
+      <span className="block text-[12px] font-medium text-foreground mb-1">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          min={0}
+          step={1}
+          value={value}
+          onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n)) onChange(n) }}
+          className="w-full h-9 px-2.5 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring tabular-nums"
+        />
+        <span className="text-[12px] text-muted-foreground">px</span>
+      </div>
+    </label>
+  )
+}
 
 function SettingsField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { nanoid } from 'nanoid'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
+import { useUIStore } from '@/store/useUIStore'
 import { getBrandColor } from '@/brand/palette'
 import type { Layer, ShapeLayer } from '@/types/design'
 
@@ -315,9 +316,10 @@ export function useKeyboardShortcuts() {
         }
       }
 
-      // Arrow keys — nudge
+      // Arrow keys — nudge (amounts are configurable in Settings → Canvas)
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        const amount = e.shiftKey ? 8 : 1
+        const ui = useUIStore.getState()
+        const amount = e.shiftKey ? ui.nudgeLarge : ui.nudgeSmall
         const selected = [...state.selectedLayerIds]
         if (selected.length === 0) return
 

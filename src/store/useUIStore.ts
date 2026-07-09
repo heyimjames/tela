@@ -84,6 +84,11 @@ interface UIStore {
   drawWidth: number
   highlighterWidth: number
 
+  // Arrow-key nudge distances in design px. Plain arrow uses `nudgeSmall`;
+  // Shift+arrow uses `nudgeLarge`.
+  nudgeSmall: number
+  nudgeLarge: number
+
   // Actions
   setAppMode: (mode: AppMode) => void
   setSettingsOpen: (open: boolean) => void
@@ -101,6 +106,8 @@ interface UIStore {
   setHighlighterColor: (color: BrandColor) => void
   setDrawWidth: (width: number) => void
   setHighlighterWidth: (width: number) => void
+  setNudgeSmall: (n: number) => void
+  setNudgeLarge: (n: number) => void
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -127,6 +134,9 @@ export const useUIStore = create<UIStore>((set) => ({
   drawWidth: 6,
   highlighterWidth: 22,
 
+  nudgeSmall: 1,
+  nudgeLarge: 10,
+
   setAppMode: (mode) => set({ appMode: mode }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setRightPanel: (panel) => set({ rightPanel: panel }),
@@ -138,6 +148,8 @@ export const useUIStore = create<UIStore>((set) => ({
   setHighlighterColor: (color) => set({ highlighterColor: color }),
   setDrawWidth: (width) => set({ drawWidth: width }),
   setHighlighterWidth: (width) => set({ highlighterWidth: width }),
+  setNudgeSmall: (n) => set({ nudgeSmall: Math.max(0.1, n) }),
+  setNudgeLarge: (n) => set({ nudgeLarge: Math.max(1, n) }),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   toggleSnap: () => set((s) => ({ snapToGrid: !s.snapToGrid })),
   toggleSmartPadding: () => set((s) => ({ smartPadding: !s.smartPadding })),
