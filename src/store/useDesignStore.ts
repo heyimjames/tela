@@ -156,6 +156,9 @@ interface DesignStore {
   // Text editing
   editingTextLayerId: LayerId | null
 
+  // The layer under the cursor (desktop hover feedback). Transient, not persisted.
+  hoveredLayerId: LayerId | null
+
   // History
   history: DesignDocument[]
   historyIndex: number
@@ -212,6 +215,7 @@ interface DesignStore {
 
   // Text editing
   setEditingTextLayerId: (id: LayerId | null) => void
+  setHoveredLayerId: (id: LayerId | null) => void
 
   // History
   undo: () => void
@@ -355,6 +359,7 @@ export const useDesignStore = create<DesignStore>()(
   panOffset: { x: 0, y: 0 },
 
   editingTextLayerId: null,
+  hoveredLayerId: null,
 
   history: [],
   historyIndex: -1,
@@ -908,6 +913,7 @@ export const useDesignStore = create<DesignStore>()(
       selectedLayerIds: new Set(),
       activeLayerId: null,
       editingTextLayerId: null,
+      hoveredLayerId: null,
       history: [],
       historyIndex: -1,
       savedVersions: [],
@@ -931,6 +937,7 @@ export const useDesignStore = create<DesignStore>()(
       selectedLayerIds: new Set(),
       activeLayerId: null,
       editingTextLayerId: null,
+      hoveredLayerId: null,
       history: [],
       historyIndex: -1,
     })
@@ -955,6 +962,7 @@ export const useDesignStore = create<DesignStore>()(
   // --- Text editing ---
 
   setEditingTextLayerId: (id) => set({ editingTextLayerId: id }),
+  setHoveredLayerId: (id) => set({ hoveredLayerId: id }),
 
   // --- History ---
 
@@ -984,6 +992,7 @@ export const useDesignStore = create<DesignStore>()(
         selectedLayerIds: new Set(),
         activeLayerId: null,
         editingTextLayerId: null,
+        hoveredLayerId: null,
       }
     })
     _syncBackToFrame()
@@ -1000,6 +1009,7 @@ export const useDesignStore = create<DesignStore>()(
         selectedLayerIds: new Set(),
         activeLayerId: null,
         editingTextLayerId: null,
+        hoveredLayerId: null,
       }
     })
     _syncBackToFrame()
@@ -1027,6 +1037,7 @@ export const useDesignStore = create<DesignStore>()(
       selectedLayerIds: new Set(),
       activeLayerId: null,
       editingTextLayerId: null,
+      hoveredLayerId: null,
     })
     _syncBackToFrame()
   },

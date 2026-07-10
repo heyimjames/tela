@@ -39,6 +39,25 @@ interface GroupResizeStart {
 
 const MIN_GROUP_SIZE = 8 // px — floor for the combined bbox so it can't collapse
 
+// Shortest distance from a point to a polyline (min over each segment). Used to
+// hit-test freehand strokes against the actual ink instead of their bbox.
+function distToPolyline(px: number, py: number, pts: readonly (readonly [number, number])[]): number {
+  if (pts.length === 0) return Infinity
+  if (pts.length === 1) return Math.hypot(px - pts[0][0], py - pts[0][1])
+  let min = Infinity
+  for (let i = 1; i < pts.length; i++) {
+    const [x1, y1] = pts[i - 1]
+    const [x2, y2] = pts[i]
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const l2 = dx * dx + dy * dy
+    const t = l2 ? Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / l2)) : 0
+    const d = Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy))
+    if (d < min) min = d
+  }
+  return min
+}
+
 // Scale every group member relative to a fixed anchor edge. Corner handles are
 // free-form (independent axes) unless Shift is held, in which case they scale
 // uniformly (aspect locked) — matching Figma and single-layer resize. Edge
@@ -131,6 +150,13 @@ export function useCanvasInteraction(
   const hitTest = useCallback(
     (designX: number, designY: number): LayerId | null => {
       const layers = useDesignStore.getState().document.layers
+      const zoom = useDesignStore.getState().zoom
+      // A finger is far less precise than a cursor: give a generous hit slop on
+      // touch, a small one on mouse. Kept in *design* units (screen px ÷ zoom) so
+      // the tappable margin is a constant on-screen size at any zoom.
+      const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+      const slop = (coarse ? 20 : 7) / (zoom || 1)
+
       for (let i = layers.length - 1; i >= 0; i--) {
         const layer = layers[i]
         if (!layer.visible || layer.locked || layer.type === 'background') continue
@@ -149,11 +175,27 @@ export function useCanvasInteraction(
           py = cy + ox * Math.sin(rad) + oy * Math.cos(rad)
         }
 
+        // Freehand strokes hit-test against the *ink*, not the bounding box: a
+        // thin diagonal line has a huge, mostly-empty bbox that both makes the
+        // line itself hard to tap and blocks clicks meant for layers underneath.
+        // Measure the distance to the stroke polyline (in its own point space)
+        // and accept a hit within half the stroke width plus the touch slop.
+        if (layer.type === 'draw') {
+          const sx = layer.natWidth ? layer.width / layer.natWidth : 1
+          const sy = layer.natHeight ? layer.height / layer.natHeight : 1
+          const avg = (Math.abs(sx) + Math.abs(sy)) / 2 || 1
+          const lx = (px - layer.x) / (sx || 1)
+          const ly = (py - layer.y) / (sy || 1)
+          const d = distToPolyline(lx, ly, layer.points)
+          if (d <= (layer.strokeWidth ?? 4) / 2 + slop / avg) return layer.id
+          continue
+        }
+
         if (
-          px >= layer.x &&
-          px <= layer.x + layer.width &&
-          py >= layer.y &&
-          py <= layer.y + layer.height
+          px >= layer.x - slop &&
+          px <= layer.x + layer.width + slop &&
+          py >= layer.y - slop &&
+          py <= layer.y + layer.height + slop
         ) {
           return layer.id
         }
@@ -387,6 +429,12 @@ export function useCanvasInteraction(
         const { x, y } = getDesignCoords(e.clientX, e.clientY)
         const hitId = hitTest(x, y)
         const tool = useDesignStore.getState().tool
+        // Track the layer under the cursor for the hover highlight (select tool
+        // only). Guarded so we only write when it actually changes.
+        const nextHover = tool === 'select' ? hitId : null
+        if (useDesignStore.getState().hoveredLayerId !== nextHover) {
+          useDesignStore.getState().setHoveredLayerId(nextHover)
+        }
         if (tool === 'pan') {
           setHoverCursor('grab')
         } else if (hitId) {

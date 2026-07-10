@@ -13,6 +13,7 @@ import { FrameThumbnail } from '@/components/canvas/FrameThumbnail'
 import { ShaderBackgroundOverlay } from '@/components/canvas/ShaderBackground'
 import { GridOverlay } from '@/components/canvas/GridOverlay'
 import { SelectionOverlay } from '@/components/canvas/SelectionOverlay'
+import { HoverOverlay } from '@/components/canvas/HoverOverlay'
 import { AutoLayoutOverlay } from '@/components/canvas/AutoLayoutOverlay'
 import { DistanceMeasurement } from '@/components/canvas/DistanceMeasurement'
 import { TextEditOverlay } from '@/components/canvas/TextEditOverlay'
@@ -713,7 +714,7 @@ export function PreviewPanel() {
         onPointerDown={(e) => { if (drawTool.onPointerDown(e)) return; handlePointerDown(e) }}
         onPointerMove={(e) => { if (drawTool.onPointerMove(e)) return; handlePointerMove(e) }}
         onPointerUp={(e) => { if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
-        onPointerLeave={(e) => { if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
+        onPointerLeave={(e) => { useDesignStore.getState().setHoveredLayerId(null); if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleStackContextMenu}
       >
@@ -731,6 +732,7 @@ export function PreviewPanel() {
           </svg>
         )}
         <AutoLayoutOverlay zoom={zoom} />
+        <HoverOverlay zoom={zoom} />
         <SelectionOverlay zoom={zoom} panOffset={{ x: 0, y: 0 }} onResizeStart={handleResizeStart} onGroupResizeStart={handleGroupResizeStart} />
         <GridOverlay zoom={zoom} />
         <TextEditOverlay zoom={zoom} />
