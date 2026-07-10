@@ -9,6 +9,7 @@ import { HomePage } from '@/components/library/HomePage'
 import { SettingsPage } from '@/components/library/SettingsPage'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { CommandPalette } from '@/components/canvas/CommandPalette'
+import { ShortcutsCheatSheet } from '@/components/canvas/ShortcutsCheatSheet'
 import { ContextMenu } from '@/components/canvas/ContextMenu'
 import { SettingsModal } from '@/components/panels/SettingsModal'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -67,6 +68,7 @@ function EditorView() {
       <MobileControlSheet />
       <MobileTextEditor />
       <CommandPalette />
+      <ShortcutsCheatSheet />
       <ContextMenu />
       <SettingsModal />
     </div>

@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDesignStore } from '@/store/useDesignStore'
-import { exportAndDownload } from '@/engine/compositor'
+import { exportAndDownload, exportDesign } from '@/engine/compositor'
 import { exportSvgAndDownload } from '@/engine/svgExport'
 import { playChime } from '@/lib/chime'
 import { SliderField } from '@/components/controls/SliderField'
 import { Button } from '@/components/ui/button'
-import { Download, Check } from 'lucide-react'
+import { Download, Check, Copy, ClipboardCheck } from 'lucide-react'
+
+// Copying an image to the clipboard is only possible where the async Clipboard
+// API supports it (Chromium, Safari) — hide the button elsewhere.
+const CAN_COPY_IMAGE = typeof navigator !== 'undefined' && 'clipboard' in navigator && typeof ClipboardItem !== 'undefined'
 
 export function ExportPanel() {
   const document = useDesignStore((s) => s.document)
@@ -16,6 +20,7 @@ export function ExportPanel() {
   const [dpr, setDpr] = useState(2)
   const [exporting, setExporting] = useState(false)
   const [justExported, setJustExported] = useState(false)
+  const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done'>('idle')
 
   const handleExport = async () => {
     setExporting(true)
@@ -27,6 +32,20 @@ export function ExportPanel() {
       window.setTimeout(() => setJustExported(false), 1400)
     } finally {
       setExporting(false)
+    }
+  }
+
+  // Copy the design to the clipboard as a PNG (the only image type clipboards
+  // reliably accept), so it can be pasted straight into Slack, docs, Figma, etc.
+  const handleCopy = async () => {
+    setCopyState('copying')
+    try {
+      const blob = await exportDesign(document, { format: 'png', quality: 1, dpr })
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      setCopyState('done')
+      window.setTimeout(() => setCopyState('idle'), 1400)
+    } catch {
+      setCopyState('idle')
     }
   }
 
@@ -122,6 +141,19 @@ export function ExportPanel() {
           </AnimatePresence>
         </Button>
       </motion.div>
+
+      {/* Copy the design straight to the clipboard as a PNG. */}
+      {CAN_COPY_IMAGE && (
+        <Button
+          variant="outline"
+          className="w-full rounded-[5px]"
+          onClick={handleCopy}
+          disabled={copyState === 'copying'}
+        >
+          {copyState === 'done' ? <ClipboardCheck className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+          {copyState === 'copying' ? 'Copying…' : copyState === 'done' ? 'Copied' : 'Copy to clipboard'}
+        </Button>
+      )}
     </div>
   )
 }

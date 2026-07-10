@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
+import { useUIStore } from '@/store/useUIStore'
 import { useRouterStore } from '@/store/useRouterStore'
 import { getBrandColor } from '@/brand/palette'
 import { AD_FORMATS } from '@/brand/formats'
@@ -19,6 +20,7 @@ import {
   Search,
   Plus,
   Frame,
+  Keyboard,
 } from 'lucide-react'
 import type { ShapeLayer } from '@/types/design'
 
@@ -54,8 +56,8 @@ export function CommandPalette() {
     { id: 'duplicate-frame', label: 'Duplicate Frame', shortcut: '⌘C ⌘V', icon: Frame, category: 'Frame', action: () => { const ws = useWorkspaceStore.getState(); const fid = [...ws.selectedFrameIds][0] ?? ws.activeFrameId; if (fid) ws.duplicateFrame(fid); setOpen(false) } },
 
     // View
-    { id: 'fit-view', label: 'Fit to View', icon: Maximize, category: 'View', action: () => { /* handled in PreviewPanel */ setOpen(false) } },
-    { id: 'zoom-100', label: 'Zoom to 100%', icon: Maximize, category: 'View', action: () => { useDesignStore.getState().setZoom(1); setOpen(false) } },
+    { id: 'fit-view', label: 'Fit to View', shortcut: '⇧1', icon: Maximize, category: 'View', action: () => { window.dispatchEvent(new CustomEvent('canvas-zoom', { detail: { action: 'fit' } })); setOpen(false) } },
+    { id: 'zoom-100', label: 'Zoom to 100%', shortcut: '⌘0', icon: Maximize, category: 'View', action: () => { window.dispatchEvent(new CustomEvent('canvas-zoom', { detail: { action: 'reset' } })); setOpen(false) } },
 
     // Formats
     ...AD_FORMATS.map((f) => ({
@@ -67,7 +69,10 @@ export function CommandPalette() {
     })),
 
     // Export
-    { id: 'export', label: 'Export Design', shortcut: '⌘E', icon: Download, category: 'Export', action: () => { setOpen(false) } },
+    { id: 'export', label: 'Export Design', shortcut: '⌘E', icon: Download, category: 'Export', action: () => { useUIStore.getState().setExportPanelOpen(true); setOpen(false) } },
+
+    // Help
+    { id: 'shortcuts', label: 'Keyboard Shortcuts', shortcut: '?', icon: Keyboard, category: 'Help', action: () => { window.dispatchEvent(new CustomEvent('tela:shortcuts')); setOpen(false) } },
 
     // Nav
     { id: 'back-library', label: 'Back to Library', icon: ArrowLeft, category: 'Navigate', action: () => { useRouterStore.getState().navigate({ page: 'library' }); setOpen(false) } },
