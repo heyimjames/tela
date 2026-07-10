@@ -20,12 +20,15 @@ import type { TextLayer, ImageLayer, ShapeLayer, SvgLayer, GradientLayer, Layer 
 export function LayerInspector({ layer }: { layer: Layer }) {
   const isPro = useIsProMode()
 
+  // Figma-style hierarchy: geometry and layout first (they're universal to every
+  // object — where it is, how big, how it's laid out), then the type-specific
+  // content (typography, fill…), then effects last.
   return (
     <>
-      <AutoLayoutSection layer={layer} />
       <AlignmentPanel />
-      <LayerTypeInspector layer={layer} />
       {layer.type !== 'background' && <PositionSizePanel layer={layer} />}
+      <AutoLayoutSection layer={layer} />
+      <LayerTypeInspector layer={layer} />
       {isPro && layer.type !== 'background' && <EffectsPanel layer={layer} />}
     </>
   )

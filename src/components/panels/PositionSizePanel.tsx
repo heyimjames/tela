@@ -32,7 +32,7 @@ export function PositionSizePanel({ layer }: Props) {
   const hHug = sizing === 'auto-width' || sizing === 'auto-height'
 
   return (
-    <div className="space-y-3 pt-3 mt-3 border-t border-border">
+    <div className="space-y-3 pb-3 mb-3 border-b border-border">
       <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
         Position & Size
       </div>
