@@ -35,11 +35,11 @@ function createDefaultFrame(name?: string): DesignFrame {
   }
 }
 
-function createDefaultPage(name: string = 'Page 1'): DesignPage {
+function createDefaultPage(name: string = 'Page 1', frameName?: string): DesignPage {
   return {
     id: nanoid(),
     name,
-    frames: [createDefaultFrame()],
+    frames: [createDefaultFrame(frameName)],
   }
 }
 
@@ -102,7 +102,8 @@ export const useFileStore = create<FileStore>()(
           id,
           name,
           folderId,
-          pages: [createDefaultPage()],
+          // Name the default frame after the file so the editor title matches.
+          pages: [createDefaultPage('Page 1', name)],
           createdAt: now,
           updatedAt: now,
         }

@@ -24,6 +24,8 @@ export function TopBar() {
   const route = useRouterStore((s) => s.route)
   const navigate = useRouterStore((s) => s.navigate)
   const documentName = useDesignStore((s) => s.document.name)
+  const activeFileId = useWorkspaceStore((s) => s.activeFileId)
+  const isScratchpad = activeFileId === 'scratchpad'
   const format = useDesignStore((s) => s.document.format)
   const setDocumentName = useDesignStore((s) => s.setDocumentName)
   const undo = useDesignStore((s) => s.undo)
@@ -86,17 +88,21 @@ export function TopBar() {
 
       <div className="w-px h-5 bg-border hidden md:block" />
 
-      {/* Document name */}
+      {/* Document name — the scratchpad's name is fixed, so it's read-only. */}
       <input
-        className="text-[15px] font-medium text-foreground bg-transparent border-none outline-none min-w-0 max-w-[240px] hover:bg-muted/50 focus:bg-muted/50 rounded-[5px] px-2 py-1 transition-colors"
+        className={`text-[15px] font-medium text-foreground bg-transparent border-none outline-none min-w-0 max-w-[240px] rounded-[5px] px-2 py-1 transition-colors ${
+          isScratchpad ? 'cursor-default select-none' : 'hover:bg-muted/50 focus:bg-muted/50'
+        }`}
         value={documentName}
+        readOnly={isScratchpad}
+        title={isScratchpad ? "The Scratchpad's name can't be changed" : undefined}
         onChange={(e) => {
+          if (isScratchpad) return
           const name = e.target.value
           setDocumentName(name)
           // Keep the Files page in sync — the editor doc name and the file-store
           // record are separate, so a rename here must also update the file that
-          // backs this editing session (skips the scratchpad, which is fixed).
-          const { activeFileId } = useWorkspaceStore.getState()
+          // backs this editing session.
           if (activeFileId) useFileStore.getState().renameFile(activeFileId, name)
         }}
       />

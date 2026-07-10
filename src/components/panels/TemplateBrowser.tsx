@@ -14,9 +14,12 @@ import { Layout, X } from 'lucide-react'
 interface Props {
   projectId?: string
   onClose: () => void
+  // When provided (e.g. from the library), take over what "pick a template" does
+  // — create a real file from the document instead of the default open-in-editor.
+  onPick?: (doc: DesignDocument) => void
 }
 
-export function TemplateBrowser({ projectId, onClose }: Props) {
+export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
   const [category, setCategory] = useState<string>('all')
   const navigate = useRouterStore((s) => s.navigate)
   const isMobile = useIsMobile()
@@ -29,6 +32,7 @@ export function TemplateBrowser({ projectId, onClose }: Props) {
     : DESIGN_TEMPLATES.filter((t) => t.category === category)
 
   const openDoc = (doc: DesignDocument) => {
+    if (onPick) { onPick(doc); onClose(); return }
     useDesignStore.setState({ document: doc })
     if (projectId) {
       const designId = useProjectStore.getState().addDesign(projectId, doc)

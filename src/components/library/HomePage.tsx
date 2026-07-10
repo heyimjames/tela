@@ -1,11 +1,16 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, type ComponentType } from 'react'
+import { createPortal } from 'react-dom'
 import { useFileStore } from '@/store/useFileStore'
 import { useRouterStore } from '@/store/useRouterStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useUIStore } from '@/store/useUIStore'
+import { nanoid } from 'nanoid'
 import { SettingsModal } from '@/components/panels/SettingsModal'
+import { TemplateBrowser } from '@/components/panels/TemplateBrowser'
 import { renderThumbnail } from '@/engine/thumbnail'
+import { generateFileName } from '@/lib/fileName'
+import type { DesignDocument } from '@/types/design'
 import { getBrandColor } from '@/brand/palette'
 import { BRAND } from '@/brand/brand.config'
 import { Button } from '@/components/ui/button'
@@ -78,6 +83,38 @@ export function HomePage() {
   // Delete is confirmed through a modal rather than firing immediately.
   const [pendingDelete, setPendingDelete] = useState<{ kind: 'file' | 'folder'; id: string; name: string } | null>(null)
   const [movingFileId, setMovingFileId] = useState<string | null>(null)
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxItem[] } | null>(null)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
+
+  // Build the right-click menu for a file / folder and open it at the cursor.
+  const openFileMenu = (e: React.MouseEvent, file: DesignFile) => {
+    e.preventDefault()
+    const items: CtxItem[] = file.isScratchpad
+      ? [
+          { label: 'Open', Icon: FileText, on: () => handleOpenFile(file.id) },
+          { label: 'Duplicate', Icon: Copy, on: () => duplicateFile(file.id) },
+        ]
+      : [
+          { label: 'Open', Icon: FileText, on: () => handleOpenFile(file.id) },
+          { label: 'Rename', Icon: Pencil, on: () => { setEditingId(file.id); setEditValue(file.name) } },
+          { label: 'Duplicate', Icon: Copy, on: () => duplicateFile(file.id) },
+          { label: 'Move to folder', Icon: FolderInput, on: () => setMovingFileId(file.id) },
+          { label: 'Delete', Icon: Trash2, danger: true, on: () => setPendingDelete({ kind: 'file', id: file.id, name: file.name }) },
+        ]
+    setCtxMenu({ x: e.clientX, y: e.clientY, items })
+  }
+  const openFolderMenu = (e: React.MouseEvent, folder: { id: string; name: string }) => {
+    e.preventDefault()
+    setCtxMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: 'Open', Icon: FolderOpen, on: () => setActiveFolderId(folder.id) },
+        { label: 'Rename', Icon: Pencil, on: () => { setEditingId(folder.id); setEditValue(folder.name) } },
+        { label: 'Delete', Icon: Trash2, danger: true, on: () => setPendingDelete({ kind: 'folder', id: folder.id, name: folder.name }) },
+      ],
+    })
+  }
 
   const confirmDelete = () => {
     if (!pendingDelete) return
@@ -141,7 +178,28 @@ export function HomePage() {
       useWorkspaceStore.setState({ activeFrameId: firstFrame.id })
     }
 
+    // The editor title is the file's name (loadFromFrame set it to the frame's).
+    useDesignStore.getState().setDocumentName(file.name)
     navigate({ page: 'editor-standalone' })
+  }
+
+  // Picking a template creates a real file from it (so it lives in the library),
+  // then opens it — rather than an unsaved in-editor doc.
+  const createFromTemplate = (doc: DesignDocument) => {
+    const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId)
+    const bg = doc.layers.find((l) => l.type === 'background') as { fill?: unknown } | undefined
+    const frame = {
+      id: nanoid(),
+      name: doc.name || 'Frame 1',
+      width: doc.format.width,
+      height: doc.format.height,
+      format: doc.format,
+      backgroundFill: bg?.fill ?? { type: 'solid', color: getBrandColor('cloud') },
+      layers: doc.layers,
+    }
+    useFileStore.getState().updateFilePages(id, [{ id: nanoid(), name: 'Page 1', frames: [frame] }])
+    setTemplatesOpen(false)
+    handleOpenFile(id)
   }
 
   const timeAgo = (dateStr: string) => {
@@ -187,7 +245,7 @@ export function HomePage() {
           <NavItem
             icon={Sparkles}
             label="Templates"
-            onClick={() => {/* TODO: open template browser */}}
+            onClick={() => setTemplatesOpen(true)}
           />
 
           {/* Folders */}
@@ -248,7 +306,7 @@ export function HomePage() {
             {[
               { label: 'Files', active: !activeFolderId && filter === 'all', on: () => { setFilter('all'); setActiveFolderId(null) } },
               { label: 'Recents', active: filter === 'recents', on: () => { setFilter('recents'); setActiveFolderId(null) } },
-              { label: 'Templates', active: false, on: () => {/* TODO: template browser */} },
+              { label: 'Templates', active: false, on: () => setTemplatesOpen(true) },
             ].map((t) => (
               <button
                 key={t.label}
@@ -304,7 +362,7 @@ export function HomePage() {
 
               {/* New file */}
               <Button size="sm" className="h-10 md:h-8 rounded-[5px] gap-1.5 shrink-0" onClick={() => {
-                const id = createFile('Untitled', activeFolderId)
+                const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId)
                 handleOpenFile(id)
               }}>
                 <Plus className="w-4 h-4" />
@@ -342,6 +400,7 @@ export function HomePage() {
                     onCancelEdit={() => setEditingId(null)}
                     onEditValueChange={setEditValue}
                     onDelete={() => deleteFolder(folder.id)}
+                    onContextMenu={(e) => openFolderMenu(e, folder)}
                   />
                 ))}
               </div>
@@ -377,6 +436,7 @@ export function HomePage() {
                   onDuplicate={() => duplicateFile(file.id)}
                   onDelete={() => setPendingDelete({ kind: 'file', id: file.id, name: file.name })}
                   onMove={() => setMovingFileId(file.id)}
+                  onContextMenu={(e) => openFileMenu(e, file)}
                   timeAgo={timeAgo}
                 />
               ))}
@@ -391,6 +451,7 @@ export function HomePage() {
                   onDuplicate={() => duplicateFile(file.id)}
                   onDelete={() => setPendingDelete({ kind: 'file', id: file.id, name: file.name })}
                   onMove={() => setMovingFileId(file.id)}
+                  onContextMenu={(e) => openFileMenu(e, file)}
                   timeAgo={timeAgo}
                 />
               ))}
@@ -402,7 +463,7 @@ export function HomePage() {
               <FileText className="w-12 h-12 mx-auto text-muted-foreground/20 mb-4" />
               <h2 className="text-[16px] font-medium text-foreground mb-1">No files yet</h2>
               <p className="text-[13px] text-muted-foreground mb-4">Create a file to start designing.</p>
-              <Button className="rounded-[5px] gap-1.5" onClick={() => createFile('Untitled', activeFolderId)}>
+              <Button className="rounded-[5px] gap-1.5" onClick={() => { const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId); handleOpenFile(id) }}>
                 <Plus className="w-4 h-4" />
                 New file
               </Button>
@@ -428,6 +489,12 @@ export function HomePage() {
 
       {/* Settings — a bottom sheet on mobile (opened by the top-bar gear), a modal on desktop. */}
       <SettingsModal />
+
+      {/* Right-click menu for files / folders. */}
+      <LibraryContextMenu menu={ctxMenu} onClose={() => setCtxMenu(null)} />
+
+      {/* Templates — picking one creates a new file from it. */}
+      {templatesOpen && <TemplateBrowser onClose={() => setTemplatesOpen(false)} onPick={createFromTemplate} />}
     </div>
   )
 }
@@ -555,6 +622,7 @@ function FolderCard({
   onCancelEdit,
   onEditValueChange,
   onDelete,
+  onContextMenu,
 }: {
   folder: Folder
   isEditing: boolean
@@ -565,14 +633,14 @@ function FolderCard({
   onCancelEdit: () => void
   onEditValueChange: (v: string) => void
   onDelete: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
 }) {
   return (
     <div
       className="group relative flex items-center gap-2.5 px-4 py-3 bg-card border border-border rounded-[7px] hover:shadow-[var(--shadow-subtle)] transition-shadow cursor-pointer min-w-[180px]"
       onClick={() => { if (!isEditing) onOpen() }}
-      // Rename without navigating in: right-click, or the hover pencil. (A
-      // double-click can't be used — the first click already opens the folder.)
-      onContextMenu={(e) => { e.preventDefault(); onStartEdit() }}
+      // Right-click opens the folder's context menu (rename / delete).
+      onContextMenu={onContextMenu}
     >
       <FolderOpen className="w-5 h-5 text-muted-foreground/60 shrink-0" />
       {isEditing ? (
@@ -627,6 +695,7 @@ function FileCard({
   onDuplicate,
   onDelete,
   onMove,
+  onContextMenu,
   timeAgo,
 }: {
   file: DesignFile
@@ -640,18 +709,19 @@ function FileCard({
   onDuplicate: () => void
   onDelete: () => void
   onMove: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
   timeAgo: (d: string) => string
 }) {
   const isEditing = editingId === file.id
 
-  // Generate thumbnail from first frame of first page
-  const thumb = useMemo(() => {
-    const firstPage = file.pages[0]
-    const firstFrame = firstPage?.frames[0]
-    if (!firstFrame || firstFrame.layers.length <= 1) return null
-
+  // Generate a thumbnail from the first frame, plus the frame's background colour
+  // so the preview can sit on a matching field (contain, never cropped).
+  const { thumb, bg } = useMemo(() => {
+    const firstFrame = file.pages[0]?.frames[0]
+    const bgLayer = firstFrame?.layers.find((l) => l.type === 'background') as { fill?: { type: string; color?: { hex: string } } } | undefined
+    const bg = bgLayer?.fill?.type === 'solid' ? bgLayer.fill.color?.hex ?? '#ebe9e1' : '#ebe9e1'
+    if (!firstFrame || firstFrame.layers.length <= 1) return { thumb: null, bg }
     try {
-      // Create a minimal document for the thumbnail renderer
       const doc = {
         id: file.id,
         name: file.name,
@@ -660,21 +730,23 @@ function FileCard({
         createdAt: file.createdAt,
         updatedAt: file.updatedAt,
       }
-      return renderThumbnail(doc as any, 400, 280)
-    } catch { return null }
+      return { thumb: renderThumbnail(doc as any, 400, 280), bg }
+    } catch { return { thumb: null, bg } }
   }, [file])
 
   return (
     <div
       className="group bg-card border border-border rounded-[12px] overflow-hidden cursor-pointer hover:shadow-[0_2px_8px_-2px_rgba(17,17,17,0.08)] transition-[box-shadow] duration-200"
       onClick={onOpen}
+      onContextMenu={onContextMenu}
       draggable={!file.isScratchpad && !isEditing}
       onDragStart={(e) => { e.dataTransfer.setData(FILE_DND, file.id); e.dataTransfer.effectAllowed = 'move' }}
     >
-      {/* Thumbnail */}
-      <div className="aspect-[4/3] bg-[#ebe9e1] relative overflow-hidden">
+      {/* Thumbnail — contained (never cropped) on the frame's own background so
+          the whole design reads, edge-to-edge and clipped to the rounded card. */}
+      <div className="aspect-[4/3] relative overflow-hidden" style={{ background: bg }}>
         {thumb ? (
-          <img src={thumb} alt="" className="w-full h-full object-cover" />
+          <img src={thumb} alt="" className="w-full h-full object-contain" />
         ) : (
           // No preview yet → a seeded, on-brand OKLCH mesh gradient, locked to
           // this file's id (stable across loads). No icon — the gradient is it.
@@ -716,7 +788,6 @@ function FileCard({
           <>
             <div className="flex items-center gap-1.5">
               <span className="text-[14px] font-medium text-foreground truncate">{file.name}</span>
-              {file.isScratchpad && <Pencil className="w-3 h-3 text-muted-foreground/40 shrink-0" />}
             </div>
             <p className="text-[12px] text-muted-foreground/60 mt-0.5">
               {file.isScratchpad ? 'Your permanent draft' : `Edited ${timeAgo(file.updatedAt)}`}
@@ -734,6 +805,7 @@ function FileListRow({
   onDuplicate,
   onDelete,
   onMove,
+  onContextMenu,
   timeAgo,
 }: {
   file: DesignFile
@@ -741,12 +813,14 @@ function FileListRow({
   onDuplicate: () => void
   onDelete: () => void
   onMove: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
   timeAgo: (d: string) => string
 }) {
   return (
     <div
       className="group flex items-center gap-4 px-4 py-3 rounded-[7px] cursor-pointer hover:bg-muted/30 transition-colors"
       onClick={onOpen}
+      onContextMenu={onContextMenu}
       draggable={!file.isScratchpad}
       onDragStart={(e) => { e.dataTransfer.setData(FILE_DND, file.id); e.dataTransfer.effectAllowed = 'move' }}
     >
@@ -775,5 +849,54 @@ function FileListRow({
         </div>
       )}
     </div>
+  )
+}
+
+// --- Right-click menu -------------------------------------------------------
+
+type CtxItem = { label: string; Icon?: ComponentType<{ className?: string }>; on: () => void; danger?: boolean }
+
+function LibraryContextMenu({ menu, onClose }: { menu: { x: number; y: number; items: CtxItem[] } | null; onClose: () => void }) {
+  useEffect(() => {
+    if (!menu) return
+    const close = () => onClose()
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    // A left-click, scroll, or Escape dismisses it. Right-clicking another item
+    // just replaces the menu (that item's handler sets fresh state).
+    window.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menu, onClose])
+
+  if (!menu) return null
+  // Keep the menu on-screen near the two edges it might overflow.
+  const left = Math.min(menu.x, window.innerWidth - 200)
+  const top = Math.min(menu.y, window.innerHeight - (menu.items.length * 34 + 12))
+  return createPortal(
+    <div
+      className="fixed z-[200] min-w-[184px] rounded-[10px] border border-black/5 bg-white/98 p-1 shadow-[0_10px_34px_rgba(0,0,0,0.16)] backdrop-blur"
+      style={{ left, top }}
+      onClick={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {menu.items.map((it, i) => (
+        <button
+          key={i}
+          className={`flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-1.5 text-[13px] transition-colors cursor-pointer ${
+            it.danger ? 'text-red-600 hover:bg-red-50' : 'text-foreground hover:bg-muted'
+          }`}
+          onClick={() => { it.on(); onClose() }}
+        >
+          {it.Icon && <it.Icon className="h-3.5 w-3.5 opacity-70" />}
+          {it.label}
+        </button>
+      ))}
+    </div>,
+    document.body,
   )
 }
