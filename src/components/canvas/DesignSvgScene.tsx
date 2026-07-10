@@ -4,6 +4,7 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { applySvgColorOverrides, applySvgStrokeWidth } from '@/engine/svgColors'
 import { FONT_FAMILY } from '@/engine/textMeasure'
 import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
+import { trianglePoints, starPoints, toPointsAttr } from '@/lib/geometry'
 import type {
   DesignDocument,
   Layer,
@@ -343,6 +344,18 @@ function ShapeNode({ layer }: { layer: ShapeLayer }) {
         stroke={stroke?.color.hex ?? fill.hex}
         strokeWidth={stroke?.width ?? 2}
         strokeLinecap={layer.lineCap ?? 'butt'}
+      />
+    )
+  }
+
+  if (shape === 'triangle' || shape === 'star') {
+    const pts = shape === 'triangle' ? trianglePoints(width, height) : starPoints(width, height)
+    return (
+      <polygon
+        points={toPointsAttr(pts)}
+        fill={fill.hex}
+        strokeLinejoin="round"
+        {...strokeProps}
       />
     )
   }

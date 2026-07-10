@@ -9,6 +9,10 @@ import {
   Type,
   ImageIcon,
   Square,
+  Circle,
+  Triangle,
+  Star,
+  Minus,
   FileCode,
   Undo2,
   Redo2,
@@ -39,11 +43,22 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const addShape = (shape: ShapeLayer['shape'], name: string, colorToken: string) => {
+    useDesignStore.getState().addLayer({
+      type: 'shape', name, visible: true, locked: false, opacity: 1,
+      x: 100, y: 100, width: 200, height: 200, rotation: 0,
+      shape, fill: getBrandColor(colorToken), borderRadius: shape === 'rectangle' ? 7 : 0,
+    } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>)
+  }
+
   const commands: Command[] = [
     // Add elements
     { id: 'add-text', label: 'Add Text Layer', shortcut: 'T', icon: Type, category: 'Add', action: () => { useDesignStore.getState().addLayer(createTextLayer()); setOpen(false) } },
     { id: 'add-shape', label: 'Add Rectangle', shortcut: 'R', icon: Square, category: 'Add', action: () => { useDesignStore.getState().addLayer({ type: 'shape', name: 'Rectangle', visible: true, locked: false, opacity: 1, x: 100, y: 100, width: 200, height: 200, rotation: 0, shape: 'rectangle', fill: getBrandColor('brand-dark'), borderRadius: 7 } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>); setOpen(false) } },
-    { id: 'add-ellipse', label: 'Add Ellipse', icon: Square, category: 'Add', action: () => { useDesignStore.getState().addLayer({ type: 'shape', name: 'Ellipse', visible: true, locked: false, opacity: 1, x: 100, y: 100, width: 200, height: 200, rotation: 0, shape: 'ellipse', fill: getBrandColor('brand-accent'), borderRadius: 0 } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>); setOpen(false) } },
+    { id: 'add-ellipse', label: 'Add Ellipse', icon: Circle, category: 'Add', action: () => { addShape('ellipse', 'Ellipse', 'brand-accent'); setOpen(false) } },
+    { id: 'add-triangle', label: 'Add Triangle', icon: Triangle, category: 'Add', action: () => { addShape('triangle', 'Triangle', 'accent-2'); setOpen(false) } },
+    { id: 'add-star', label: 'Add Star', icon: Star, category: 'Add', action: () => { addShape('star', 'Star', 'orange'); setOpen(false) } },
+    { id: 'add-line', label: 'Add Line', icon: Minus, category: 'Add', action: () => { useDesignStore.getState().addLayer({ type: 'shape', name: 'Line', visible: true, locked: false, opacity: 1, x: 100, y: 200, width: 240, height: 0, rotation: 0, shape: 'line', fill: getBrandColor('charcoal'), borderRadius: 0, stroke: { color: getBrandColor('charcoal'), width: 3 }, lineCap: 'round' } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>); setOpen(false) } },
 
     // Edit
     { id: 'undo', label: 'Undo', shortcut: '⌘Z', icon: Undo2, category: 'Edit', action: () => { useDesignStore.getState().undo(); setOpen(false) } },

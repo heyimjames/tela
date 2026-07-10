@@ -195,7 +195,7 @@ export interface SvgLayer extends LayerBase {
 
 // --- Shape layer ---
 
-export type ShapeType = 'rectangle' | 'ellipse' | 'line' | 'pill'
+export type ShapeType = 'rectangle' | 'ellipse' | 'line' | 'pill' | 'triangle' | 'star'
 
 export type LineCap = 'butt' | 'round' | 'square'
 

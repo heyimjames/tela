@@ -10,6 +10,7 @@ import type {
 import { getOrLoadImage, svgImageCache } from '@/engine/renderers/imageCache'
 import { applySvgColorOverrides } from '@/engine/svgColors'
 import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
+import { trianglePoints, starPoints } from '@/lib/geometry'
 import { renderTextLayer } from '@/engine/renderers/textRenderer'
 import { renderGradientLayer } from '@/engine/renderers/gradientRenderer'
 
@@ -312,6 +313,23 @@ export function renderShapeLayer(
     case 'ellipse': {
       ctx.beginPath()
       ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2)
+      ctx.fillStyle = layer.fill.hex
+      ctx.fill()
+      if (layer.stroke) {
+        ctx.strokeStyle = layer.stroke.color.hex
+        ctx.lineWidth = layer.stroke.width * scale
+        ctx.stroke()
+      }
+      break
+    }
+    case 'triangle':
+    case 'star': {
+      const pts = layer.shape === 'triangle' ? trianglePoints(w, h) : starPoints(w, h)
+      ctx.beginPath()
+      ctx.lineJoin = 'round'
+      ctx.moveTo(pts[0][0], pts[0][1])
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1])
+      ctx.closePath()
       ctx.fillStyle = layer.fill.hex
       ctx.fill()
       if (layer.stroke) {

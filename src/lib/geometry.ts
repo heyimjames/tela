@@ -1,3 +1,26 @@
+/** A triangle that fills a w×h box (apex top-centre). */
+export function trianglePoints(w: number, h: number): [number, number][] {
+  return [[w / 2, 0], [w, h], [0, h]]
+}
+
+/** An n-pointed star filling a w×h box (elliptical, so it stretches with the box). */
+export function starPoints(w: number, h: number, points = 5, innerRatio = 0.42): [number, number][] {
+  const cx = w / 2
+  const cy = h / 2
+  const out: [number, number][] = []
+  for (let i = 0; i < points * 2; i++) {
+    const angle = -Math.PI / 2 + (i * Math.PI) / points
+    const f = i % 2 === 0 ? 1 : innerRatio
+    out.push([cx + cx * f * Math.cos(angle), cy + cy * f * Math.sin(angle)])
+  }
+  return out
+}
+
+/** SVG `points` attribute string from a list of coordinates. */
+export function toPointsAttr(pts: readonly (readonly [number, number])[]): string {
+  return pts.map(([x, y]) => `${Math.round(x * 100) / 100},${Math.round(y * 100) / 100}`).join(' ')
+}
+
 /** Shortest distance from a point to a polyline (min over each segment). Used to
  *  hit-test and erase freehand strokes against the actual ink, not their bbox. */
 export function distToPolyline(px: number, py: number, pts: readonly (readonly [number, number])[]): number {
