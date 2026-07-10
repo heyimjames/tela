@@ -444,6 +444,8 @@ function renderDrawLayer(ctx: CanvasRenderingContext2D, layer: DrawLayer, scale:
     size: layer.strokeWidth,
     mode: layer.mode,
     thinning: layer.thinning,
+    taper: layer.taper,
+    streamline: layer.streamline,
     last: true,
   })
   ctx.save()

@@ -268,6 +268,10 @@ export interface DrawLayer extends LayerBase {
   pressures?: number[]
   // How strongly pressure narrows the stroke (0 = constant, 1 = fully variable).
   thinning?: number
+  // End shape: 0 = round (blunt) caps, 1 = fully pointed taper. Absent → pen 1.
+  taper?: number
+  // Low-pass smoothing of the raw samples (0 = raw, 1 = very smooth). Absent → pen 0.5.
+  streamline?: number
 }
 
 export type Layer = BackgroundLayer | TextLayer | ImageLayer | SvgLayer | ShapeLayer | GradientLayer | GroupLayer | DrawLayer

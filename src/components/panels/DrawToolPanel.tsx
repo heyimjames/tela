@@ -31,6 +31,14 @@ export function DrawToolPanel() {
   const setDrawWidth = useUIStore((s) => s.setDrawWidth)
   const setHighlighterWidth = useUIStore((s) => s.setHighlighterWidth)
 
+  // Pen shape controls (the highlighter is a constant-width round marker).
+  const thinning = useUIStore((s) => s.drawThinning)
+  const taper = useUIStore((s) => s.drawTaper)
+  const smoothing = useUIStore((s) => s.drawSmoothing)
+  const setThinning = useUIStore((s) => s.setDrawThinning)
+  const setTaper = useUIStore((s) => s.setDrawTaper)
+  const setSmoothing = useUIStore((s) => s.setDrawSmoothing)
+
   const color = isHighlighter ? highlighterColor : drawColor
   const setColor = isHighlighter ? setHighlighterColor : setDrawColor
   const width = isHighlighter ? highlighterWidth : drawWidth
@@ -67,15 +75,50 @@ export function DrawToolPanel() {
         label={isHighlighter ? 'Marker width' : 'Stroke width'}
         value={width}
         min={isHighlighter ? 6 : 1}
-        max={isHighlighter ? 60 : 40}
+        max={isHighlighter ? 100 : 80}
         step={1}
         format={(v) => `${Math.round(v)}px`}
         onChange={setWidth}
       />
+
+      {/* Pen-only shape controls. The highlighter is a constant-width round
+          marker, so taper / pressure / smoothing don't apply to it. */}
+      {!isHighlighter && (
+        <>
+          <SliderField
+            label="Taper"
+            value={taper}
+            min={0}
+            max={1}
+            step={0.05}
+            format={(v) => (v <= 0.02 ? 'Round' : v >= 0.98 ? 'Pointed' : `${Math.round(v * 100)}%`)}
+            onChange={setTaper}
+          />
+          <SliderField
+            label="Pressure"
+            value={thinning}
+            min={0}
+            max={1}
+            step={0.05}
+            format={(v) => (v <= 0.02 ? 'Uniform' : `${Math.round(v * 100)}%`)}
+            onChange={setThinning}
+          />
+          <SliderField
+            label="Smoothing"
+            value={smoothing}
+            min={0}
+            max={1}
+            step={0.05}
+            format={(v) => `${Math.round(v * 100)}%`}
+            onChange={setSmoothing}
+          />
+        </>
+      )}
+
       <p className="text-[11px] leading-relaxed text-muted-foreground/60">
         {isHighlighter
           ? 'Translucent marker — overlapping colours blend without darkening. Each stroke becomes a layer you can move, resize, and restyle.'
-          : 'Pressure-variable ink that tapers and thins with speed. Each stroke becomes a layer you can move, resize, and restyle.'}
+          : 'Pressure-variable ink. Taper shapes the ends (round → pointed), Pressure sets how much speed thins the line. Each stroke becomes a layer you can move, resize, and restyle.'}
       </p>
     </div>
   )

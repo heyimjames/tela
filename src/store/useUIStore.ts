@@ -83,6 +83,11 @@ interface UIStore {
   highlighterColor: BrandColor
   drawWidth: number
   highlighterWidth: number
+  // Pen shape controls (highlighter is a constant-width round marker, so these
+  // only apply to the pen): pressure→width variation, end taper, and smoothing.
+  drawThinning: number
+  drawTaper: number
+  drawSmoothing: number
 
   // Arrow-key nudge distances in design px. Plain arrow uses `nudgeSmall`;
   // Shift+arrow uses `nudgeLarge`.
@@ -106,6 +111,9 @@ interface UIStore {
   setHighlighterColor: (color: BrandColor) => void
   setDrawWidth: (width: number) => void
   setHighlighterWidth: (width: number) => void
+  setDrawThinning: (n: number) => void
+  setDrawTaper: (n: number) => void
+  setDrawSmoothing: (n: number) => void
   setNudgeSmall: (n: number) => void
   setNudgeLarge: (n: number) => void
 }
@@ -133,6 +141,9 @@ export const useUIStore = create<UIStore>((set) => ({
   highlighterColor: getBrandColor('gold-300'),
   drawWidth: 6,
   highlighterWidth: 22,
+  drawThinning: 0.55,
+  drawTaper: 1,
+  drawSmoothing: 0.5,
 
   nudgeSmall: 1,
   nudgeLarge: 10,
@@ -148,6 +159,9 @@ export const useUIStore = create<UIStore>((set) => ({
   setHighlighterColor: (color) => set({ highlighterColor: color }),
   setDrawWidth: (width) => set({ drawWidth: width }),
   setHighlighterWidth: (width) => set({ highlighterWidth: width }),
+  setDrawThinning: (n) => set({ drawThinning: n }),
+  setDrawTaper: (n) => set({ drawTaper: n }),
+  setDrawSmoothing: (n) => set({ drawSmoothing: n }),
   setNudgeSmall: (n) => set({ nudgeSmall: Math.max(0.1, n) }),
   setNudgeLarge: (n) => set({ nudgeLarge: Math.max(1, n) }),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),

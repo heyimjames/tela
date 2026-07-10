@@ -29,6 +29,10 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
   const mode = useUIStore((s) => s.drawMode)
   const strokeWidth = useUIStore((s) => (s.drawMode === 'highlighter' ? s.highlighterWidth : s.drawWidth))
   const color = useUIStore((s) => (s.drawMode === 'highlighter' ? s.highlighterColor : s.drawColor))
+  // Pen shape controls (ignored for the highlighter, which is a round marker).
+  const thinning = useUIStore((s) => s.drawThinning)
+  const taper = useUIStore((s) => s.drawTaper)
+  const streamline = useUIStore((s) => s.drawSmoothing)
 
   const localPoint = useCallback((e: React.PointerEvent): [number, number] => {
     const rect = wrapRef.current!.getBoundingClientRect()
@@ -112,6 +116,11 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
       color: drawColor,
       strokeWidth: drawWidth,
       mode: drawMode,
+      // Persist the pen shape so a committed stroke re-renders identically and
+      // can be restyled later. Highlighter keeps its constant-width round default.
+      ...(drawMode === 'pen'
+        ? { thinning: ui.drawThinning, taper: ui.drawTaper, streamline: ui.drawSmoothing }
+        : {}),
       natWidth: w,
       natHeight: h,
     } as Omit<DrawLayer, 'id' | 'zIndex'>)
@@ -127,6 +136,9 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
     mode,
     strokeWidth,
     color,
+    thinning,
+    taper,
+    streamline,
     drawing: preview.length > 0,
   }
 }

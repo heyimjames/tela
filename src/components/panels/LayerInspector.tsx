@@ -6,12 +6,13 @@ import { TextPropertiesPanel } from '@/components/panels/TextPropertiesPanel'
 import { ImagePropertiesPanel } from '@/components/panels/ImagePropertiesPanel'
 import { ShapePropertiesPanel } from '@/components/panels/ShapePropertiesPanel'
 import { SvgPropertiesPanel } from '@/components/panels/SvgPropertiesPanel'
+import { DrawPropertiesPanel } from '@/components/panels/DrawPropertiesPanel'
 import { GradientPropertiesPanel } from '@/components/panels/GradientPropertiesPanel'
 import { EffectsPanel } from '@/components/panels/EffectsPanel'
 import { PositionSizePanel } from '@/components/panels/PositionSizePanel'
 import { AutoLayoutPanel } from '@/components/panels/AutoLayoutPanel'
 import { LayoutGrid } from 'lucide-react'
-import type { TextLayer, ImageLayer, ShapeLayer, SvgLayer, GradientLayer, Layer } from '@/types/design'
+import type { TextLayer, ImageLayer, ShapeLayer, SvgLayer, GradientLayer, DrawLayer, Layer } from '@/types/design'
 
 /**
  * The properties inspector for the active layer. Shared by the desktop right
@@ -97,6 +98,8 @@ function LayerTypeInspector({ layer }: { layer: Layer }) {
       return isPro ? <GradientPropertiesPanel layer={layer as GradientLayer} /> : null
     case 'svg':
       return <SvgPropertiesPanel layer={layer as SvgLayer} />
+    case 'draw':
+      return <DrawPropertiesPanel layer={layer as DrawLayer} />
     default:
       return null
   }

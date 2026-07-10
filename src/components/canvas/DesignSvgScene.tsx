@@ -441,6 +441,8 @@ function DrawNode({ layer }: { layer: DrawLayer }) {
     size: layer.strokeWidth,
     mode: layer.mode,
     thinning: layer.thinning,
+    taper: layer.taper,
+    streamline: layer.streamline,
     last: true,
   })
   const path = (

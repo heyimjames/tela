@@ -41,6 +41,10 @@ export interface DrawStyleInput {
   mode?: DrawMode
   /** How much pressure narrows the stroke (0 = constant width, 1 = fully variable). */
   thinning?: number
+  /** End shape: 0 = round (blunt) caps, 1 = fully pointed taper. Pen default 1. */
+  taper?: number
+  /** Low-pass smoothing of the raw samples (0 = raw/wobbly, 1 = very smooth). */
+  streamline?: number
   /** True once the stroke is finished — enables the end taper/cap. */
   last?: boolean
 }
@@ -337,11 +341,15 @@ export function getDrawPath(input: DrawStyleInput): string {
 
   const isHighlighter = mode === 'highlighter'
   const thinning = input.thinning ?? (isHighlighter ? 0 : 0.55)
-  const streamline = isHighlighter ? 0.4 : 0.5
+  const streamline = input.streamline ?? (isHighlighter ? 0.4 : 0.5)
   const smoothing = 0.5
-  // Highlighter is a constant-width marker (no taper); the pen tapers its ends.
-  const taperStart = isHighlighter ? 0 : Math.min(size, 20)
-  const taperEnd = isHighlighter ? 0 : Math.min(size, 20)
+  // Taper is a 0..1 fraction of the natural end taper (capped at 20 design units
+  // or the stroke width, whichever is smaller). 0 → round caps (a blunt marker
+  // end), 1 → a fine point. Highlighter defaults to no taper (round marker).
+  const taperAmt = input.taper ?? (isHighlighter ? 0 : 1)
+  const taperLen = taperAmt * Math.min(size, 20)
+  const taperStart = taperLen
+  const taperEnd = taperLen
   // Simulate pressure from velocity unless real pen pressure was captured.
   const hasRealPressure = !!pressures && pressures.some((p) => p > 0 && p !== 0.5)
   const simulatePressure = !hasRealPressure

@@ -723,7 +723,7 @@ export function PreviewPanel() {
         {drawTool.drawing && (
           <svg className="absolute top-0 left-0 pointer-events-none" width={activeW} height={activeH} viewBox={`0 0 ${activeFrame?.width ?? docFormat.width} ${activeFrame?.height ?? docFormat.height}`}>
             <path
-              d={getDrawPath({ points: drawTool.preview, pressures: drawTool.previewPress, size: drawTool.strokeWidth, mode: drawTool.mode, last: false })}
+              d={getDrawPath({ points: drawTool.preview, pressures: drawTool.previewPress, size: drawTool.strokeWidth, mode: drawTool.mode, thinning: drawTool.mode === 'pen' ? drawTool.thinning : undefined, taper: drawTool.mode === 'pen' ? drawTool.taper : undefined, streamline: drawTool.mode === 'pen' ? drawTool.streamline : undefined, last: false })}
               fill={drawTool.color.hex}
               fillOpacity={drawTool.mode === 'highlighter' ? HIGHLIGHTER_OPACITY : undefined}
               style={drawTool.mode === 'highlighter' ? { mixBlendMode: 'multiply' } : undefined}
