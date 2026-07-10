@@ -16,6 +16,22 @@ export function starPoints(w: number, h: number, points = 5, innerRatio = 0.42):
   return out
 }
 
+/** A filled arrowhead triangle: tip at (tipX,tipY), pointing along (dirX,dirY). */
+export function arrowHeadPoints(tipX: number, tipY: number, dirX: number, dirY: number, size: number): [number, number][] {
+  const len = Math.hypot(dirX, dirY) || 1
+  const ux = dirX / len
+  const uy = dirY / len
+  const px = -uy // perpendicular
+  const py = ux
+  const bx = tipX - ux * size
+  const by = tipY - uy * size
+  return [
+    [tipX, tipY],
+    [bx + px * size * 0.55, by + py * size * 0.55],
+    [bx - px * size * 0.55, by - py * size * 0.55],
+  ]
+}
+
 /** SVG `points` attribute string from a list of coordinates. */
 export function toPointsAttr(pts: readonly (readonly [number, number])[]): string {
   return pts.map(([x, y]) => `${Math.round(x * 100) / 100},${Math.round(y * 100) / 100}`).join(' ')

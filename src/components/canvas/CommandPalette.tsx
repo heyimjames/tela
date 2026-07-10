@@ -13,6 +13,7 @@ import {
   Triangle,
   Star,
   Minus,
+  ArrowRight,
   FileCode,
   Undo2,
   Redo2,
@@ -59,6 +60,7 @@ export function CommandPalette() {
     { id: 'add-triangle', label: 'Add Triangle', icon: Triangle, category: 'Add', action: () => { addShape('triangle', 'Triangle', 'accent-2'); setOpen(false) } },
     { id: 'add-star', label: 'Add Star', icon: Star, category: 'Add', action: () => { addShape('star', 'Star', 'orange'); setOpen(false) } },
     { id: 'add-line', label: 'Add Line', icon: Minus, category: 'Add', action: () => { useDesignStore.getState().addLayer({ type: 'shape', name: 'Line', visible: true, locked: false, opacity: 1, x: 100, y: 200, width: 240, height: 0, rotation: 0, shape: 'line', fill: getBrandColor('charcoal'), borderRadius: 0, stroke: { color: getBrandColor('charcoal'), width: 3 }, lineCap: 'round' } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>); setOpen(false) } },
+    { id: 'add-arrow', label: 'Add Arrow', icon: ArrowRight, category: 'Add', action: () => { useDesignStore.getState().addLayer({ type: 'shape', name: 'Arrow', visible: true, locked: false, opacity: 1, x: 100, y: 200, width: 240, height: 0, rotation: 0, shape: 'line', fill: getBrandColor('charcoal'), borderRadius: 0, stroke: { color: getBrandColor('charcoal'), width: 3 }, lineCap: 'round', arrowEnd: true } satisfies Omit<ShapeLayer, 'id' | 'zIndex'>); setOpen(false) } },
 
     // Edit
     { id: 'undo', label: 'Undo', shortcut: '⌘Z', icon: Undo2, category: 'Edit', action: () => { useDesignStore.getState().undo(); setOpen(false) } },

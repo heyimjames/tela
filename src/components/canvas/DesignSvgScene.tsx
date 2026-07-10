@@ -4,7 +4,7 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { applySvgColorOverrides, applySvgStrokeWidth } from '@/engine/svgColors'
 import { FONT_FAMILY } from '@/engine/textMeasure'
 import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
-import { trianglePoints, starPoints, toPointsAttr } from '@/lib/geometry'
+import { trianglePoints, starPoints, toPointsAttr, arrowHeadPoints } from '@/lib/geometry'
 import type {
   DesignDocument,
   Layer,
@@ -333,18 +333,23 @@ function ShapeNode({ layer }: { layer: ShapeLayer }) {
   if (shape === 'line') {
     const cpx = layer.controlPointX
     const cpy = layer.controlPointY
+    const cy = height / 2
     const d =
       cpx != null && cpy != null
-        ? `M 0 ${height / 2} Q ${cpx * width} ${cpy * height} ${width} ${height / 2}`
-        : `M 0 ${height / 2} L ${width} ${height / 2}`
+        ? `M 0 ${cy} Q ${cpx * width} ${cpy * height} ${width} ${cy}`
+        : `M 0 ${cy} L ${width} ${cy}`
+    const lineColor = stroke?.color.hex ?? fill.hex
+    const sw = stroke?.width ?? 2
+    // Arrowheads point along the tangent at each end (chord for a straight line).
+    const ctrlX = cpx != null ? cpx * width : width / 2
+    const ctrlY = cpy != null ? cpy * height : cy
+    const headSize = Math.min(Math.max(sw * 3.2, 8), width * 0.4)
     return (
-      <path
-        d={d}
-        fill="none"
-        stroke={stroke?.color.hex ?? fill.hex}
-        strokeWidth={stroke?.width ?? 2}
-        strokeLinecap={layer.lineCap ?? 'butt'}
-      />
+      <g>
+        <path d={d} fill="none" stroke={lineColor} strokeWidth={sw} strokeLinecap={layer.lineCap ?? 'butt'} />
+        {layer.arrowEnd && <polygon points={toPointsAttr(arrowHeadPoints(width, cy, width - ctrlX, cy - ctrlY, headSize))} fill={lineColor} strokeLinejoin="round" />}
+        {layer.arrowStart && <polygon points={toPointsAttr(arrowHeadPoints(0, cy, 0 - ctrlX, cy - ctrlY, headSize))} fill={lineColor} strokeLinejoin="round" />}
+      </g>
     )
   }
 

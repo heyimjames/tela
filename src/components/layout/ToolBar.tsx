@@ -6,17 +6,18 @@ import { LayoutPicker } from '@/components/panels/LayoutPicker'
 import { useIsProMode } from '@/hooks/useIsProMode'
 import { measureImportedSvg } from '@/engine/svgMeasure'
 import {
-  MousePointer2, Type, ImageIcon, Square, Circle, Triangle, Star, Minus, Palette, FileCode, Hand, LayoutTemplate, LayoutGrid, MessageCircle, ChevronDown,
+  MousePointer2, Type, ImageIcon, Square, Circle, Triangle, Star, Minus, ArrowRight, Palette, FileCode, Hand, LayoutTemplate, LayoutGrid, MessageCircle, ChevronDown,
 } from 'lucide-react'
 import type { ShapeLayer, GradientLayer, ImageLayer, SvgLayer } from '@/types/design'
 
-// The shape tool is a small dropdown: rectangle / ellipse / triangle / star / line.
-const SHAPES: { id: ShapeLayer['shape']; label: string; Icon: typeof Square; make: () => Partial<ShapeLayer> }[] = [
+// The shape tool is a small dropdown: rectangle / ellipse / triangle / star / line / arrow.
+const SHAPES: { id: string; label: string; Icon: typeof Square; make: () => Partial<ShapeLayer> }[] = [
   { id: 'rectangle', label: 'Rectangle', Icon: Square, make: () => ({ shape: 'rectangle', name: 'Rectangle', fill: getBrandColor('brand-dark'), borderRadius: 7 }) },
   { id: 'ellipse', label: 'Ellipse', Icon: Circle, make: () => ({ shape: 'ellipse', name: 'Ellipse', fill: getBrandColor('brand-accent'), borderRadius: 0 }) },
   { id: 'triangle', label: 'Triangle', Icon: Triangle, make: () => ({ shape: 'triangle', name: 'Triangle', fill: getBrandColor('accent-2'), borderRadius: 0 }) },
   { id: 'star', label: 'Star', Icon: Star, make: () => ({ shape: 'star', name: 'Star', fill: getBrandColor('orange'), borderRadius: 0 }) },
   { id: 'line', label: 'Line', Icon: Minus, make: () => ({ shape: 'line', name: 'Line', fill: getBrandColor('charcoal'), borderRadius: 0, width: 240, height: 0, stroke: { color: getBrandColor('charcoal'), width: 3 }, lineCap: 'round' }) },
+  { id: 'arrow', label: 'Arrow', Icon: ArrowRight, make: () => ({ shape: 'line', name: 'Arrow', fill: getBrandColor('charcoal'), borderRadius: 0, width: 240, height: 0, stroke: { color: getBrandColor('charcoal'), width: 3 }, lineCap: 'round', arrowEnd: true }) },
 ]
 
 function ShapeMenu({ addLayer }: { addLayer: (l: Record<string, unknown>) => void }) {

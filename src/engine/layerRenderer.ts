@@ -10,7 +10,7 @@ import type {
 import { getOrLoadImage, svgImageCache } from '@/engine/renderers/imageCache'
 import { applySvgColorOverrides } from '@/engine/svgColors'
 import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
-import { trianglePoints, starPoints } from '@/lib/geometry'
+import { trianglePoints, starPoints, arrowHeadPoints } from '@/lib/geometry'
 import { renderTextLayer } from '@/engine/renderers/textRenderer'
 import { renderGradientLayer } from '@/engine/renderers/gradientRenderer'
 
@@ -340,28 +340,40 @@ export function renderShapeLayer(
       break
     }
     case 'line': {
+      // Match the SVG scene: a line runs horizontally across the box at y = h/2
+      // (angle it by rotating the layer), so what's exported matches what's shown.
+      const cy = h / 2
+      const color = layer.stroke?.color.hex ?? layer.fill.hex
       ctx.beginPath()
       ctx.lineCap = layer.lineCap ?? 'round'
-      ctx.strokeStyle = layer.fill.hex
+      ctx.strokeStyle = color
       ctx.lineWidth = Math.max(layer.stroke?.width ?? 2, 1) * scale
-
-      const x0 = 0
-      const y0 = 0
-      const x1 = w
-      const y1 = h
-
-      ctx.moveTo(x0, y0)
-
-      // Bezier control point (if set)
+      ctx.moveTo(0, cy)
       if (layer.controlPointX != null && layer.controlPointY != null) {
-        const cpx = layer.controlPointX * w
-        const cpy = layer.controlPointY * h
-        ctx.quadraticCurveTo(cpx, cpy, x1, y1)
+        ctx.quadraticCurveTo(layer.controlPointX * w, layer.controlPointY * h, w, cy)
       } else {
-        ctx.lineTo(x1, y1)
+        ctx.lineTo(w, cy)
       }
-
       ctx.stroke()
+
+      // Arrowheads (filled triangles) at either end.
+      if (layer.arrowStart || layer.arrowEnd) {
+        const ctrlX = layer.controlPointX != null ? layer.controlPointX * w : w / 2
+        const ctrlY = layer.controlPointY != null ? layer.controlPointY * h : cy
+        const headSize = Math.min(Math.max((layer.stroke?.width ?? 2) * scale * 3.2, 8 * scale), w * 0.4)
+        const drawHead = (tipX: number, tipY: number, dx: number, dy: number) => {
+          const pts = arrowHeadPoints(tipX, tipY, dx, dy, headSize)
+          ctx.beginPath()
+          ctx.moveTo(pts[0][0], pts[0][1])
+          ctx.lineTo(pts[1][0], pts[1][1])
+          ctx.lineTo(pts[2][0], pts[2][1])
+          ctx.closePath()
+          ctx.fillStyle = color
+          ctx.fill()
+        }
+        if (layer.arrowEnd) drawHead(w, cy, w - ctrlX, cy - ctrlY)
+        if (layer.arrowStart) drawHead(0, cy, 0 - ctrlX, cy - ctrlY)
+      }
       break
     }
   }

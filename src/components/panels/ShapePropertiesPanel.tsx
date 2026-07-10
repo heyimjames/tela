@@ -110,6 +110,29 @@ export function ShapePropertiesPanel({ layer }: Props) {
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <label className="text-[13px] text-muted-foreground font-normal">Arrowheads</label>
+            <div className="flex gap-1">
+              {([
+                { label: 'Start', key: 'arrowStart' as const },
+                { label: 'End', key: 'arrowEnd' as const },
+              ]).map((a) => {
+                const on = !!layer[a.key]
+                return (
+                  <button
+                    key={a.key}
+                    className={`flex-1 py-1.5 text-[12px] rounded-[5px] transition-colors duration-150 ${
+                      on ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                    onClick={() => { pushSnapshot(); updateLayer<ShapeLayer>(layer.id, { [a.key]: !on }) }}
+                  >
+                    {a.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <SliderField
             label="Curve"
             value={layer.controlPointY ?? 0.5}

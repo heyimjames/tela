@@ -207,6 +207,9 @@ export interface ShapeLayer extends LayerBase {
   borderRadius: number
   // Line-specific
   lineCap?: LineCap
+  // Arrowheads on a line (either end).
+  arrowStart?: boolean
+  arrowEnd?: boolean
   // Bezier control point (normalized 0-1 relative to line bounding box)
   controlPointX?: number
   controlPointY?: number
