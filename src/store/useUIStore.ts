@@ -144,9 +144,10 @@ export const useUIStore = create<UIStore>((set) => ({
   drawWidth: 6,
   highlighterWidth: 22,
   drawThinning: 0.55,
-  // A gentle taper (not a full calligraphic point) reads like a real pen and
-  // keeps short strokes visible; crank it to "Pointed" for sharp ends.
-  drawTaper: 0.5,
+  // Round caps by default (taper 0) — soft ends, not a point. Any taper > 0
+  // narrows the stroke to an actual point at the tip; the pen still looks lively
+  // from pressure/thinning. Crank Taper toward "Pointed" for calligraphic ends.
+  drawTaper: 0,
   drawSmoothing: 0.5,
   drawOpacity: 1,
 
