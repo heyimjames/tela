@@ -142,7 +142,9 @@ export const useUIStore = create<UIStore>((set) => ({
   drawWidth: 6,
   highlighterWidth: 22,
   drawThinning: 0.55,
-  drawTaper: 1,
+  // A gentle taper (not a full calligraphic point) reads like a real pen and
+  // keeps short strokes visible; crank it to "Pointed" for sharp ends.
+  drawTaper: 0.5,
   drawSmoothing: 0.5,
 
   nudgeSmall: 1,

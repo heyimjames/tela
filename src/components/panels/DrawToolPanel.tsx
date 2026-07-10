@@ -2,12 +2,56 @@ import { Pen, Highlighter } from 'lucide-react'
 import { useUIStore } from '@/store/useUIStore'
 import { BrandColorPicker } from '@/components/panels/BrandColorPicker'
 import { SliderField } from '@/components/controls/SliderField'
-import type { DrawMode } from '@/types/design'
+import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
+import type { BrandColor, DrawMode } from '@/types/design'
 
 const MODES: { id: DrawMode; label: string; Icon: typeof Pen }[] = [
   { id: 'pen', label: 'Pen', Icon: Pen },
   { id: 'highlighter', label: 'Marker', Icon: Highlighter },
 ]
+
+// Quick-pick sizes (S/M/L/XL), tldraw-style — faster than dragging the slider.
+const PEN_SIZES = [3, 6, 12, 24]
+const MARKER_SIZES = [12, 22, 40, 64]
+const SIZE_LABELS = ['S', 'M', 'L', 'XL']
+
+// A sample squiggle (in a 600×120 space) drawn with the current settings, so you
+// see the actual pen before committing. Varying segment lengths let the
+// velocity-simulated pressure show, the way a real stroke would.
+const PREVIEW_PTS: [number, number][] = [
+  [40, 88], [130, 34], [220, 86], [310, 36], [400, 84], [500, 46], [568, 72],
+]
+
+function PenPreview({ mode, width, color, thinning, taper, smoothing }: {
+  mode: DrawMode; width: number; color: BrandColor; thinning: number; taper: number; smoothing: number
+}) {
+  const isHighlighter = mode === 'highlighter'
+  const d = getDrawPath({
+    points: PREVIEW_PTS,
+    size: width,
+    mode,
+    thinning: isHighlighter ? undefined : thinning,
+    taper: isHighlighter ? undefined : taper,
+    streamline: isHighlighter ? undefined : smoothing,
+    last: true,
+  })
+  return (
+    <svg viewBox="0 0 600 120" preserveAspectRatio="xMidYMid meet" className="w-full h-14 rounded-[6px] bg-muted/40">
+      <path
+        d={d}
+        fill={color.hex}
+        fillOpacity={isHighlighter ? HIGHLIGHTER_OPACITY : 1}
+        style={isHighlighter ? { mixBlendMode: 'multiply' } : undefined}
+      />
+    </svg>
+  )
+}
+
+// A dot of proportional size for the S/M/L/XL buttons.
+function SizeDot({ px }: { px: number }) {
+  const d = Math.max(4, Math.min(18, 4 + px * 0.5))
+  return <span className="rounded-full bg-current" style={{ width: d, height: d }} />
+}
 
 /**
  * Draw tool settings — shown in the right sidebar while the draw tool is active
@@ -70,16 +114,42 @@ export function DrawToolPanel() {
         ))}
       </div>
 
+      {/* What the current pen will actually look like. */}
+      <PenPreview mode={mode} width={width} color={color} thinning={thinning} taper={taper} smoothing={smoothing} />
+
       <BrandColorPicker label="Color" value={color} onChange={setColor} />
-      <SliderField
-        label={isHighlighter ? 'Marker width' : 'Stroke width'}
-        value={width}
-        min={isHighlighter ? 6 : 1}
-        max={isHighlighter ? 100 : 80}
-        step={1}
-        format={(v) => `${Math.round(v)}px`}
-        onChange={setWidth}
-      />
+
+      {/* Quick sizes + a slider for fine control. */}
+      <div className="space-y-1.5">
+        <label className="text-[13px] text-muted-foreground font-normal">{isHighlighter ? 'Marker width' : 'Stroke width'}</label>
+        <div className="flex gap-1">
+          {(isHighlighter ? MARKER_SIZES : PEN_SIZES).map((sz, i) => {
+            const active = Math.round(width) === sz
+            return (
+              <button
+                key={sz}
+                title={`${SIZE_LABELS[i]} — ${sz}px`}
+                aria-label={`${SIZE_LABELS[i]} (${sz}px)`}
+                className={`flex-1 flex items-center justify-center h-9 rounded-[5px] transition-colors duration-150 cursor-pointer ${
+                  active ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+                onClick={() => setWidth(sz)}
+              >
+                <SizeDot px={sz} />
+              </button>
+            )
+          })}
+        </div>
+        <SliderField
+          label=""
+          value={width}
+          min={isHighlighter ? 6 : 1}
+          max={isHighlighter ? 100 : 80}
+          step={1}
+          format={(v) => `${Math.round(v)}px`}
+          onChange={setWidth}
+        />
+      </div>
 
       {/* Pen-only shape controls. The highlighter is a constant-width round
           marker, so taper / pressure / smoothing don't apply to it. */}
