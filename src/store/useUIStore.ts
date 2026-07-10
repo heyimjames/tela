@@ -88,6 +88,7 @@ interface UIStore {
   drawThinning: number
   drawTaper: number
   drawSmoothing: number
+  drawOpacity: number
 
   // Arrow-key nudge distances in design px. Plain arrow uses `nudgeSmall`;
   // Shift+arrow uses `nudgeLarge`.
@@ -114,6 +115,7 @@ interface UIStore {
   setDrawThinning: (n: number) => void
   setDrawTaper: (n: number) => void
   setDrawSmoothing: (n: number) => void
+  setDrawOpacity: (n: number) => void
   setNudgeSmall: (n: number) => void
   setNudgeLarge: (n: number) => void
 }
@@ -146,6 +148,7 @@ export const useUIStore = create<UIStore>((set) => ({
   // keeps short strokes visible; crank it to "Pointed" for sharp ends.
   drawTaper: 0.5,
   drawSmoothing: 0.5,
+  drawOpacity: 1,
 
   nudgeSmall: 1,
   nudgeLarge: 10,
@@ -164,6 +167,7 @@ export const useUIStore = create<UIStore>((set) => ({
   setDrawThinning: (n) => set({ drawThinning: n }),
   setDrawTaper: (n) => set({ drawTaper: n }),
   setDrawSmoothing: (n) => set({ drawSmoothing: n }),
+  setDrawOpacity: (n) => set({ drawOpacity: n }),
   setNudgeSmall: (n) => set({ nudgeSmall: Math.max(0.1, n) }),
   setNudgeLarge: (n) => set({ nudgeLarge: Math.max(1, n) }),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),

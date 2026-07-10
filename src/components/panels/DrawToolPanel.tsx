@@ -1,14 +1,10 @@
-import { Pen, Highlighter } from 'lucide-react'
+import { Pen, Highlighter, Eraser } from 'lucide-react'
 import { useUIStore } from '@/store/useUIStore'
+import { useDesignStore } from '@/store/useDesignStore'
 import { BrandColorPicker } from '@/components/panels/BrandColorPicker'
 import { SliderField } from '@/components/controls/SliderField'
 import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
 import type { BrandColor, DrawMode } from '@/types/design'
-
-const MODES: { id: DrawMode; label: string; Icon: typeof Pen }[] = [
-  { id: 'pen', label: 'Pen', Icon: Pen },
-  { id: 'highlighter', label: 'Marker', Icon: Highlighter },
-]
 
 // Quick-pick sizes (S/M/L/XL), tldraw-style — faster than dragging the slider.
 const PEN_SIZES = [3, 6, 12, 24]
@@ -62,8 +58,11 @@ function SizeDot({ px }: { px: number }) {
  * committed DrawLayer both read these from the UI store.
  */
 export function DrawToolPanel() {
+  const tool = useDesignStore((s) => s.tool)
+  const setTool = useDesignStore((s) => s.setTool)
   const mode = useUIStore((s) => s.drawMode)
   const setMode = useUIStore((s) => s.setDrawMode)
+  const isEraser = tool === 'eraser'
   const isHighlighter = mode === 'highlighter'
 
   const drawColor = useUIStore((s) => s.drawColor)
@@ -79,34 +78,43 @@ export function DrawToolPanel() {
   const thinning = useUIStore((s) => s.drawThinning)
   const taper = useUIStore((s) => s.drawTaper)
   const smoothing = useUIStore((s) => s.drawSmoothing)
+  const opacity = useUIStore((s) => s.drawOpacity)
   const setThinning = useUIStore((s) => s.setDrawThinning)
   const setTaper = useUIStore((s) => s.setDrawTaper)
   const setSmoothing = useUIStore((s) => s.setDrawSmoothing)
+  const setOpacity = useUIStore((s) => s.setDrawOpacity)
 
   const color = isHighlighter ? highlighterColor : drawColor
   const setColor = isHighlighter ? setHighlighterColor : setDrawColor
   const width = isHighlighter ? highlighterWidth : drawWidth
   const setWidth = isHighlighter ? setHighlighterWidth : setDrawWidth
 
+  // Pen / Marker set the draw tool + mode; Eraser is its own tool.
+  const modes = [
+    { id: 'pen', label: 'Pen', Icon: Pen, active: tool === 'draw' && !isHighlighter, onClick: () => { setTool('draw'); setMode('pen') } },
+    { id: 'marker', label: 'Marker', Icon: Highlighter, active: tool === 'draw' && isHighlighter, onClick: () => { setTool('draw'); setMode('highlighter') } },
+    { id: 'eraser', label: 'Eraser', Icon: Eraser, active: isEraser, onClick: () => setTool('eraser') },
+  ]
+
   return (
     <div className="space-y-4">
       <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
-        Draw
+        {isEraser ? 'Eraser' : 'Draw'}
       </div>
 
-      {/* Pen ⇄ highlighter segmented toggle. */}
+      {/* Pen / Marker / Eraser segmented toggle. */}
       <div className="flex gap-1">
-        {MODES.map(({ id, label, Icon }) => (
+        {modes.map(({ id, label, Icon, active, onClick }) => (
           <button
             key={id}
             className={`
               flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11px] rounded-[5px]
               transition-[color,background-color,transform] duration-150 active:scale-[0.97]
-              ${mode === id
+              ${active
                 ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'}
             `}
-            onClick={() => setMode(id)}
+            onClick={onClick}
           >
             <Icon className="size-3.5" strokeWidth={2} />
             {label}
@@ -114,6 +122,12 @@ export function DrawToolPanel() {
         ))}
       </div>
 
+      {isEraser ? (
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          Drag across a stroke to erase it. Only freehand strokes are affected — press <span className="font-medium text-foreground">E</span> to toggle, or pick the Pen to draw again.
+        </p>
+      ) : (
+        <>
       {/* What the current pen will actually look like. */}
       <PenPreview mode={mode} width={width} color={color} thinning={thinning} taper={taper} smoothing={smoothing} />
 
@@ -182,6 +196,15 @@ export function DrawToolPanel() {
             format={(v) => `${Math.round(v * 100)}%`}
             onChange={setSmoothing}
           />
+          <SliderField
+            label="Opacity"
+            value={opacity}
+            min={0.1}
+            max={1}
+            step={0.05}
+            format={(v) => `${Math.round(v * 100)}%`}
+            onChange={setOpacity}
+          />
         </>
       )}
 
@@ -190,6 +213,8 @@ export function DrawToolPanel() {
           ? 'Translucent marker — overlapping colours blend without darkening. Each stroke becomes a layer you can move, resize, and restyle.'
           : 'Pressure-variable ink. Taper shapes the ends (round → pointed), Pressure sets how much speed thins the line. Each stroke becomes a layer you can move, resize, and restyle.'}
       </p>
+        </>
+      )}
     </div>
   )
 }

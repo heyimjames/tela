@@ -367,6 +367,35 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // E — eraser (toggle)
+      if (e.key === 'e' && !isMeta && !e.altKey) {
+        state.setTool(state.tool === 'eraser' ? 'select' : 'eraser')
+        e.preventDefault()
+        return
+      }
+
+      // While the pen is active: [ / ] thin/thicken the stroke, 1–4 pick a size
+      // preset. Mirrors the S/M/L/XL buttons and Procreate-style bracket keys.
+      if (state.tool === 'draw' && !isMeta) {
+        const ui = useUIStore.getState()
+        const isH = ui.drawMode === 'highlighter'
+        const setW = isH ? ui.setHighlighterWidth : ui.setDrawWidth
+        if (e.key === '[' || e.key === ']') {
+          const cur = isH ? ui.highlighterWidth : ui.drawWidth
+          const [min, max] = isH ? [6, 100] : [1, 80]
+          const delta = (e.key === ']' ? 1 : -1) * (e.shiftKey ? 6 : 2)
+          setW(Math.max(min, Math.min(max, cur + delta)))
+          e.preventDefault()
+          return
+        }
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          const sizes = isH ? [12, 22, 40, 64] : [3, 6, 12, 24]
+          setW(sizes[Number(e.key) - 1])
+          e.preventDefault()
+          return
+        }
+      }
+
       // T — add text
       if (e.key === 't' && !isMeta) {
         state.addLayer(createTextLayer())

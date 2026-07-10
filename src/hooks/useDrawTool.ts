@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useUIStore } from '@/store/useUIStore'
+import { distToPolyline } from '@/lib/geometry'
 import type { DrawLayer, DrawMode } from '@/types/design'
 
 /**
@@ -20,8 +21,10 @@ import type { DrawLayer, DrawMode } from '@/types/design'
  */
 export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoom: number) {
   const drawingRef = useRef(false)
+  const erasingRef = useRef(false)
   const ptsRef = useRef<[number, number][]>([])
   const pressRef = useRef<number[]>([])
+  const straightRef = useRef(false) // Shift held → straighten to a single segment
   const [preview, setPreview] = useState<[number, number][]>([])
   const [previewPress, setPreviewPress] = useState<number[]>([])
 
@@ -33,6 +36,7 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
   const thinning = useUIStore((s) => s.drawThinning)
   const taper = useUIStore((s) => s.drawTaper)
   const streamline = useUIStore((s) => s.drawSmoothing)
+  const opacity = useUIStore((s) => s.drawOpacity)
 
   const localPoint = useCallback((e: React.PointerEvent): [number, number] => {
     const rect = wrapRef.current!.getBoundingClientRect()
@@ -43,19 +47,60 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
   const pressureOf = (e: React.PointerEvent): number =>
     e.pointerType === 'mouse' ? 0.5 : (e.pressure > 0 ? e.pressure : 0.5)
 
+  // With Shift held, straighten the stroke to its first + latest point so it
+  // reads as a clean straight segment (underlines, arrows, borders).
+  const strokeFor = useCallback((): { pts: [number, number][]; press: number[] } => {
+    const p = ptsRef.current
+    const pr = pressRef.current
+    if (straightRef.current && p.length >= 2) {
+      return { pts: [p[0], p[p.length - 1]], press: [pr[0], pr[pr.length - 1]] }
+    }
+    return { pts: p, press: pr }
+  }, [])
+
+  // Object eraser: remove any freehand stroke whose ink is under the cursor.
+  const eraseAt = useCallback((x: number, y: number) => {
+    const d = useDesignStore.getState()
+    const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+    const slop = (coarse ? 24 : 16) / (zoom || 1)
+    const remove: string[] = []
+    for (const layer of d.document.layers) {
+      if (layer.type !== 'draw' || !layer.visible || layer.locked) continue
+      const sx = layer.natWidth ? layer.width / layer.natWidth : 1
+      const sy = layer.natHeight ? layer.height / layer.natHeight : 1
+      const avg = (Math.abs(sx) + Math.abs(sy)) / 2 || 1
+      const lx = (x - layer.x) / (sx || 1)
+      const ly = (y - layer.y) / (sy || 1)
+      if (distToPolyline(lx, ly, layer.points) <= (layer.strokeWidth ?? 4) / 2 + slop / avg) remove.push(layer.id)
+    }
+    if (remove.length) d.removeLayers(remove)
+  }, [zoom])
+
   const onPointerDown = useCallback((e: React.PointerEvent): boolean => {
-    if (useDesignStore.getState().tool !== 'draw') return false
+    const tool = useDesignStore.getState().tool
+    if (tool === 'eraser') {
+      e.preventDefault()
+      try { (e.target as Element).setPointerCapture?.(e.pointerId) } catch { /* ignore */ }
+      erasingRef.current = true
+      useDesignStore.getState().pushSnapshot() // one undo for the whole erase gesture
+      const [x, y] = localPoint(e)
+      eraseAt(x, y)
+      return true
+    }
+    if (tool !== 'draw') return false
     e.preventDefault()
     try { (e.target as Element).setPointerCapture?.(e.pointerId) } catch { /* ignore */ }
     drawingRef.current = true
+    straightRef.current = e.shiftKey
     ptsRef.current = [localPoint(e)]
     pressRef.current = [pressureOf(e)]
     setPreview([...ptsRef.current])
     setPreviewPress([...pressRef.current])
     return true
-  }, [localPoint])
+  }, [localPoint, eraseAt])
 
   const onPointerMove = useCallback((e: React.PointerEvent): boolean => {
+    if (erasingRef.current) { const [x, y] = localPoint(e); eraseAt(x, y); return true }
     if (!drawingRef.current) return false
     // Coalesced events give a denser, smoother sample stream on capable devices.
     const events = typeof e.nativeEvent.getCoalescedEvents === 'function'
@@ -66,16 +111,20 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
       ptsRef.current.push([(ev.clientX - rect.left) / zoom, (ev.clientY - rect.top) / zoom])
       pressRef.current.push(ev.pointerType === 'mouse' ? 0.5 : (ev.pressure > 0 ? ev.pressure : 0.5))
     }
-    setPreview([...ptsRef.current])
-    setPreviewPress([...pressRef.current])
+    straightRef.current = e.shiftKey
+    const s = strokeFor()
+    setPreview([...s.pts])
+    setPreviewPress([...s.press])
     return true
-  }, [wrapRef, zoom])
+  }, [wrapRef, zoom, localPoint, eraseAt, strokeFor])
 
   const onPointerUp = useCallback((): boolean => {
+    if (erasingRef.current) { erasingRef.current = false; return true }
     if (!drawingRef.current) return false
     drawingRef.current = false
-    const pts = ptsRef.current
-    const press = pressRef.current
+    const s = strokeFor()
+    const pts = s.pts
+    const press = s.press
     ptsRef.current = []
     pressRef.current = []
     setPreview([])
@@ -105,7 +154,7 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
       name: drawMode === 'highlighter' ? 'Highlight' : 'Drawing',
       visible: true,
       locked: false,
-      opacity: 1,
+      opacity: drawMode === 'pen' ? ui.drawOpacity : 1,
       x: minX - pad,
       y: minY - pad,
       width: w,
@@ -125,7 +174,7 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
       natHeight: h,
     } as Omit<DrawLayer, 'id' | 'zIndex'>)
     return true
-  }, [])
+  }, [strokeFor])
 
   return {
     onPointerDown,
@@ -139,6 +188,7 @@ export function useDrawTool(wrapRef: React.RefObject<HTMLDivElement | null>, zoo
     thinning,
     taper,
     streamline,
+    opacity,
     drawing: preview.length > 0,
   }
 }

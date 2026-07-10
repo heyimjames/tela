@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { nanoid } from 'nanoid'
 import { useDesignStore } from '@/store/useDesignStore'
 import { getBrandColor } from '@/brand/palette'
+import { distToPolyline } from '@/lib/geometry'
 import { useSnapComputation } from '@/hooks/canvas/useSnapComputation'
 import { computeResize } from '@/hooks/canvas/useResizeComputation'
 import type { SnapGuide, SpacingGuide } from '@/hooks/canvas/useSnapComputation'
@@ -38,25 +39,6 @@ interface GroupResizeStart {
 }
 
 const MIN_GROUP_SIZE = 8 // px — floor for the combined bbox so it can't collapse
-
-// Shortest distance from a point to a polyline (min over each segment). Used to
-// hit-test freehand strokes against the actual ink instead of their bbox.
-function distToPolyline(px: number, py: number, pts: readonly (readonly [number, number])[]): number {
-  if (pts.length === 0) return Infinity
-  if (pts.length === 1) return Math.hypot(px - pts[0][0], py - pts[0][1])
-  let min = Infinity
-  for (let i = 1; i < pts.length; i++) {
-    const [x1, y1] = pts[i - 1]
-    const [x2, y2] = pts[i]
-    const dx = x2 - x1
-    const dy = y2 - y1
-    const l2 = dx * dx + dy * dy
-    const t = l2 ? Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / l2)) : 0
-    const d = Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy))
-    if (d < min) min = d
-  }
-  return min
-}
 
 // Scale every group member relative to a fixed anchor edge. Corner handles are
 // free-form (independent axes) unless Shift is held, in which case they scale

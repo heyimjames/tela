@@ -9,6 +9,8 @@ import type { Layer } from '@/types/design'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { DesignSvgScene } from '@/components/canvas/DesignSvgScene'
 import { FloatingToolbar } from '@/components/layout/FloatingToolbar'
+import { DrawQuickBar } from '@/components/layout/DrawQuickBar'
+import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 import { FrameThumbnail } from '@/components/canvas/FrameThumbnail'
 import { ShaderBackgroundOverlay } from '@/components/canvas/ShaderBackground'
 import { GridOverlay } from '@/components/canvas/GridOverlay'
@@ -613,7 +615,22 @@ export function PreviewPanel() {
     window.removeEventListener('pointerup', onMarqueeUp)
   }, [onFrameDragMove, onFrameDragUp, onMarqueeMove, onMarqueeUp])
 
-  const cursor = tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : (tool === 'shape' || tool === 'draw') ? 'crosshair' : hoverCursor
+  // Brush cursor: a ring sized to the pen (or a fixed eraser ring) that follows
+  // the cursor on desktop, so you can see the tool's footprint before drawing.
+  const coarsePointer = useCoarsePointer()
+  const [brush, setBrush] = useState<{ x: number; y: number } | null>(null)
+  const showBrush = !coarsePointer && (tool === 'draw' || tool === 'eraser') && !!brush
+  const updateBrush = useCallback((e: React.PointerEvent) => {
+    if (coarsePointer || (tool !== 'draw' && tool !== 'eraser')) { setBrush(null); return }
+    const rect = activeWrapRef.current?.getBoundingClientRect()
+    if (rect) setBrush({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+  }, [coarsePointer, tool])
+  const brushSize = tool === 'eraser' ? 36 : Math.max(6, drawTool.strokeWidth * zoom)
+
+  // Hide the native cursor while the brush ring is shown, so only the ring reads.
+  const cursor = showBrush
+    ? 'none'
+    : tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : (tool === 'shape' || tool === 'draw' || tool === 'eraser') ? 'crosshair' : hoverCursor
   const activeW = (activeFrame?.width ?? docFormat.width) * zoom
   const activeH = (activeFrame?.height ?? docFormat.height) * zoom
 
@@ -712,9 +729,9 @@ export function PreviewPanel() {
         className="absolute inset-0"
         style={{ overflow: 'visible', cursor }}
         onPointerDown={(e) => { if (drawTool.onPointerDown(e)) return; handlePointerDown(e) }}
-        onPointerMove={(e) => { if (drawTool.onPointerMove(e)) return; handlePointerMove(e) }}
+        onPointerMove={(e) => { updateBrush(e); if (drawTool.onPointerMove(e)) return; handlePointerMove(e) }}
         onPointerUp={(e) => { if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
-        onPointerLeave={(e) => { useDesignStore.getState().setHoveredLayerId(null); if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
+        onPointerLeave={(e) => { setBrush(null); useDesignStore.getState().setHoveredLayerId(null); if (drawTool.onPointerUp()) return; handlePointerUp(e) }}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleStackContextMenu}
       >
@@ -726,13 +743,27 @@ export function PreviewPanel() {
             <path
               d={getDrawPath({ points: drawTool.preview, pressures: drawTool.previewPress, size: drawTool.strokeWidth, mode: drawTool.mode, thinning: drawTool.mode === 'pen' ? drawTool.thinning : undefined, taper: drawTool.mode === 'pen' ? drawTool.taper : undefined, streamline: drawTool.mode === 'pen' ? drawTool.streamline : undefined, last: false })}
               fill={drawTool.color.hex}
-              fillOpacity={drawTool.mode === 'highlighter' ? HIGHLIGHTER_OPACITY : undefined}
+              fillOpacity={drawTool.mode === 'highlighter' ? HIGHLIGHTER_OPACITY : drawTool.opacity}
               style={drawTool.mode === 'highlighter' ? { mixBlendMode: 'multiply' } : undefined}
             />
           </svg>
         )}
         <AutoLayoutOverlay zoom={zoom} />
         <HoverOverlay zoom={zoom} />
+        {showBrush && brush && (
+          <div
+            className="pointer-events-none absolute z-40 rounded-full"
+            style={{
+              left: brush.x,
+              top: brush.y,
+              width: brushSize,
+              height: brushSize,
+              transform: 'translate(-50%, -50%)',
+              border: tool === 'eraser' ? '1.5px dashed rgba(17,17,17,0.55)' : `1.5px solid ${drawTool.color.hex}`,
+              background: tool === 'eraser' ? 'rgba(17,17,17,0.05)' : 'transparent',
+            }}
+          />
+        )}
         <SelectionOverlay zoom={zoom} panOffset={{ x: 0, y: 0 }} onResizeStart={handleResizeStart} onGroupResizeStart={handleGroupResizeStart} />
         <GridOverlay zoom={zoom} />
         <TextEditOverlay zoom={zoom} />
@@ -989,6 +1020,7 @@ export function PreviewPanel() {
 
         {/* Floating quick-actions toolbar (bottom-centre, over the canvas). */}
         {hasFrames && <FloatingToolbar />}
+        {hasFrames && <DrawQuickBar />}
       </div>
 
       {/* Bottom bar */}

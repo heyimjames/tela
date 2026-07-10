@@ -57,7 +57,7 @@ export function RightSidebar() {
           <ExportPanel />
         ) : rightPanel === 'auto-resize' ? (
           <AutoResizePanel />
-        ) : tool === 'draw' ? (
+        ) : tool === 'draw' || tool === 'eraser' ? (
           <DrawToolPanel />
         ) : activeLayer ? (
           <LayerInspector layer={activeLayer} />
