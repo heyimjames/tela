@@ -34,6 +34,7 @@ import {
   Sparkles,
   FolderInput,
   Check,
+  X,
 } from 'lucide-react'
 import { cardGradient } from '@/lib/cardGradient'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -374,6 +375,12 @@ export function HomePage() {
         </div>
 
         <div className="px-8 pb-8">
+          {/* First-run welcome (dismissible, shown once). */}
+          <FirstRunWelcome
+            onNewFile={() => { const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId); handleOpenFile(id) }}
+            onTemplates={() => setTemplatesOpen(true)}
+          />
+
           {/* Folders row */}
           {visibleFolders.length > 0 && (
             <div className="mb-6">
@@ -898,5 +905,55 @@ function LibraryContextMenu({ menu, onClose }: { menu: { x: number; y: number; i
       ))}
     </div>,
     document.body,
+  )
+}
+
+// --- First-run welcome ------------------------------------------------------
+
+function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; onTemplates: () => void }) {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem('tela-welcomed') === '1' } catch { return false }
+  })
+  if (dismissed) return null
+
+  const dismiss = () => {
+    try { localStorage.setItem('tela-welcomed', '1') } catch { /* ignore */ }
+    setDismissed(true)
+  }
+  const act = (fn: () => void) => { dismiss(); fn() }
+
+  return (
+    <div className="relative mb-6 overflow-hidden rounded-[14px] border border-border bg-card">
+      {/* Brand wash */}
+      <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: cardGradient('tela-welcome') }} />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card via-card/85 to-transparent" />
+      <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-[520px]">
+          <div className="mb-1 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="text-[16px] font-semibold text-foreground">Welcome to {BRAND.productName}</h2>
+          </div>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            A fast, local-first canvas for posts, ads, and quick graphics — everything stays in your browser.
+            Start from a template or a blank file, then press <kbd className="rounded-[4px] border border-black/10 bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">⌘K</kbd> for commands and <kbd className="rounded-[4px] border border-black/10 bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">?</kbd> for shortcuts.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="sm" className="rounded-[6px] gap-1.5" onClick={() => act(onNewFile)}>
+            <Plus className="h-4 w-4" /> New design
+          </Button>
+          <Button size="sm" variant="outline" className="rounded-[6px] gap-1.5" onClick={() => act(onTemplates)}>
+            <LayoutGrid className="h-4 w-4" /> Templates
+          </Button>
+        </div>
+      </div>
+      <button
+        aria-label="Dismiss"
+        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+        onClick={dismiss}
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
   )
 }
