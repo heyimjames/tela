@@ -17,11 +17,12 @@ _Tela_ is Portuguese for both **canvas** and **screen**.
 ## What you can do
 
 - **Start from a template or a blank canvas.** Pick a LinkedIn / Instagram / Facebook layout and edit it, or begin empty.
-- **Add and edit any element** — headlines and body text, shapes (rectangle, ellipse, pill, line), images (upload or drag & drop), SVG icons with recolouring, gradients, and freehand pen / highlighter drawing.
+- **Add and edit any element** — headlines and body text, shapes (rectangle, ellipse, triangle, star, line, arrow), images (upload or drag & drop), SVG icons with recolouring, gradients, and a pressure-style **pen, highlighter, and eraser**.
 - **Compose like a designer** — drag, resize, rotate, align & distribute, snap to guides, group and nest with **Auto Layout**, duplicate, reorder, lock, and hide layers.
+- **Move fast** — a **⌘K command palette**, single-key tools, and a full keyboard-shortcut sheet (press **?**).
 - **Style with your brand** — colours from a themeable token palette, OKLCH gradients, corner radius, drop shadow & blur, and animated WebGL shader backgrounds.
 - **Design once, publish everywhere** — switch a design between formats (feed, story, banner…) and **auto-resize** it across every ad size in one click.
-- **Export** — render your design to **PNG / JPG / WebP** at 1×–3×.
+- **Export** — render to **PNG / JPG / WebP / SVG** at 1×–3×, or copy the design straight to your clipboard.
 - **Work offline, own your data** — everything saves to your browser. No account, nothing leaves the device.
 - **Use it on your phone** — pinch-zoom, drag-to-pan, finger-sized handles, and iOS-style bottom sheets with detents.
 - **(Optional) generate with AI** — wire up your own endpoint and describe an ad to have AI compose or re-lay-it-out.
@@ -66,9 +67,11 @@ It's also built to be **made yours**: the entire brand identity — name, colour
 
 - **Multi-format artboards** — LinkedIn, Instagram, Facebook, stories, banners, and custom sizes. Design once, reflow across formats.
 - **Auto Layout** — flexbox-style layout on any group: direction, gap, padding, alignment. Groups nest, and resizing the container never scales its contents.
-- **Full layer model** — text, images, shapes, SVG (with recolouring), OKLCH gradients, freehand pen/highlighter, and backgrounds (solid, gradient, image, or animated WebGL shader).
-- **Direct-manipulation editing** — drag, resize, rotate, snap-to-alignment, marquee select, alt-drag duplicate, distance measurement, inline text editing.
-- **Export** — PNG / JPG / WebP at 1×/2×/3×, plus one-click auto-resize to every format.
+- **Full layer model** — text, images, shapes (rectangle, ellipse, triangle, star, line, arrow), SVG (with recolouring), OKLCH gradients, freehand drawing, and backgrounds (solid, gradient, image, or animated WebGL shader).
+- **A real drawing tool** — a pressure-simulated **pen** with adjustable width, taper (round → pointed ends), pressure and smoothing; a translucent **highlighter**; and an **eraser**. Hold **Shift** for a straight line; every stroke becomes a selectable, restyleable layer.
+- **Direct-manipulation editing** — drag, resize, rotate, snap-to-alignment, marquee select, alt-drag duplicate, distance measurement, inline text editing, and right-click context menus.
+- **Command palette & shortcuts** — **⌘K** for every command, single-key tools (V/T/R/P/E…), and a built-in shortcut cheat sheet (**?**).
+- **Export** — PNG / JPG / WebP / SVG at 1×/2×/3×, copy-to-clipboard, plus one-click auto-resize to every format.
 - **Themeable brand system** — a token-based palette and a design-system component library, all swappable from config.
 - **Zero backend** — static bundle, `localStorage` persistence, instant load.
 
