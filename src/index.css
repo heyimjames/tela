@@ -78,6 +78,12 @@
   --destructive: var(--alert-300);
   /* Ink, not white: --alert-300 is a light red, and white on it is 2.8:1. */
   --destructive-foreground: var(--ground);
+  /* Text links are the wiki's secondary accent, a step lighter than the primary
+     action — hive-300 is the colour of a filled button, hive-100 the colour of
+     a word you can click. Separate token because they are separate jobs; the
+     `text-primary` that survives elsewhere marks active/selected state, not a
+     link. */
+  --link: var(--hive-100);
   --border: var(--hairline);
   --input: var(--hairline);
   --ring: var(--hive-300);
@@ -133,6 +139,7 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-link: var(--link);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);

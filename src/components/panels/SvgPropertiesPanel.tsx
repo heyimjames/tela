@@ -107,7 +107,7 @@ export function SvgPropertiesPanel({ layer }: Props) {
         <Header count={colors.length} />
         {hasOverrides && (
           <button
-            className="text-[11px] text-primary hover:underline cursor-pointer"
+            className="text-[11px] text-link hover:underline cursor-pointer"
             onClick={resetColors}
           >
             Reset

@@ -171,7 +171,7 @@ export function BackgroundPanel() {
             ))}
             {fill.stops.length < 5 && (
               <button
-                className="text-[11px] text-primary hover:underline"
+                className="text-[11px] text-link hover:underline"
                 onClick={() => {
                   pushSnapshot()
                   const stops = [...fill.stops, { position: 1, color: getBrandColor('stone') }]

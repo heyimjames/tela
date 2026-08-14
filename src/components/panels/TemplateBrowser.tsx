@@ -195,7 +195,7 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
         {/* Footer */}
         <div className="px-6 py-3 border-t border-border flex justify-between items-center">
           <button
-            className="text-[13px] text-primary hover:underline cursor-pointer"
+            className="text-[13px] text-link hover:underline cursor-pointer"
             onClick={startBlank}
           >
             Start with blank canvas

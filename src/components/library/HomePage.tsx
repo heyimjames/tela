@@ -402,7 +402,7 @@ export function HomePage() {
           {visibleFolders.length === 0 && !activeFolderId && (
             <div className="mb-4">
               <button
-                className="text-[13px] text-primary hover:underline cursor-pointer"
+                className="text-[13px] text-link hover:underline cursor-pointer"
                 onClick={() => createFolder('New Folder')}
               >
                 + Create folder

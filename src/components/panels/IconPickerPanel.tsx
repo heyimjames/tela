@@ -94,7 +94,7 @@ export function IconPickerPanel() {
       <div className="flex justify-between items-center">
         <span className="text-[12px] text-muted-foreground tabular-nums">{filtered.length} icons</span>
         <button
-          className="text-[12px] text-primary hover:underline cursor-pointer tabular-nums"
+          className="text-[12px] text-link hover:underline cursor-pointer tabular-nums"
           onClick={() => setShowAll(!showAll)}
         >
           {showAll ? 'Show popular' : `Show all ${allIconNames.length}`}

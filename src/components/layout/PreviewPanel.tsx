@@ -993,7 +993,7 @@ export function PreviewPanel() {
             <motion.button
               type="button"
               onClick={() => useWorkspaceStore.getState().addFrame(useDesignStore.getState().document.format)}
-              className="group mt-1 inline-flex items-center gap-1.5 text-[14px] font-medium text-primary cursor-pointer transition-transform active:scale-[0.96]"
+              className="group mt-1 inline-flex items-center gap-1.5 text-[14px] font-medium text-link cursor-pointer transition-transform active:scale-[0.96]"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.64, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}

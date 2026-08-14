@@ -81,7 +81,7 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
         )}
         {isPro && (
           <button
-            className="text-[11px] text-primary hover:underline cursor-pointer shrink-0"
+            className="text-[11px] text-link hover:underline cursor-pointer shrink-0"
             onClick={() => setSimplified(!simplified)}
           >
             {simplified ? 'All colours' : 'Simplified'}

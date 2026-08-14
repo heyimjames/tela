@@ -178,7 +178,7 @@ export function GradientPropertiesPanel({ layer }: Props) {
           <label className="text-[13px] text-muted-foreground font-normal">Color Stops</label>
           {layer.stops.length < 5 && (
             <button
-              className="text-[12px] text-primary hover:underline cursor-pointer"
+              className="text-[12px] text-link hover:underline cursor-pointer"
               onClick={() => {
                 pushSnapshot()
                 updateLayer<GradientLayer>(layer.id, {

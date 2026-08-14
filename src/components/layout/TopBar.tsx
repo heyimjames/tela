@@ -272,7 +272,7 @@ export function TopBar() {
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
               <span className="text-[12px] font-medium text-muted-foreground">Saved Versions</span>
               <button
-                className="text-[11px] text-primary hover:text-foreground font-medium cursor-pointer"
+                className="text-[11px] text-link hover:text-foreground font-medium cursor-pointer"
                 onClick={() => { saveVersion(); }}
               >
                 + Save Current
