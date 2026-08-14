@@ -32,4 +32,6 @@ dist-ssr
 .claude/worktrees/
 
 # Release artifacts are build output, reproducible from the recorded commit.
-release/
+# Anchored to the repository root: an unanchored `release/` also matches
+# `tests/release/`, which silently swallowed the release suite.
+/release/
