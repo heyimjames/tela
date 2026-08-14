@@ -132,7 +132,7 @@ export function ShortcutsCheatSheet() {
         <div className="grid grid-cols-1 gap-x-8 gap-y-5 p-5 sm:grid-cols-2">
           {GROUPS.map((group) => (
             <div key={group.title}>
-              <div className="mb-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+              <div className="mb-2 eyebrow">
                 {group.title}
               </div>
               <div className="space-y-1">

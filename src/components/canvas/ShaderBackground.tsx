@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { CHROME_ACCENT } from '@/brand/chrome'
+import { getBrandColor } from '@/brand/palette'
 import { motion } from 'motion/react'
 import {
   MeshGradient,
@@ -24,6 +25,9 @@ interface RenderOpts {
 }
 
 const FILL_STYLE: CSSProperties = { width: '100%', height: '100%', display: 'block' }
+
+/** Two-tone shaders need a back colour when the user has only set one stop. */
+const CHROME_SURFACE = getBrandColor('cloud').hex
 
 /**
  * Maps a {@link ShaderFill} onto the matching Paper Shader component, translating
@@ -76,7 +80,7 @@ export function renderShaderElement(fill: ShaderFill, opts: RenderOpts = {}): Re
         <Dithering
           {...common}
           colorFront={colors[0]}
-          colorBack={colors[1] ?? '#f8f8f3'}
+          colorBack={colors[1] ?? CHROME_SURFACE}
           size={Math.round(lerp(1 - fill.intensity, 1, 6))}
         />
       )
@@ -85,7 +89,7 @@ export function renderShaderElement(fill: ShaderFill, opts: RenderOpts = {}): Re
         <Waves
           {...common}
           colorFront={colors[0]}
-          colorBack={colors[1] ?? '#f8f8f3'}
+          colorBack={colors[1] ?? CHROME_SURFACE}
           amplitude={lerp(fill.intensity, 0.2, 0.9)}
           frequency={lerp(fill.scale, 0.6, 1.4)}
         />

@@ -243,7 +243,7 @@ export function HomePage() {
           {/* Folders */}
           {folders.length > 0 && (
             <div className="pt-4">
-              <div className="px-3 mb-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/50 font-medium">
+              <div className="px-3 mb-1 eyebrow">
                 Folders
               </div>
               {folders.filter((f) => f.parentId === null).map((folder) => (
@@ -710,7 +710,8 @@ function FileCard({
   const { thumb, bg } = useMemo(() => {
     const firstFrame = file.pages[0]?.frames[0]
     const bgLayer = firstFrame?.layers.find((l) => l.type === 'background') as { fill?: { type: string; color?: { hex: string } } } | undefined
-    const bg = bgLayer?.fill?.type === 'solid' ? bgLayer.fill.color?.hex ?? '#ebe9e1' : '#ebe9e1'
+    const fallbackBg = getBrandColor('stone').hex
+    const bg = bgLayer?.fill?.type === 'solid' ? bgLayer.fill.color?.hex ?? fallbackBg : fallbackBg
     if (!firstFrame || firstFrame.layers.length <= 1) return { thumb: null, bg }
     try {
       const doc = {

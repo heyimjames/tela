@@ -82,7 +82,7 @@ export function FramePropertiesPanel({ frame }: { frame: Frame }) {
 
 function SectionHeader({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+    <div className="eyebrow">
       {children}
     </div>
   )

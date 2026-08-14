@@ -13,6 +13,7 @@ import { getDrawPath, HIGHLIGHTER_OPACITY } from '@/engine/freehand'
 import { trianglePoints, starPoints, arrowHeadPoints } from '@/lib/geometry'
 import { renderTextLayer } from '@/engine/renderers/textRenderer'
 import { renderGradientLayer } from '@/engine/renderers/gradientRenderer'
+import { CHROME_ACCENT } from '@/brand/chrome'
 
 /**
  * Per-render options. Shader backgrounds are WebGL and can't render synchronously
@@ -141,7 +142,7 @@ function renderShaderBackground(
   // Live editor: a React shader overlay sits behind the canvas — leave transparent.
   if (opts?.suppressShaderBg) return
   // Any other sync path (e.g. a thumbnail without a capture): cheap solid fallback.
-  ctx.fillStyle = layer.fill.colors[0] ?? '#0017c7'
+  ctx.fillStyle = layer.fill.colors[0] ?? CHROME_ACCENT
   ctx.fillRect(0, 0, w, h)
 }
 

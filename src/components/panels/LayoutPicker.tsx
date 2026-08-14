@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CHROME_SIGNAL } from '@/brand/chrome'
+import { getBrandColor } from '@/brand/palette'
 import { DESIGN_LAYOUTS, type DesignLayout, type LayoutLayer } from '@/brand/layouts'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -106,7 +107,7 @@ function LayoutThumb({ layout, w, h }: { layout: DesignLayout; w: number; h: num
         // text → a stack of bars filling roughly the text box
         const rows = Math.max(1, Math.round(lh / 6))
         return Array.from({ length: rows }).map((_, r) => (
-          <rect key={`${i}-${r}`} x={x} y={y + r * 5} width={r === rows - 1 ? lw * 0.7 : lw} height={2.5} rx={1.25} fill="#100f0f" opacity={0.55} />
+          <rect key={`${i}-${r}`} x={x} y={y + r * 5} width={r === rows - 1 ? lw * 0.7 : lw} height={2.5} rx={1.25} fill={getBrandColor('charcoal').hex} opacity={0.55} />
         ))
       })}
     </svg>

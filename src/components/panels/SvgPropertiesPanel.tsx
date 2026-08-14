@@ -144,7 +144,7 @@ function ColorGroup({ label, children }: { label: string; children: ReactNode })
 
 function Header({ count }: { count?: number }) {
   return (
-    <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+    <div className="eyebrow">
       {count != null ? `SVG · ${count} colour${count === 1 ? '' : 's'}` : 'SVG'}
     </div>
   )

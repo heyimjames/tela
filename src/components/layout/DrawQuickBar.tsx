@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Pen, Highlighter, Eraser } from 'lucide-react'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useUIStore } from '@/store/useUIStore'
-import { getBrandColor } from '@/brand/palette'
+import { getBrandColor, BRAND_PALETTE } from '@/brand/palette'
 import { haptic } from '@/lib/haptics'
 
 // A curated quick palette — the full picker still lives in the sidebar panel.
@@ -75,17 +75,22 @@ export function DrawQuickBar() {
               {SWATCHES.map((token) => {
                 const c = getBrandColor(token)
                 const active = color.token === token
+                // Show the palette LABEL, never the key. Keys are frozen for
+                // document compatibility ('brand-primary'), while the picker
+                // labels the same swatch 'Hive 500' — printing the key here
+                // gives one colour two names, one of them retired.
+                const label = BRAND_PALETTE[token]?.label ?? token
                 return (
                   <button
                     key={token}
-                    title={c.token}
+                    title={label}
                     onPointerDown={() => haptic('light')}
                     onClick={(e) => { e.currentTarget.blur(); setColor(c) }}
                     className={`h-6 w-6 shrink-0 rounded-full transition-transform duration-150 active:scale-[0.9] cursor-pointer ${
                       active ? 'ring-2 ring-primary ring-offset-1 ring-offset-white' : 'ring-1 ring-black/10'
                     }`}
                     style={{ background: c.hex }}
-                    aria-label={`Colour ${c.token}`}
+                    aria-label={`Colour ${label}`}
                   />
                 )
               })}

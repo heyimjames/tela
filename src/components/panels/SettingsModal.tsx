@@ -85,7 +85,7 @@ export function SettingsModal() {
       >
         {/* Sidebar */}
         <div className="w-[200px] bg-card border-r border-border p-3 space-y-1 shrink-0">
-          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium px-3 py-2">
+          <div className="eyebrow px-3 py-2">
             Settings
           </div>
           {tabs.map((t) => {

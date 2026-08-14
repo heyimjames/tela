@@ -127,6 +127,25 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@layer components {
+  /* Section eyebrow — the mono, wide-tracked label above every inspector panel
+     group ("Alignment", "Position & Size", "Export", …). These are the only
+     wayfinding in the sidebar, so they carry SOLID --muted-foreground: the
+     hand-copied `text-muted-foreground/60` this replaces compounded to ~0.37
+     effective alpha over --card, roughly 2.4:1 — well under WCAG AA 4.5:1 —
+     and had already drifted to /50 at two call sites. One definition, ~34 uses.
+     Lives in @layer components so per-site utilities (hover:, px-, mb-) win. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

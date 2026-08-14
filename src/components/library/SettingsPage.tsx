@@ -37,7 +37,7 @@ export function SettingsPage() {
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
-          <h2 className="px-3 py-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/50 font-medium">Settings</h2>
+          <h2 className="px-3 py-2 eyebrow">Settings</h2>
           {([
             { id: 'general' as Tab, label: 'General', icon: Settings },
             { id: 'ai' as Tab, label: 'AI Assistant', icon: Wand2 },

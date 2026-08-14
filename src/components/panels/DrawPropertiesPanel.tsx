@@ -31,7 +31,7 @@ export function DrawPropertiesPanel({ layer }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+      <div className="eyebrow">
         {isHighlighter ? 'Marker' : 'Pen'}
       </div>
 

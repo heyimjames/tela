@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { postCanvasAI } from '@/lib/aiApi'
 import { DEFAULT_AI_MODEL } from '@/lib/aiModels'
 import { BRAND } from '@/brand/brand.config'
+import { AI_BRAND_COLOR_LIST, AI_BRAND_COLOR_TOKENS } from '@/brand/palette'
 import { useDesignStore } from '@/store/useDesignStore'
 import { applyDesignJson, serializeLayersForAI } from '@/engine/applyDesignJson'
 
@@ -29,6 +30,15 @@ interface AIStore {
   setLastError: (err: string | null) => void
 }
 
+/**
+ * The pre-re-skin seed values, kept verbatim so the persist `migrate` below can
+ * tell "never touched the default" from "deliberately typed this".
+ */
+const PRE_RESKIN_DEFAULTS = {
+  productName: 'Tela',
+  productDescription: 'A local-first design canvas for social and ad creatives.',
+} as const
+
 export const useAIStore = create<AIStore>()(
   persist(
     (set) => ({
@@ -50,6 +60,25 @@ export const useAIStore = create<AIStore>()(
     }),
     {
       name: 'tela-ai',
+      /**
+       * v1 → the "HiveMind | Design" re-skin. `productName` /
+       * `productDescription` seed from BRAND but are *persisted*, so a returning
+       * user's stored copy pins the retired product identity into every AI
+       * prompt ("Product: Tela") forever. Reset only the values that are still
+       * the untouched pre-re-skin defaults; anything the user actually edited is
+       * their own context and is left alone.
+       */
+      version: 1,
+      migrate: (persisted, fromVersion) => {
+        const s = { ...(persisted as Record<string, unknown>) }
+        if (fromVersion < 1) {
+          if (s.productName === PRE_RESKIN_DEFAULTS.productName) s.productName = BRAND.productName
+          if (s.productDescription === PRE_RESKIN_DEFAULTS.productDescription) {
+            s.productDescription = BRAND.ai.productDescription
+          }
+        }
+        return s
+      },
       partialize: (state) => ({
         model: state.model,
         productName: state.productName,
@@ -138,15 +167,7 @@ CTA: ${options.productContext.callToAction}
 
 Canvas size: ${options.format.width}x${options.format.height} (${options.format.label})
 
-Available brand colors (use ONLY these):
-- charcoal: #100f0f (dark text)
-- white: #ffffff
-- cloud: #f8f8f3 (light bg)
-- paper: #f2f2eb
-- brand-dark: #3e4576 (dark blue bg)
-- brand-primary: #0017c7 (links, accents)
-- brand-accent: #d0e6e8 (light teal)
-- ember-500: #F56139 (CTA orange)
+Available brand colors (use ONLY these): ${AI_BRAND_COLOR_LIST}
 
 Return a JSON array of layers. Each layer is one of:
 - Text: { "type": "text", "name": "string", "x": number, "y": number, "width": number, "height": number, "content": "string", "fontSize": number, "fontWeight": 300|400|500|600|700, "textAlign": "left"|"center"|"right", "colorToken": "charcoal"|"white"|"brand-primary"|"ember-500", "letterSpacing": number, "lineHeight": number, "textTransform": "none"|"uppercase" }
@@ -186,7 +207,7 @@ New canvas: ${options.format.width}x${options.format.height} (${options.format.l
 Existing layers to adapt:
 ${JSON.stringify(options.layers, null, 2)}
 
-Available brand colours (reuse the colorToken values already present): charcoal, white, cloud, paper, brand-dark, brand-primary, brand-accent, ember-500.
+Available brand colours (reuse the colorToken values already present): ${AI_BRAND_COLOR_TOKENS}.
 
 Return a JSON array of layers for the NEW canvas. Each layer is one of:
 - Text: { "type":"text","name","x","y","width","height","content","fontSize","fontWeight":300|400|500|600|700,"textAlign":"left"|"center"|"right","colorToken","letterSpacing","lineHeight","textTransform":"none"|"uppercase" }

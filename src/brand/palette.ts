@@ -32,7 +32,10 @@ export const BRAND_PALETTE: Record<string, BrandToken> = {
   // dropped next to the hive ramp still belongs to the same brand system)
   'accent-1':      { label: 'Perf',   hex: '#b4e01f', group: 'accent' },
   'accent-2':      { label: 'Studio', hex: '#4e4060', group: 'accent' },
-  'accent-3':      { label: 'Ember',  hex: '#f86b3c', group: 'accent' },
+  // Labelled "Clickt Ember" on purpose: the `ember-*` scale below is the
+  // editor's own ember (#F56139, the template CTA and CHROME_SIGNAL). Two
+  // swatches both reading "Ember" is unresolvable in the picker.
+  'accent-3':      { label: 'Clickt Ember', hex: '#f86b3c', group: 'accent' },
   'accent-4':      { label: 'Slate',  hex: '#5c6470', group: 'accent' },
 
   // --- Traffic ---
@@ -101,7 +104,7 @@ export const BRAND_PALETTE: Record<string, BrandToken> = {
 export const BRAND_GROUPS = [
   { id: 'neutrals', label: 'Neutrals' },
   { id: 'brand',    label: 'Brand' },
-  { id: 'agents',   label: 'Agents' },
+  { id: 'accent',   label: 'Accent' },
   { id: 'traffic',  label: 'Traffic' },
   { id: 'earths',   label: 'Earths' },
   { id: 'waters',   label: 'Waters' },
@@ -122,3 +125,36 @@ export function getTokensByGroup(group: string) {
     .filter(([, t]) => t.group === group)
     .map(([key, t]) => ({ token: key, ...t }))
 }
+
+/**
+ * The colour roster offered to the LLM — the single source for *every*
+ * model-facing prompt (the AI panel and the `useAIStore` design/relayout
+ * prompts). Hand-maintained copies of this list silently drift from the brand
+ * the moment it is re-skinned, and a prompt that names a retired hex invites
+ * the model to emit a literal colour that is not in the palette at all.
+ *
+ * `ember-500` is included explicitly rather than by group: it is the CTA colour
+ * every starter template uses (and `CHROME_SIGNAL`), but the other ten ember
+ * shades are noise in a prompt. Alpha hexes are excluded — the model cannot
+ * reason about an 8-digit hex, and layers address the token anyway.
+ *
+ * Ordering is deterministic: `Object.entries` preserves the literal declaration
+ * order of `BRAND_PALETTE`, so the same build always renders the same prompt.
+ */
+const AI_COLOR_GROUPS = ['neutrals', 'brand', 'accent'] as const
+const AI_COLOR_EXTRA_TOKENS = ['ember-500'] as const
+
+export const AI_BRAND_COLORS = [
+  ...AI_COLOR_GROUPS.flatMap((group) => getTokensByGroup(group)),
+  ...AI_COLOR_EXTRA_TOKENS.map((token) => ({ token, ...BRAND_PALETTE[token] })),
+].filter((t) => /^#[0-9a-fA-F]{6}$/.test(t.hex))
+
+/** `token (#hex), …` — for prompts that show the model the actual colours. */
+export const AI_BRAND_COLOR_LIST = AI_BRAND_COLORS
+  .map((t) => `${t.token} (${t.hex})`)
+  .join(', ')
+
+/** `token, …` — for prompts that only need the legal `colorToken` values. */
+export const AI_BRAND_COLOR_TOKENS = AI_BRAND_COLORS
+  .map((t) => t.token)
+  .join(', ')

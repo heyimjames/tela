@@ -5,7 +5,12 @@
     <!-- HiveMind d20 mark. The .ico carries 16 (bold variant) / 32 / 48; the SVG
          is the scalable master; the 192 PNG covers Android/PWA surfaces. -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="/d20-flat.svg" />
+    <!-- Theme-adaptive pair: the flat mark's faces are hive-900/700, which reads
+         as a dark blob on a dark tab strip (the cyan edging is sub-pixel at
+         16px). d20-flat-bold.svg is the variant authored for dark chrome.
+         Browsers that ignore `media` on rel=icon fall through to the last one. -->
+    <link rel="icon" type="image/svg+xml" href="/d20-flat.svg" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/d20-flat-bold.svg" media="(prefers-color-scheme: dark)" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/d20-flat-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

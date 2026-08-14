@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { isPaperShaderElement } from '@paper-design/shaders-react'
 import type { ShaderFill } from '@/types/design'
 import { renderShaderElement } from '@/components/canvas/ShaderBackground'
+import { CHROME_ACCENT } from '@/brand/chrome'
 
 /**
  * Renders a shader background to a static bitmap for the Canvas-2D export pipeline.
@@ -38,7 +39,7 @@ function solidFallback(fill: ShaderFill, w: number, h: number): HTMLCanvasElemen
   c.width = Math.round(w)
   c.height = Math.round(h)
   const ctx = c.getContext('2d')!
-  ctx.fillStyle = fill.colors[0] ?? '#0017c7'
+  ctx.fillStyle = fill.colors[0] ?? CHROME_ACCENT
   ctx.fillRect(0, 0, c.width, c.height)
   return c
 }

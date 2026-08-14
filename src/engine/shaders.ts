@@ -1,5 +1,6 @@
 import type { ShaderFill, ShaderKind } from '@/types/design'
 import { BRAND_PALETTE } from '@/brand/palette'
+import { CHROME_ACCENT } from '@/brand/chrome'
 
 /**
  * Catalogue of the Paper Shader backgrounds we expose, with copy for the picker.
@@ -14,7 +15,7 @@ export const SHADER_KINDS: { kind: ShaderKind; label: string; blurb: string }[] 
   { kind: 'waves', label: 'Waves', blurb: 'Rolling line waves' },
 ]
 
-const hex = (token: string) => BRAND_PALETTE[token]?.hex ?? '#0017c7'
+const hex = (token: string) => BRAND_PALETTE[token]?.hex ?? CHROME_ACCENT
 
 /**
  * Brand-true color sets used as the starting palette when a shader is added.

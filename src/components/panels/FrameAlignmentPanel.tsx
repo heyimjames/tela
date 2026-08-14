@@ -108,7 +108,7 @@ export function FrameAlignmentPanel() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+        <div className="eyebrow">
           Align frames
         </div>
         <span className="text-[11px] text-muted-foreground/50 tabular-nums">{selected.length} selected</span>

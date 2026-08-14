@@ -33,7 +33,7 @@ export function PositionSizePanel({ layer }: Props) {
 
   return (
     <div className="space-y-3 pb-3 mb-3 border-b border-border">
-      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
+      <div className="eyebrow">
         Position & Size
       </div>
 

@@ -100,7 +100,7 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
             return (
               <div key={group.id}>
                 <button
-                  className="flex items-center gap-1 w-full text-left text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium py-1 hover:text-muted-foreground transition-colors cursor-pointer"
+                  className="flex items-center gap-1 w-full text-left eyebrow py-1 hover:text-foreground transition-colors cursor-pointer"
                   onClick={() => toggleCollapse(group.id)}
                 >
                   {isCollapsed

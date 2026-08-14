@@ -14,7 +14,7 @@ import { SAMPLE_AVATAR_URL } from '@/brand/avatars'
  *
  * Values follow a small design-system convention:
  *   radius small                    → 5px
- *   button primary                  → charcoal #100f0f / white text
+ *   button primary                  → charcoal (palette `charcoal`) / white text
  *   button secondary                → charcoal @5% (≈ stone) / charcoal text
  *   font size small/body/big        → 13 / 15 / 17 px
  *   button heights sm/md/lg         → 32 / 40 / 48 px
@@ -66,7 +66,7 @@ const cloud = () => getBrandColor('cloud')
 // `.hex`, so a descriptive token label is all that's needed alongside it.
 const c = (token: string, hex: string): BrandColor => ({ token, hex })
 
-const BORDER_SUBTLE = c('border-subtle', '#100f0f1a') // charcoal @10%
+const BORDER_SUBTLE = c('border-subtle', `${getBrandColor('charcoal').hex}1a`) // charcoal @10%
 
 // Sentiment pairs (DS light theme, oklch→hex approximations).
 const SENTIMENT = {
