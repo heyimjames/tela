@@ -4,6 +4,7 @@ import { applyDesignJson } from '@/engine/applyDesignJson'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useUIStore } from '@/store/useUIStore'
+import { useAiUiEnabled } from '@/ai'
 import { getBrandColor } from '@/brand/palette'
 import {
   Sparkles,
@@ -56,7 +57,11 @@ function buildPromptForVersion(userPrompt: string, style: StyleApproach, version
 
 export function AIAdBuilder() {
   const rightPanel = useUIStore((s) => s.rightPanel)
-  const isVisible = rightPanel === 'ai'
+  const aiUiEnabled = useAiUiEnabled()
+  // Gated on the capability directly, not only on the panel state it keys off.
+  // `rightPanel === 'ai'` is now unreachable while AI is off, but this overlay is
+  // AI-only regardless of how it came to be shown.
+  const isVisible = rightPanel === 'ai' && aiUiEnabled
 
   const [prompt, setPrompt] = useState('')
   const [versions, setVersions] = useState(1)

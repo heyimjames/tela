@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { isAiUiEnabled } from '@/ai'
 import { getBrandColor } from '@/brand/palette'
 import type { BrandColor, DrawMode } from '@/types/design'
 
@@ -156,7 +157,15 @@ export const useUIStore = create<UIStore>((set) => ({
 
   setAppMode: (mode) => set({ appMode: mode }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
-  setRightPanel: (panel) => set({ rightPanel: panel }),
+  // The 'ai' panel is refused outright while AI is disabled, so hiding the buttons
+  // is not the only thing standing between a user and the panel. Any caller — a
+  // future toolbar, an agent command, a console poke — routes through here, and a
+  // refused transition leaves the current panel alone rather than silently
+  // redirecting somewhere the caller did not ask for.
+  setRightPanel: (panel) => {
+    if (panel === 'ai' && !isAiUiEnabled()) return
+    set({ rightPanel: panel })
+  },
   setMobileDrawer: (drawer) => set({ mobileDrawer: drawer }),
   setFormatSelectorOpen: (open) => set({ formatSelectorOpen: open }),
   setExportPanelOpen: (open) => set({ exportPanelOpen: open }),
