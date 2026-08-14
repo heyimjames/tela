@@ -77,10 +77,10 @@ export function SettingsModal() {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={() => setOpen(false)}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
-        className="relative bg-white rounded-[12px] shadow-xl w-[700px] max-h-[80vh] overflow-hidden flex"
+        className="relative bg-popover rounded-[12px] shadow-xl w-[700px] max-h-[80vh] overflow-hidden flex"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sidebar */}
@@ -152,7 +152,7 @@ function GeneralSettings() {
             <p className="text-[12px] text-muted-foreground leading-relaxed">
               Helps you make something that looks good — fewer options, and it keeps things tidy for you.
             </p>
-            <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground/70">
+            <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground">
               <li>Brand colours only</li>
               <li>Text sizes that fit together</li>
               <li>Everything lines up on its own</li>
@@ -176,7 +176,7 @@ function GeneralSettings() {
             <p className="text-[12px] text-muted-foreground leading-relaxed">
               The full toolset with complete control — for when you know what you're doing.
             </p>
-            <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground/70">
+            <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground">
               <li>Any colour, custom picker</li>
               <li>Any text size &amp; spacing</li>
               <li>Gradients, shadows &amp; effects</li>
@@ -190,7 +190,7 @@ function GeneralSettings() {
       <div className="space-y-2">
         <label className="text-[14px] font-medium text-foreground">Auto-Save</label>
         <p className="text-[13px] text-muted-foreground">Your work is automatically saved to your browser.</p>
-        <div className="flex items-center gap-2 text-[12px] text-muted-foreground/60">
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-green-500" />
           Auto-save enabled
         </div>
@@ -238,7 +238,7 @@ function AISettings() {
       <div className="space-y-2">
         <label className="text-[14px] font-medium text-foreground">Model</label>
         <select
-          className="w-full px-3 py-2 text-[13px] bg-white border border-border rounded-[5px] outline-none cursor-pointer"
+          className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-[5px] outline-none cursor-pointer"
           value={normalizeAIModel(model)}
           onChange={(e) => setModel(e.target.value)}
         >
@@ -349,21 +349,24 @@ function AppearanceSettings() {
     <div className="space-y-6">
       <div className="space-y-3">
         <h3 className="text-[14px] font-medium text-foreground">Theme</h3>
-        <p className="text-[12px] text-muted-foreground">Light mode only for now. Dark mode coming soon.</p>
+        <p className="text-[12px] text-muted-foreground">Dark only for now, matching the HiveMind wiki. Light mode coming soon.</p>
         <div className="flex gap-2">
-          <div className="px-4 py-2 bg-foreground text-background rounded-[5px] text-[12px] font-medium">Light</div>
-          <div className="px-4 py-2 bg-muted text-muted-foreground rounded-[5px] text-[12px] opacity-50 cursor-not-allowed">Dark (soon)</div>
+          <div className="px-4 py-2 bg-foreground text-background rounded-[5px] text-[12px] font-medium">Dark</div>
+          <div className="px-4 py-2 bg-muted text-muted-foreground rounded-[5px] text-[12px] opacity-50 cursor-not-allowed">Light (soon)</div>
         </div>
       </div>
 
       <div className="border-t border-border pt-6 space-y-3">
         <h3 className="text-[14px] font-medium text-foreground">Canvas Background</h3>
-        <p className="text-[12px] text-muted-foreground">The grey area around your design.</p>
+        <p className="text-[12px] text-muted-foreground">The area around your design.</p>
+        {/* Swatches read from the chrome ramp rather than restating hexes — the
+            desk is no longer grey, and labels describe relative lift, lightest
+            first. (This control has never been wired to state; unchanged here.) */}
         <div className="flex gap-2">
           {[
-            { label: 'Light', color: '#e8e8e2' },
-            { label: 'Medium', color: '#d5d5cc' },
-            { label: 'Dark', color: '#8a8a82' },
+            { label: 'Light', color: 'var(--surface-hover)' },
+            { label: 'Medium', color: 'var(--surface)' },
+            { label: 'Dark', color: 'var(--ground)' },
           ].map((bg) => (
             <button
               key={bg.label}
@@ -393,7 +396,7 @@ function NudgeField({ label, value, onChange }: { label: string; value: number; 
           step={1}
           value={value}
           onChange={(e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n)) onChange(n) }}
-          className="w-full h-9 px-2.5 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring tabular-nums"
+          className="w-full h-9 px-2.5 text-[13px] bg-background border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring tabular-nums"
         />
         <span className="text-[12px] text-muted-foreground">px</span>
       </div>
@@ -415,7 +418,7 @@ function SettingsTextarea({ label, value, onChange }: { label: string; value: st
     <div className="space-y-1.5">
       <label className="text-[13px] text-muted-foreground font-normal">{label}</label>
       <textarea
-        className="w-full min-h-[50px] px-3 py-2 text-[13px] bg-white border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
+        className="w-full min-h-[50px] px-3 py-2 text-[13px] bg-background border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -439,7 +442,7 @@ function SettingsToggle({ label, description, value, onChange }: { label: string
       >
         <div
           className={`
-            absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-150
+            absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow-sm transition-transform duration-150
             ${value ? 'translate-x-5' : 'translate-x-0.5'}
           `}
         />

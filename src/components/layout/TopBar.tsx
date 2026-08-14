@@ -152,7 +152,7 @@ export function TopBar() {
         >
           <Monitor className="w-3 h-3" />
           <span className="hidden sm:inline">{format.label}</span>
-          <span className="text-muted-foreground/50 tabular-nums">{format.width}x{format.height}</span>
+          <span className="text-muted-foreground tabular-nums">{format.width}x{format.height}</span>
           <ChevronDown className="w-3 h-3" />
         </button>
 
@@ -272,7 +272,7 @@ export function TopBar() {
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
               <span className="text-[12px] font-medium text-muted-foreground">Saved Versions</span>
               <button
-                className="text-[11px] text-primary hover:text-primary/80 font-medium cursor-pointer"
+                className="text-[11px] text-primary hover:text-foreground font-medium cursor-pointer"
                 onClick={() => { saveVersion(); }}
               >
                 + Save Current

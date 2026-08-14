@@ -34,7 +34,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
       <div className="space-y-1.5">
         <label className="text-[13px] text-muted-foreground font-normal">Model</label>
         <select
-          className="w-full px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] outline-none cursor-pointer"
+          className="w-full px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] outline-none cursor-pointer"
           value={normalizeAIModel(model)}
           onChange={(e) => setModel(e.target.value)}
         >
@@ -58,7 +58,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
         <div className="space-y-1.5">
           <label className="text-[13px] text-muted-foreground font-normal">Description</label>
           <textarea
-            className="w-full min-h-[50px] px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
+            className="w-full min-h-[50px] px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
             value={productDescription}
             onChange={(e) => setProductContext({ productDescription: e.target.value })}
           />
@@ -67,7 +67,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
         <div className="space-y-1.5">
           <label className="text-[13px] text-muted-foreground font-normal">Target Audience</label>
           <textarea
-            className="w-full min-h-[40px] px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
+            className="w-full min-h-[40px] px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
             value={targetAudience}
             onChange={(e) => setProductContext({ targetAudience: e.target.value })}
           />
@@ -76,7 +76,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
         <div className="space-y-1.5">
           <label className="text-[13px] text-muted-foreground font-normal">Brand Voice</label>
           <textarea
-            className="w-full min-h-[40px] px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
+            className="w-full min-h-[40px] px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring"
             value={brandVoice}
             onChange={(e) => setProductContext({ brandVoice: e.target.value })}
           />

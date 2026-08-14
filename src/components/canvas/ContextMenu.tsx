@@ -50,7 +50,7 @@ export function ContextMenu() {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
       style={{ left, top, transformOrigin: 'top left' }}
-      className="fixed z-[100] min-w-[190px] overflow-hidden rounded-[8px] border border-border bg-white py-1 shadow-lg"
+      className="fixed z-[100] min-w-[190px] overflow-hidden rounded-[8px] border border-border bg-popover py-1 shadow-lg"
       onContextMenu={(e) => e.preventDefault()}
     >
       {items.map((item) => (
@@ -59,7 +59,7 @@ export function ContextMenu() {
           <button
             className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[13px] transition-colors active:scale-[0.99] ${
               item.danger
-                ? 'text-red-600 hover:bg-red-50'
+                ? 'text-destructive hover:bg-destructive/10'
                 : 'text-foreground hover:bg-muted'
             }`}
             onClick={() => {

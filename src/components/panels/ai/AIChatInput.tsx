@@ -68,7 +68,7 @@ export function AIChatInput({
       <div className="flex gap-1.5 items-end">
         <textarea
           ref={inputRef}
-          className="flex-1 min-h-[36px] max-h-[100px] px-2.5 py-2 text-[13px] bg-white border border-border rounded-[6px] resize-none outline-none focus:ring-1 focus:ring-ring leading-snug"
+          className="flex-1 min-h-[36px] max-h-[100px] px-2.5 py-2 text-[13px] bg-background border border-border rounded-[6px] resize-none outline-none focus:ring-1 focus:ring-ring leading-snug"
           placeholder="Ask anything about your ad..."
           value={input}
           onChange={(e) => setInput(e.target.value)}

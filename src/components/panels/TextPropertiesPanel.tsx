@@ -55,7 +55,7 @@ export function TextPropertiesPanel({ layer }: Props) {
       <div className="space-y-1.5">
         <label className="text-[13px] text-muted-foreground font-normal">Content</label>
         <textarea
-          className="w-full min-h-[60px] px-2 py-1.5 text-[12px] bg-white border border-border rounded-[5px] resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full min-h-[60px] px-2 py-1.5 text-[12px] bg-background border border-border rounded-[5px] resize-none focus:outline-none focus:ring-1 focus:ring-ring"
           value={layer.content}
           onChange={(e) => updateLayer<TextLayer>(layer.id, { content: e.target.value })}
           onFocus={() => pushSnapshot()}
@@ -66,7 +66,7 @@ export function TextPropertiesPanel({ layer }: Props) {
       <div className="space-y-1.5">
         <label className="text-[13px] text-muted-foreground font-normal">Role</label>
         <select
-          className="w-full px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+          className="w-full px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring cursor-pointer"
           value={layer.textRole ?? 'none'}
           onChange={(e) => {
             pushSnapshot()

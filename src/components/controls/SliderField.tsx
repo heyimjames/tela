@@ -44,7 +44,7 @@ export function SliderField({ label, value, min, max, step, onChange, format, sn
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <Label className="text-[13px] text-muted-foreground font-normal">{label}</Label>
-        <span className="text-[12px] font-mono tabular-nums text-muted-foreground/60">{display}</span>
+        <span className="text-[12px] font-mono tabular-nums text-muted-foreground">{display}</span>
       </div>
       <Slider
         min={min}

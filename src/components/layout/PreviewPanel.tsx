@@ -95,7 +95,7 @@ function ReformatNudge() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.98 }}
           transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute bottom-20 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-border bg-white/95 px-4 py-2 shadow-lg backdrop-blur"
+          className="absolute bottom-20 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-border bg-popover/95 px-4 py-2 shadow-lg backdrop-blur"
         >
           <span className="text-[13px] text-muted-foreground">
             Reformatted to <span className="font-medium text-foreground">{format.label}</span>
@@ -112,7 +112,7 @@ function ReformatNudge() {
           <button
             type="button"
             onClick={() => setVisible(false)}
-            className="text-muted-foreground/60 transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Dismiss"
           >
             <X className="h-3.5 w-3.5" />
@@ -849,7 +849,7 @@ export function PreviewPanel() {
               <RevealWords text="A frame full of potential." />
             </p>
             <motion.p
-              className="text-muted-foreground/55"
+              className="text-muted-foreground"
               style={{ fontSize: Math.max(9, Math.round(19 * zoom)), lineHeight: 1.3 }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -864,7 +864,9 @@ export function PreviewPanel() {
   )
 
   return (
-    <div className="flex flex-col h-full min-w-0 bg-[#e8e8e2] overflow-hidden relative">
+    // The desk around the artboards — chrome, so it rides --background with the
+    // rest of the app. The frames themselves keep their own white body below.
+    <div className="flex flex-col h-full min-w-0 bg-background overflow-hidden relative">
       {/* Canvas area */}
       <div
         ref={containerRef}
@@ -917,7 +919,7 @@ export function PreviewPanel() {
                         }}
                         onBlur={commitFrameRename}
                         onFocus={(e) => e.currentTarget.select()}
-                        className="absolute -top-[26px] left-0 max-w-[220px] rounded-[5px] border border-primary bg-white px-1.5 py-1 text-[11px] leading-none text-foreground outline-none"
+                        className="absolute -top-[26px] left-0 max-w-[220px] rounded-[5px] border border-primary bg-background px-1.5 py-1 text-[11px] leading-none text-foreground outline-none"
                       />
                     ) : (
                       <button
@@ -927,7 +929,7 @@ export function PreviewPanel() {
                         onDoubleClick={(e) => { e.stopPropagation(); setEditingName(frame.name); setEditingFrameId(frame.id) }}
                         title={`${frame.name} — double-click to rename`}
                         className={`absolute -top-[26px] left-0 flex max-w-full origin-bottom-left items-center gap-1 truncate rounded-[5px] px-1.5 py-1 text-[11px] leading-none outline-none transition-[color,background-color,transform] cursor-grab active:cursor-grabbing active:scale-[0.97] select-none ${
-                          isActive || isSelected ? 'text-primary font-medium bg-primary/10' : 'text-muted-foreground/70 hover:bg-black/[0.04] hover:text-foreground'
+                          isActive || isSelected ? 'text-primary font-medium bg-primary/10' : 'text-muted-foreground hover:bg-foreground/10 hover:text-foreground'
                         }`}
                       >
                         <span className="truncate">{frame.name}</span>
@@ -935,7 +937,13 @@ export function PreviewPanel() {
                     )
                   )}
 
-                  {/* Frame body — the white/border chrome. The active frame is
+                  {/* Frame body. This white and its black hairlines are the one
+                      surface the dark re-skin leaves alone: it is the document's
+                      own paper, not chrome, and the desk behind it is now dark
+                      enough that the frame edge reads on its own. Exports never
+                      come through here (svgExport owns that), so touching it
+                      would change what the user sees without changing what they
+                      ship. The active frame is
                       NOT clipped here so bounding-box handles can be dragged
                       past the frame edge; its artwork is clipped by the inner
                       content box in editingStack instead. Inactive frames keep
@@ -1049,7 +1057,7 @@ export function PreviewPanel() {
           {gridMenuOpen && showGrid && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setGridMenuOpen(false)} />
-              <div className="absolute bottom-full left-0 mb-1 bg-white border border-border rounded-[7px] shadow-lg py-1 min-w-[160px] z-50">
+              <div className="absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-[7px] shadow-lg py-1 min-w-[160px] z-50">
                 {Object.entries(GRID_PRESETS).map(([key, config]) => {
                   const r = resolveGrid(config, gridFormat)
                   return (
@@ -1068,7 +1076,7 @@ export function PreviewPanel() {
           )}
         </div>
         <div className="flex-1" />
-        <span className="text-[12px] tabular-nums text-muted-foreground/50">{(activeFrame?.width ?? docFormat.width)} x {(activeFrame?.height ?? docFormat.height)}</span>
+        <span className="text-[12px] tabular-nums text-muted-foreground">{(activeFrame?.width ?? docFormat.width)} x {(activeFrame?.height ?? docFormat.height)}</span>
       </div>
     </div>
   )

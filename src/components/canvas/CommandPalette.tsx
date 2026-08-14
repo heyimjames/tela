@@ -148,16 +148,16 @@ export function CommandPalette() {
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <Search className="w-5 h-5 text-muted-foreground/50 shrink-0" />
+          <Search className="w-5 h-5 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
-            className="flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/40"
+            className="flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
             placeholder="Search commands..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <kbd className="text-[11px] text-muted-foreground/40 bg-muted px-1.5 py-0.5 rounded-[3px]">ESC</kbd>
+          <kbd className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-[3px]">ESC</kbd>
         </div>
 
         {/* Results */}
@@ -182,7 +182,7 @@ export function CommandPalette() {
                   <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="flex-1 text-[13px]">{cmd.label}</span>
                   {cmd.shortcut && (
-                    <kbd className="text-[11px] text-muted-foreground/50">{cmd.shortcut}</kbd>
+                    <kbd className="text-[11px] text-muted-foreground">{cmd.shortcut}</kbd>
                   )}
                 </button>
               )

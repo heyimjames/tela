@@ -132,7 +132,7 @@ function MessageContent({ content }: { content: string }) {
         if (part.startsWith('```')) {
           const codeContent = part.replace(/```json?\n?/, '').replace(/```$/, '').trim()
           return (
-            <div key={i} className="my-2 p-2 bg-black/5 rounded-[4px] text-[11px] font-mono overflow-x-auto max-h-[120px] overflow-y-auto">
+            <div key={i} className="my-2 p-2 bg-muted rounded-[4px] text-[11px] font-mono overflow-x-auto max-h-[120px] overflow-y-auto">
               {codeContent}
             </div>
           )

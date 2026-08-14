@@ -35,7 +35,7 @@ export function LayoutPicker({ onClose }: Props) {
       {DESIGN_LAYOUTS.map((layout) => (
         <button
           key={layout.id}
-          className="group text-left bg-white border border-border rounded-[9px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
+          className="group text-left bg-card border border-border rounded-[9px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
           onClick={() => apply(layout)}
         >
           <div className="bg-muted/40 p-3 flex items-center justify-center aspect-[1.6/1]">
@@ -71,8 +71,8 @@ export function LayoutPicker({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <div className="relative bg-white rounded-[12px] shadow-xl w-[720px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative bg-popover rounded-[12px] shadow-xl w-[720px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <LayoutTemplate className="w-5 h-5 text-primary" />
@@ -97,6 +97,9 @@ function LayoutThumb({ layout, w, h }: { layout: DesignLayout; w: number; h: num
   const s = PREVIEW_W / w
   const layers = layout.build(w, h)
   return (
+    // Stays white while the chrome around it went dark: this is a picture of the
+    // artboard, drawn with the layout's own document colours. Reskinning it would
+    // misrepresent what the layout produces. Document-facing, not chrome.
     <svg width={PREVIEW_W} height={previewH} viewBox={`0 0 ${PREVIEW_W} ${previewH}`} className="rounded-[4px] bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]">
       {layers.map((l: LayoutLayer, i) => {
         const x = l.x * s, y = l.y * s, lw = l.width * s, lh = l.height * s

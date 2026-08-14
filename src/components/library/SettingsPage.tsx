@@ -142,7 +142,7 @@ function AISettings() {
 
       <div className="space-y-3">
         <h3 className="text-[16px] font-medium">Model</h3>
-        <select className="w-full px-3 py-2 text-[14px] bg-white border border-border rounded-[5px] cursor-pointer" value={normalizeAIModel(store.model)} onChange={(e) => store.setModel(e.target.value)}>
+        <select className="w-full px-3 py-2 text-[14px] bg-background border border-border rounded-[5px] cursor-pointer" value={normalizeAIModel(store.model)} onChange={(e) => store.setModel(e.target.value)}>
           {AI_MODELS.map((m) => (
             <option key={m.id} value={m.id}>{m.label}</option>
           ))}
@@ -208,7 +208,7 @@ function ModeCard({ icon: Icon, title, description, features, active, onClick }:
     <button className={`p-5 rounded-[7px] border-2 text-left transition-[border-color,background-color] cursor-pointer ${active ? 'border-primary bg-primary/5' : 'border-border hover:border-border/80'}`} onClick={onClick}>
       <div className="flex items-center gap-2 mb-2"><Icon className="w-5 h-5 text-primary" /><span className="text-[15px] font-semibold">{title}</span></div>
       <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">{description}</p>
-      <ul className="space-y-1">{features.map((f) => <li key={f} className="text-[12px] text-muted-foreground/70">• {f}</li>)}</ul>
+      <ul className="space-y-1">{features.map((f) => <li key={f} className="text-[12px] text-muted-foreground">• {f}</li>)}</ul>
     </button>
   )
 }
@@ -218,7 +218,7 @@ function SettingsField({ label, value, onChange }: { label: string; value: strin
 }
 
 function SettingsTextarea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return <div className="space-y-1.5"><label className="text-[14px] text-muted-foreground">{label}</label><textarea className="w-full min-h-[60px] px-3 py-2 text-[14px] bg-white border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring" value={value} onChange={(e) => onChange(e.target.value)} /></div>
+  return <div className="space-y-1.5"><label className="text-[14px] text-muted-foreground">{label}</label><textarea className="w-full min-h-[60px] px-3 py-2 text-[14px] bg-background border border-border rounded-[5px] resize-none outline-none focus:ring-1 focus:ring-ring" value={value} onChange={(e) => onChange(e.target.value)} /></div>
 }
 
 function Toggle({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: () => void }) {
@@ -226,7 +226,7 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
     <div className="flex items-start justify-between gap-4">
       <div><span className="text-[14px] font-medium text-foreground">{label}</span><p className="text-[13px] text-muted-foreground mt-0.5">{desc}</p></div>
       <button aria-label={label} aria-pressed={value} className={`w-10 h-5 rounded-full transition-colors cursor-pointer relative shrink-0 mt-0.5 ${value ? 'bg-primary' : 'bg-muted'}`} onClick={onChange}>
-        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow-sm transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
       </button>
     </div>
   )

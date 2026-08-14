@@ -80,7 +80,7 @@ export function DSComponentLibraryPanel() {
         {filtered.map((def) => (
           <button
             key={def.id}
-            className="group flex flex-col items-stretch gap-1.5 rounded-[7px] border border-border bg-white p-2 text-left transition-[border-color,box-shadow,transform] hover:border-primary/30 hover:shadow-[0_4px_16px_-6px_rgba(17,17,17,0.18)] active:scale-[0.98] cursor-pointer"
+            className="group flex flex-col items-stretch gap-1.5 rounded-[7px] border border-border bg-card p-2 text-left transition-[border-color,box-shadow,transform] hover:border-primary/30 hover:shadow-[0_4px_16px_-6px_rgba(17,17,17,0.18)] active:scale-[0.98] cursor-pointer"
             onClick={() => void insert(def)}
             title={`${def.name} — click to add to canvas`}
             aria-label={`Add ${def.name} to canvas`}
@@ -93,7 +93,7 @@ export function DSComponentLibraryPanel() {
         ))}
       </div>
 
-      <p className="text-[11px] leading-snug text-muted-foreground/50">
+      <p className="text-[11px] leading-snug text-muted-foreground">
         Components are non-interactive — they drop onto the canvas as editable
         shapes and text so you can mock up real designs.
       </p>

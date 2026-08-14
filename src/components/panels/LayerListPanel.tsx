@@ -266,7 +266,7 @@ export function LayerListPanel() {
 
               {editingId === `page-${page.id}` ? (
                 <input
-                  className="flex-1 text-[13px] bg-white text-foreground border border-border rounded-[3px] px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                  className="flex-1 text-[13px] bg-background text-foreground border border-border rounded-[3px] px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-ring"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={() => { if (editValue.trim()) renamePage(page.id, editValue.trim()); setEditingId(null) }}
@@ -286,7 +286,7 @@ export function LayerListPanel() {
               {/* Delete page (only if more than one page) */}
               {workspace.pages.length > 1 && (
                 <button
-                  className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-destructive cursor-pointer transition-opacity"
+                  className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-destructive cursor-pointer transition-opacity"
                   onClick={(e) => { e.stopPropagation(); removePage(page.id) }}
                   title="Delete page"
                   aria-label="Delete page"
@@ -337,17 +337,17 @@ export function LayerListPanel() {
                         }}
                       >
                         <button
-                          className="p-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-pointer"
+                          className="p-0.5 text-muted-foreground hover:text-muted-foreground cursor-pointer"
                           onClick={(e) => { e.stopPropagation(); setCollapsedFrames((p) => { const n = new Set(p); n.has(frame.id) ? n.delete(frame.id) : n.add(frame.id); return n }) }}
                           aria-label={isCollapsed ? 'Expand frame' : 'Collapse frame'}
                         >
                           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
-                        <FrameIcon className="w-4 h-4 text-primary/60 shrink-0" />
+                        <FrameIcon className="w-4 h-4 text-primary shrink-0" />
 
                         {editingId === `frame-${frame.id}` ? (
                           <input
-                            className="flex-1 text-[13px] font-medium text-foreground bg-white border border-border rounded-[3px] px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                            className="flex-1 text-[13px] font-medium text-foreground bg-background border border-border rounded-[3px] px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             onBlur={() => { if (editValue.trim()) renameFrame(frame.id, editValue.trim()); setEditingId(null) }}
@@ -364,15 +364,15 @@ export function LayerListPanel() {
                           </span>
                         )}
 
-                        <span className="text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">{frame.width}x{frame.height}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{frame.width}x{frame.height}</span>
 
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+                          <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
                             onClick={(e) => { e.stopPropagation(); duplicateFrame(frame.id) }} title="Duplicate" aria-label="Duplicate frame">
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                           {activePage.frames.length > 1 && (
-                            <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-destructive cursor-pointer"
+                            <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-destructive cursor-pointer"
                               onClick={(e) => { e.stopPropagation(); removeFrame(frame.id) }} title="Delete" aria-label="Delete frame">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -485,10 +485,10 @@ function LayerRow({
     >
       {dropPos === 'above' && <div className="absolute inset-x-2 -top-px h-0.5 rounded-full bg-primary pointer-events-none" />}
       {dropPos === 'below' && <div className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary pointer-events-none" />}
-      <Icon className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+      <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       {rename?.editing ? (
         <input
-          className="flex-1 text-[12px] text-foreground bg-white border border-border rounded-[3px] px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+          className="flex-1 text-[12px] text-foreground bg-background border border-border rounded-[3px] px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
           value={rename.value}
           onChange={(e) => rename.onChange(e.target.value)}
           onBlur={rename.onCommit}
@@ -507,22 +507,22 @@ function LayerRow({
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ opacity: isActive ? 1 : undefined }}>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onVisibility() }} aria-label={layer.visible ? 'Hide layer' : 'Show layer'}>
           {layer.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onLock() }} aria-label={layer.locked ? 'Unlock layer' : 'Lock layer'}>
           {layer.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
         </button>
         {onDuplicate && (
-          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
             onClick={(e) => { e.stopPropagation(); onDuplicate() }} aria-label="Duplicate layer">
             <Copy className="w-3.5 h-3.5" />
           </button>
         )}
         {onDelete && (
-          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-destructive cursor-pointer"
+          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-destructive cursor-pointer"
             onClick={(e) => { e.stopPropagation(); onDelete() }} aria-label="Delete layer">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -569,26 +569,26 @@ function GroupHeaderRow({
       onClick={onSelect}
     >
       <button
-        className="p-0.5 -ml-1 text-muted-foreground/40 hover:text-muted-foreground cursor-pointer shrink-0"
+        className="p-0.5 -ml-1 text-muted-foreground hover:text-muted-foreground cursor-pointer shrink-0"
         onClick={(e) => { e.stopPropagation(); onToggle() }}
         aria-label={expanded ? 'Collapse group' : 'Expand group'}
       >
         {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
       </button>
-      <Group className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+      <Group className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       <span className="text-[12px] truncate flex-1 text-foreground/90">Group</span>
-      <span className="text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">{count}</span>
+      <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{count}</span>
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onVisibility() }} aria-label={anyVisible ? 'Hide group' : 'Show group'}>
           {anyVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onLock() }} aria-label={allLocked ? 'Unlock group' : 'Lock group'}>
           {allLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
         </button>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground/50 hover:text-destructive cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-destructive cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onDelete() }} aria-label="Delete group">
           <Trash2 className="w-3.5 h-3.5" />
         </button>

@@ -77,7 +77,7 @@ export function IconPickerPanel() {
 
       {/* Search */}
       <input
-        className="w-full px-3 py-2 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
+        className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
         placeholder="Search icons..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}

@@ -111,7 +111,7 @@ export function FrameAlignmentPanel() {
         <div className="eyebrow">
           Align frames
         </div>
-        <span className="text-[11px] text-muted-foreground/50 tabular-nums">{selected.length} selected</span>
+        <span className="text-[11px] text-muted-foreground tabular-nums">{selected.length} selected</span>
       </div>
 
       <div className="grid grid-cols-6 gap-1">
@@ -174,7 +174,7 @@ export function FrameAlignmentPanel() {
         <LayoutGrid className="w-4 h-4" />Tidy into row
       </button>
 
-      <p className="text-[11px] leading-snug text-muted-foreground/50">
+      <p className="text-[11px] leading-snug text-muted-foreground">
         Shift-click frames or drag a marquee to select more.
       </p>
     </div>

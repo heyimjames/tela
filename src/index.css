@@ -31,50 +31,83 @@
   /* Brand tokens — Accent CTA scale */
   --ember-500: #F56139;
 
-  /* Semantic mapping */
-  --background: #f3f4f6;
-  --foreground: #0b0f0e;
-  --card: #eef1f3;
-  --card-foreground: #0b0f0e;
-  --popover: #eef1f3;
-  --popover-foreground: #0b0f0e;
-  --primary: #1f7a82;
-  --primary-foreground: #ffffff;
-  --secondary: #e7eaed;
-  --secondary-foreground: #0b0f0e;
-  --muted: #e7eaed;
-  --muted-foreground: rgba(11, 15, 14, 0.62);
-  --accent: #dae9e6;
-  --accent-foreground: #07262b;
-  --destructive: #ef3737;
-  --border: #e7eaed;
-  --input: #e7eaed;
-  --ring: #1f7a82;
+  /* ------------------------------------------------------------------
+     Chrome ramp — DARK.
+
+     The app chrome is dark by default, matching the HiveMind wiki's dark
+     theme (wiki.gethivemind.co, data-theme="dark"). These six values are
+     sampled from that theme and are the ONLY dark hexes in the codebase —
+     everything below maps semantic tokens onto them or onto the brand ramp
+     above. If a component needs a dark colour it takes a token from here;
+     it never re-types a hex (that drift is exactly what the eyebrow
+     regression cost us).
+
+     Ordering is a lift ramp: ground (darkest) → surface → surface-float,
+     with hairline as the only rule colour. Note the document canvas is NOT
+     on this ramp — frames paint their own backgrounds and are untouched.
+     ------------------------------------------------------------------ */
+  --ground: #06191c;        /* app background; input wells share it */
+  --surface: #0b2226;       /* panels, cards, sidebars — lifted off ground */
+  --surface-float: #0e272c; /* menus, popovers, dialogs — above the panels */
+  --surface-hover: #12333a; /* hover/pressed fills, muted blocks */
+  --hairline: #16424a;      /* every 1px rule */
+  --mist: #8ea1a4;          /* muted chrome text — 6.1:1 on --surface */
+  --alert-300: #ff6b6b;     /* destructive on dark; the light #ef3737 is 4.2:1 */
+
+  /* Semantic mapping.
+     Foreground/primary/accent deliberately alias existing brand tokens
+     rather than restating their hex: text is --paper, the primary action
+     flips hive-500 → hive-300 for contrast on dark and takes hive-900 ink,
+     and links/secondary accent are hive-100. */
+  --background: var(--ground);
+  --foreground: var(--paper);
+  --card: var(--surface);
+  --card-foreground: var(--paper);
+  --popover: var(--surface-float);
+  --popover-foreground: var(--paper);
+  --primary: var(--hive-300);
+  --primary-foreground: var(--hive-900);
+  --secondary: var(--surface-hover);
+  --secondary-foreground: var(--paper);
+  --muted: var(--surface-hover);
+  /* Solid, never alpha — an alpha muted compounds against whichever surface
+     it lands on and silently drops under AA (the r6 eyebrow lesson). */
+  --muted-foreground: var(--mist);
+  --accent: var(--surface-hover);
+  --accent-foreground: var(--hive-50);
+  --destructive: var(--alert-300);
+  /* Ink, not white: --alert-300 is a light red, and white on it is 2.8:1. */
+  --destructive-foreground: var(--ground);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--hive-300);
 
   /* Radius */
   --radius: 5px;
 
-  /* Shadow (single permitted shadow) */
-  --shadow-subtle: 0 1px 2px 0 rgba(17, 17, 17, 0.05);
+  /* Shadow (single permitted shadow) — on a near-black ground a 5% black
+     scrim is invisible, so depth comes from a deeper black. */
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
 
   /* Sidebar */
-  --sidebar: #eef1f3;
-  --sidebar-foreground: #0b0f0e;
-  --sidebar-primary: #1f7a82;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dae9e6;
-  --sidebar-accent-foreground: #07262b;
-  --sidebar-border: #e7eaed;
-  --sidebar-ring: #1f7a82;
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--paper);
+  --sidebar-primary: var(--hive-300);
+  --sidebar-primary-foreground: var(--hive-900);
+  --sidebar-accent: var(--surface-hover);
+  --sidebar-accent-foreground: var(--hive-50);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--hive-300);
 
-  /* Charts (brand-derived) */
-  --chart-1: #1f7a82;
-  --chart-2: #F56139;
-  --chart-3: #0f4a52;
-  --chart-4: #97c4bd;
-  --chart-5: #5c6470;
+  /* Charts (brand-derived) — the ramp steps up for legibility on dark:
+     hive-500 is too close to the ground to carry a series. */
+  --chart-1: var(--hive-300);
+  --chart-2: var(--ember-500);
+  --chart-3: var(--hive-100);
+  --chart-4: var(--hive-500);
+  --chart-5: var(--mist);
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -103,6 +136,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -208,9 +242,11 @@
 }
 
 /* Subtle 1px outline on DOM images for consistent edge depth (make-interfaces #11).
-   Pure black at low opacity — never a tinted neutral that reads as dirt. */
+   On dark chrome a black scrim is the wrong direction — it disappears into the
+   ground and eats the image edge instead of defining it. The hairline token is
+   the same rule the rest of the chrome draws with. */
 img:not([data-no-outline]) {
-  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline: 1px solid var(--hairline);
   outline-offset: -1px;
 }
 
@@ -222,11 +258,11 @@ img:not([data-no-outline]) {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--stone);
+  background: var(--hairline);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c8cdd4;
+  background: var(--hive-700);
 }
 
 /* Hide the scrollbar while preserving scrollability (used on the sidebar panels). */

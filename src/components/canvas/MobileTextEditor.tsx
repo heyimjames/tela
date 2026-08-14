@@ -72,7 +72,7 @@ export function MobileTextEditor() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Type your text…"
-        className="flex-1 w-full resize-none bg-transparent px-4 py-4 text-[18px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/40"
+        className="flex-1 w-full resize-none bg-transparent px-4 py-4 text-[18px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
       />
     </div>

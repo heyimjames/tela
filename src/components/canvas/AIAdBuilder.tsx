@@ -179,7 +179,7 @@ export function AIAdBuilder() {
 
           {/* Prompt input */}
           <input
-            className="flex-1 px-3 py-2 text-[13px] bg-muted/30 border-none rounded-[6px] outline-none focus:bg-muted/50 transition-colors placeholder:text-muted-foreground/50"
+            className="flex-1 px-3 py-2 text-[13px] bg-muted/30 border-none rounded-[6px] outline-none focus:bg-muted/50 transition-colors placeholder:text-muted-foreground"
             placeholder="Describe the ad you want..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}

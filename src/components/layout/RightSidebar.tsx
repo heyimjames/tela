@@ -84,7 +84,7 @@ function NoSelectionPanel() {
       </div>
       <div className="text-[11px] text-muted-foreground space-y-1">
         <p>Select a frame or layer to edit its properties.</p>
-        <p className="text-muted-foreground/60 tabular-nums">
+        <p className="text-muted-foreground tabular-nums">
           {format.label} — {format.width} x {format.height}
         </p>
       </div>

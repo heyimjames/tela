@@ -1,51 +1,43 @@
 /**
  * The HiveMind d20 mark.
  *
- * Inlined rather than loaded from `/d20-flat.svg` so it survives a non-root
+ * Inlined rather than loaded from an SVG in `public/` so it survives a non-root
  * Vite `base` (the Pages build serves from `/tela/`) without any URL rewriting,
  * and so it paints on the first frame with no network round-trip.
  *
- * Geometry and colours are the flat master from the supplied favicon pack
- * (`d20-flat.svg`): faces on hive-900/hive-700 with a mid tone, edges in the
- * pack's edge cyan `#46E5DA`. Do not hand-tune the polygons — regenerate from
- * the pack if the mark changes.
+ * Geometry and colours are the **bold** master from the supplied favicon pack
+ * (`public/d20-flat-bold.svg`), not the flat one. The flat master facets the
+ * body in hive-900/hive-700, which sat fine on the old light chrome but is
+ * within a couple of points of `--ground` (#06191c) now that the app is dark:
+ * the silhouette dissolves and only the cyan edging survives, which at the 18px
+ * and 26px the lockup actually uses reads as a smudge. `index.html` already
+ * ships this same variant as the dark-scheme favicon for exactly that reason —
+ * this keeps the in-app mark and the tab icon telling the same story.
+ *
+ * Do not hand-tune the polygons — regenerate from the pack if the mark changes.
  */
-const FACES: Array<{ points: string; fill: string }> = [
-  { points: '371.5,189.3 140.5,189.3 256.0,389.4', fill: '#0B333A' },
-  { points: '371.5,189.3 140.5,189.3 256.0,22.0', fill: '#0F4A52' },
-  { points: '140.5,189.3 256.0,389.4 53.4,373.0', fill: '#07262B' },
-  { points: '256.0,389.4 371.5,189.3 458.6,373.0', fill: '#07262B' },
-  { points: '458.6,139.0 256.0,22.0 371.5,189.3', fill: '#07262B' },
-  { points: '256.0,22.0 53.4,139.0 140.5,189.3', fill: '#07262B' },
-  { points: '53.4,139.0 53.4,373.0 140.5,189.3', fill: '#0F4A52' },
-  { points: '53.4,373.0 256.0,490.0 256.0,389.4', fill: '#0B333A' },
-  { points: '256.0,490.0 458.6,373.0 256.0,389.4', fill: '#0F4A52' },
-  { points: '458.6,373.0 458.6,139.0 371.5,189.3', fill: '#0B333A' },
-]
+
+/** Solid body — one silhouette polygon, a hair above the ground it sits on. */
+const BODY = '451.7,143.0 256.0,30.0 60.3,143.0 60.3,369.0 256.0,482.0 451.7,369.0'
+const BODY_FILL = '#0B333A'
 
 /** Outer silhouette edges — heavier stroke than the interior facet edges. */
 const OUTER_EDGES: Array<[number, number, number, number]> = [
-  [458.6, 139.0, 256.0, 22.0],
-  [256.0, 22.0, 53.4, 139.0],
-  [53.4, 139.0, 53.4, 373.0],
-  [53.4, 373.0, 256.0, 490.0],
-  [256.0, 490.0, 458.6, 373.0],
-  [458.6, 373.0, 458.6, 139.0],
+  [451.7, 143.0, 256.0, 30.0],
+  [256.0, 30.0, 60.3, 143.0],
+  [60.3, 143.0, 60.3, 369.0],
+  [60.3, 369.0, 256.0, 482.0],
+  [256.0, 482.0, 451.7, 369.0],
+  [451.7, 369.0, 451.7, 143.0],
 ]
 
 const INNER_EDGES: Array<[number, number, number, number]> = [
-  [371.5, 189.3, 140.5, 189.3],
-  [140.5, 189.3, 256.0, 389.4],
-  [256.0, 389.4, 371.5, 189.3],
-  [371.5, 189.3, 458.6, 139.0],
-  [371.5, 189.3, 458.6, 373.0],
-  [371.5, 189.3, 256.0, 22.0],
-  [140.5, 189.3, 53.4, 139.0],
-  [140.5, 189.3, 256.0, 22.0],
-  [140.5, 189.3, 53.4, 373.0],
-  [256.0, 389.4, 256.0, 490.0],
-  [256.0, 389.4, 53.4, 373.0],
-  [256.0, 389.4, 458.6, 373.0],
+  [367.6, 191.6, 144.4, 191.6],
+  [144.4, 191.6, 256.0, 384.8],
+  [256.0, 384.8, 367.6, 191.6],
+  [367.6, 191.6, 451.7, 143.0],
+  [144.4, 191.6, 60.3, 143.0],
+  [256.0, 384.8, 256.0, 482.0],
 ]
 
 const EDGE = '#46E5DA'
@@ -67,14 +59,12 @@ export function HiveMark({ size = 28, className }: Props) {
       aria-label="HiveMind"
       data-no-outline
     >
-      {FACES.map((f, i) => (
-        <polygon key={`f${i}`} points={f.points} fill={f.fill} />
-      ))}
+      <polygon points={BODY} fill={BODY_FILL} />
       {OUTER_EDGES.map(([x1, y1, x2, y2], i) => (
-        <line key={`o${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={EDGE} strokeWidth={10} strokeLinecap="round" />
+        <line key={`o${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={EDGE} strokeWidth={30} strokeLinecap="round" />
       ))}
       {INNER_EDGES.map(([x1, y1, x2, y2], i) => (
-        <line key={`i${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={EDGE} strokeWidth={8} strokeLinecap="round" />
+        <line key={`i${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={EDGE} strokeWidth={26} strokeLinecap="round" />
       ))}
     </svg>
   )

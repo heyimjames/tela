@@ -75,7 +75,7 @@ function Keys({ combo }: { combo: string }) {
       {combo.split(' ').map((k, i) => (
         <kbd
           key={i}
-          className="inline-flex min-w-[20px] items-center justify-center rounded-[5px] border border-black/10 bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground/80 tabular-nums"
+          className="inline-flex min-w-[20px] items-center justify-center rounded-[5px] border border-border bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground/80 tabular-nums"
         >
           {k}
         </kbd>

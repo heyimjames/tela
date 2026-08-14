@@ -8,7 +8,7 @@ import type { Layer, TextLayer } from '@/types/design'
 // still shows the computed size, the tag marks that the axis hugs its content.
 function HugTag() {
   return (
-    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-medium text-muted-foreground/70">
+    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-medium text-muted-foreground">
       Hug
     </span>
   )
@@ -73,7 +73,7 @@ export function PositionSizePanel({ layer }: Props) {
         <button
           className={`
             p-1.5 rounded-[5px] transition-colors cursor-pointer mb-0.5
-            ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted'}
+            ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-muted-foreground hover:bg-muted'}
           `}
           onClick={() => {
             pushSnapshot()

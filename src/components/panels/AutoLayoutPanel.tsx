@@ -33,7 +33,7 @@ export function AutoLayoutPanel({ groupId, activeLayer }: { groupId: string; act
           Auto Layout
         </span>
         <button
-          className="text-muted-foreground/60 hover:text-destructive transition-colors cursor-pointer"
+          className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
           title="Remove auto layout"
           onClick={() => remove(groupId)}
         >
@@ -179,7 +179,7 @@ function NumField({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] text-muted-foreground/60">{label}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
       <input
         type="number"
         value={Math.round(value)}

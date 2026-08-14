@@ -53,7 +53,7 @@ function IconButton({ icon: Icon, label, active, onClick, danger }: {
         active
           ? 'bg-primary/12 text-primary'
           : danger
-            ? 'text-muted-foreground hover:bg-red-50 hover:text-red-600'
+            ? 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
       }`}
     >
@@ -83,7 +83,7 @@ export function FloatingToolbar() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="pointer-events-auto absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-[16px] border border-black/5 bg-white/95 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur max-md:max-w-[calc(100vw-1.5rem)] max-md:overflow-x-auto no-scrollbar"
+      className="pointer-events-auto absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-[16px] border border-border bg-popover/95 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur max-md:max-w-[calc(100vw-1.5rem)] max-md:overflow-x-auto no-scrollbar"
     >
       <IconButton icon={MousePointer2} label="Select (V)" active={tool === 'select'} onClick={() => setTool('select')} />
       <IconButton icon={Pencil} label="Draw (P)" active={tool === 'draw'} onClick={() => setTool(tool === 'draw' ? 'select' : 'draw')} />

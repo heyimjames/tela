@@ -26,12 +26,12 @@ function ClusterButton({
     variant === 'primary'
       ? 'bg-primary text-primary-foreground'
       : variant === 'danger'
-        ? 'bg-white text-red-600'
-        : 'bg-white text-foreground'
+        ? 'bg-popover text-destructive'
+        : 'bg-popover text-foreground'
   return (
     <motion.button
       aria-label={label}
-      className={`h-11 w-11 flex items-center justify-center rounded-full shadow-lg border border-black/5 transition-transform active:scale-[0.96] ${tone}`}
+      className={`h-11 w-11 flex items-center justify-center rounded-full shadow-lg border border-border transition-transform active:scale-[0.96] ${tone}`}
       initial={{ opacity: 0, scale: 0.6, y: 6 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.6, y: 6 }}

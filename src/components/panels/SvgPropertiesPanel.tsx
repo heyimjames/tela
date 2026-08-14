@@ -136,7 +136,7 @@ export function SvgPropertiesPanel({ layer }: Props) {
 function ColorGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <div className="text-[11px] text-muted-foreground/60">{label}</div>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
       <div className="flex flex-wrap gap-1.5">{children}</div>
     </div>
   )

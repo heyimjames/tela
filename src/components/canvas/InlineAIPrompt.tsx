@@ -166,7 +166,7 @@ export function InlineAIPrompt() {
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 w-[min(560px,calc(100vw-1.5rem))]">
-      <div className="bg-white border border-border rounded-[12px] shadow-[0_8px_30px_-4px_rgba(17,17,17,0.15)] overflow-hidden">
+      <div className="bg-popover border border-border rounded-[12px] shadow-[0_8px_30px_-4px_rgba(17,17,17,0.15)] overflow-hidden">
         {/* Mode indicator */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">
           <Sparkles className="w-4 h-4 text-primary" />
@@ -182,7 +182,7 @@ export function InlineAIPrompt() {
         <div className="flex items-center gap-2 px-4 pb-3">
           <input
             ref={inputRef}
-            className="flex-1 text-[14px] text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40 py-1"
+            className="flex-1 text-[14px] text-foreground bg-transparent outline-none placeholder:text-muted-foreground py-1"
             placeholder={isEditMode
               ? 'Describe how to change this text...'
               : 'Describe the ad you want to create...'}
@@ -201,7 +201,7 @@ export function InlineAIPrompt() {
             aria-label={isEditMode ? 'Generate copy' : 'Generate design'}
             className={`
               p-2 rounded-[5px] transition-[color,background-color,transform] active:scale-[0.96] cursor-pointer
-              ${loading ? 'bg-muted text-muted-foreground' : 'bg-primary text-white hover:bg-primary/90'}
+              ${loading ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'}
             `}
             onClick={handleSubmit}
             disabled={loading || !prompt.trim()}

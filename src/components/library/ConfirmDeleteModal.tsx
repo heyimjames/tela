@@ -41,14 +41,14 @@ export function ConfirmDeleteModal({ open, itemName, kind = 'file', onConfirm, o
       transition={{ duration: 0.18 }}
     >
           {/* Backdrop — dim + soft blur, click to dismiss. */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onCancel} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onCancel} />
 
           {/* Panel — grows in on the golden curve; concentric radius (20 → 10). */}
           <motion.div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-delete-title"
-            className="relative w-full max-w-[380px] rounded-[20px] bg-white p-6 shadow-[0_24px_70px_-16px_rgba(0,0,0,0.35),0_2px_8px_-2px_rgba(0,0,0,0.1)]"
+            className="relative w-full max-w-[380px] rounded-[20px] bg-popover p-6 shadow-[0_24px_70px_-16px_rgba(0,0,0,0.35),0_2px_8px_-2px_rgba(0,0,0,0.1)]"
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
@@ -84,7 +84,7 @@ export function ConfirmDeleteModal({ open, itemName, kind = 'file', onConfirm, o
               <button
                 type="button"
                 onClick={onConfirm}
-                className="rounded-[10px] bg-destructive px-4 py-2.5 text-[13px] font-medium text-white transition-[background-color,transform] duration-150 hover:bg-destructive/90 active:scale-[0.96]"
+                className="rounded-[10px] bg-destructive px-4 py-2.5 text-[13px] font-medium text-destructive-foreground transition-[background-color,transform] duration-150 hover:bg-destructive/90 active:scale-[0.96]"
               >
                 Delete
               </button>

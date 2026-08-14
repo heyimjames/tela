@@ -74,11 +74,11 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
       {filtered.map((template) => (
         <button
           key={template.id}
-          className="group text-left bg-white border border-border rounded-[7px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
+          className="group text-left bg-card border border-border rounded-[7px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
           onClick={() => handleSelect(template.id)}
         >
           <div className="aspect-[1.6/1] bg-muted/50 flex items-center justify-center">
-            <span className="text-[12px] text-muted-foreground/40">{template.formatId.replace('-', ' ')}</span>
+            <span className="text-[12px] text-muted-foreground">{template.formatId.replace('-', ' ')}</span>
           </div>
           <div className="p-3">
             <div className="text-[14px] font-medium text-foreground mb-0.5">{template.name}</div>
@@ -120,7 +120,7 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
             )}
             <button
               onClick={startBlank}
-              className="mt-4 w-full h-12 rounded-[10px] border border-border bg-white text-[14px] font-medium text-foreground transition-transform active:scale-[0.98]"
+              className="mt-4 w-full h-12 rounded-[10px] border border-border bg-card text-[14px] font-medium text-foreground transition-transform active:scale-[0.98]"
             >
               Start with a blank canvas
             </button>
@@ -132,10 +132,10 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
-        className="relative bg-white rounded-[12px] shadow-xl w-[760px] max-h-[80vh] overflow-hidden flex flex-col"
+        className="relative bg-popover rounded-[12px] shadow-xl w-[760px] max-h-[80vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -168,12 +168,12 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
             {filtered.map((template) => (
               <button
                 key={template.id}
-                className="group text-left bg-white border border-border rounded-[7px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer"
+                className="group text-left bg-card border border-border rounded-[7px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer"
                 onClick={() => handleSelect(template.id)}
               >
                 {/* Preview placeholder */}
                 <div className="aspect-[1.6/1] bg-muted/50 flex items-center justify-center">
-                  <span className="text-[12px] text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors">
+                  <span className="text-[12px] text-muted-foreground group-hover:text-muted-foreground transition-colors">
                     {template.formatId.replace('-', ' ')}
                   </span>
                 </div>

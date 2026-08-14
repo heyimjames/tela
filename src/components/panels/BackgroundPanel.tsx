@@ -352,7 +352,7 @@ export function BackgroundPanel() {
             onChange={(speed) => updateShader({ speed })}
           />
 
-          <p className="text-[11px] leading-snug text-muted-foreground/60">
+          <p className="text-[11px] leading-snug text-muted-foreground">
             Animated in the editor; exports as a still at the chosen variation.
           </p>
         </div>

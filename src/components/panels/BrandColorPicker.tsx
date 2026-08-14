@@ -71,7 +71,7 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
         </span>
         {canPick && (
           <button
-            className="p-1 rounded-[5px] text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="p-1 rounded-[5px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
             title="Pick colour from screen"
             aria-label="Pick colour from screen"
             onClick={() => void pickFromScreen()}

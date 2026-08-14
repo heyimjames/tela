@@ -75,9 +75,9 @@ export function AssetLibraryPanel() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
-          className="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
+          className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
           placeholder="Search assets..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -112,9 +112,9 @@ export function AssetLibraryPanel() {
         }}
         onDragOver={(e) => e.preventDefault()}
       >
-        <Upload className="w-5 h-5 mx-auto mb-2 text-muted-foreground/40" />
+        <Upload className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
         <p className="text-[12px] text-muted-foreground">Drop files or click to upload</p>
-        <p className="text-[10px] text-muted-foreground/50 mt-1">PNG, JPG, SVG</p>
+        <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, SVG</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -127,12 +127,16 @@ export function AssetLibraryPanel() {
 
       {/* Assets grid */}
       {assets.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground/50 text-center py-4">
+        <p className="text-[12px] text-muted-foreground text-center py-4">
           No assets yet. Upload images, SVGs, or icons.
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {assets.map((asset) => (
+            /* The tile stays white while the chrome around it went dark: it is a
+               stand-in for the document the asset will be dropped onto, and most
+               uploads are dark artwork on transparency, which would disappear in
+               a dark well. Document-facing surface — deliberately not chrome. */
             <div
               key={asset.id}
               className="group relative aspect-square bg-white border border-border rounded-[5px] overflow-hidden cursor-grab hover:border-primary/30 transition-colors active:cursor-grabbing"
@@ -157,9 +161,11 @@ export function AssetLibraryPanel() {
                 className="w-full h-full object-contain p-1"
               />
 
-              {/* Delete button */}
+              {/* Delete button. A dark chip, not white: it floats over the white
+                  asset tile, and its icon is --muted-foreground, which is now a
+                  dark-surface value (2.3:1 on white). */}
               <button
-                className="absolute top-1 right-1 p-1 bg-white/90 rounded-[3px] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 cursor-pointer"
+                className="absolute top-1 right-1 p-1 bg-popover/90 rounded-[3px] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation()
                   removeAsset(asset.id)

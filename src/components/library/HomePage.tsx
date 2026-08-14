@@ -316,7 +316,7 @@ export function HomePage() {
                 {(['all', 'recents'] as const).map((tab) => (
                   <button
                     key={tab}
-                    className={`px-3 py-1 text-[13px] rounded-[4px] transition-colors cursor-pointer ${filter === tab ? 'bg-white text-foreground shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-3 py-1 text-[13px] rounded-[4px] transition-colors cursor-pointer ${filter === tab ? 'bg-accent text-foreground shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
                     onClick={() => setFilter(tab)}
                   >
                     {tab === 'all' ? 'All' : 'Recents'}
@@ -326,17 +326,17 @@ export function HomePage() {
 
               {/* View toggle (desktop) */}
               <div className="hidden md:flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
-                <button aria-label="Grid view" className={`p-1.5 rounded-[4px] ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('grid')}>
+                <button aria-label="Grid view" className={`p-1.5 rounded-[4px] ${viewMode === 'grid' ? 'bg-accent shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('grid')}>
                   <LayoutGrid className="w-4 h-4 text-muted-foreground" />
                 </button>
-                <button aria-label="List view" className={`p-1.5 rounded-[4px] ${viewMode === 'list' ? 'bg-white shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('list')}>
+                <button aria-label="List view" className={`p-1.5 rounded-[4px] ${viewMode === 'list' ? 'bg-accent shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('list')}>
                   <List className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
 
               {/* Search */}
               <div className="relative flex-1 md:flex-none md:w-[200px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   className="pl-9 h-10 md:h-8 text-[13px] rounded-[5px]"
                   placeholder="Search files"
@@ -451,7 +451,7 @@ export function HomePage() {
 
           {visibleFiles.length === 0 && !searchQuery && (
             <div className="text-center py-20">
-              <FileText className="w-12 h-12 mx-auto text-muted-foreground/20 mb-4" />
+              <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-[16px] font-medium text-foreground mb-1">No files yet</h2>
               <p className="text-[13px] text-muted-foreground mb-4">Create a file to start designing.</p>
               <Button className="rounded-[5px] gap-1.5" onClick={() => { const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId); handleOpenFile(id) }}>
@@ -534,8 +534,8 @@ function MoveToFolderPicker({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <div className="relative w-full max-w-[380px] rounded-[16px] bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative w-full max-w-[380px] rounded-[16px] bg-popover shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-border text-[14px] font-semibold text-foreground truncate">Move “{file.name}” to…</div>
         <div className="max-h-[50vh] overflow-y-auto">{rows}</div>
       </div>
@@ -633,10 +633,10 @@ function FolderCard({
       // Right-click opens the folder's context menu (rename / delete).
       onContextMenu={onContextMenu}
     >
-      <FolderOpen className="w-5 h-5 text-muted-foreground/60 shrink-0" />
+      <FolderOpen className="w-5 h-5 text-muted-foreground shrink-0" />
       {isEditing ? (
         <input
-          className="text-[14px] font-medium text-foreground bg-white border border-border rounded-[5px] px-1.5 py-0.5 min-w-0 flex-1 outline-none focus:ring-1 focus:ring-ring"
+          className="text-[14px] font-medium text-foreground bg-background border border-border rounded-[5px] px-1.5 py-0.5 min-w-0 flex-1 outline-none focus:ring-1 focus:ring-ring"
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
           onBlur={() => { if (editValue.trim()) onSaveEdit(editValue.trim()); else onCancelEdit() }}
@@ -748,16 +748,16 @@ function FileCard({
         {/* Hover actions */}
         {!file.isScratchpad && (
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
-            <button aria-label="Rename" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onStartEdit() }} title="Rename">
+            <button aria-label="Rename" className="p-1.5 bg-popover/90 rounded-[5px] shadow-sm hover:bg-popover cursor-pointer" onClick={(e) => { e.stopPropagation(); onStartEdit() }} title="Rename">
               <Pencil className="w-3 h-3 text-muted-foreground" />
             </button>
-            <button aria-label="Move to folder" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onMove() }} title="Move to folder">
+            <button aria-label="Move to folder" className="p-1.5 bg-popover/90 rounded-[5px] shadow-sm hover:bg-popover cursor-pointer" onClick={(e) => { e.stopPropagation(); onMove() }} title="Move to folder">
               <FolderInput className="w-3 h-3 text-muted-foreground" />
             </button>
-            <button aria-label="Duplicate" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onDuplicate() }} title="Duplicate">
+            <button aria-label="Duplicate" className="p-1.5 bg-popover/90 rounded-[5px] shadow-sm hover:bg-popover cursor-pointer" onClick={(e) => { e.stopPropagation(); onDuplicate() }} title="Duplicate">
               <Copy className="w-3 h-3 text-muted-foreground" />
             </button>
-            <button aria-label="Delete" className="p-1.5 bg-white/90 rounded-[5px] shadow-sm hover:bg-white cursor-pointer" onClick={(e) => { e.stopPropagation(); onDelete() }} title="Delete">
+            <button aria-label="Delete" className="p-1.5 bg-popover/90 rounded-[5px] shadow-sm hover:bg-popover cursor-pointer" onClick={(e) => { e.stopPropagation(); onDelete() }} title="Delete">
               <Trash2 className="w-3 h-3 text-muted-foreground" />
             </button>
           </div>
@@ -768,7 +768,7 @@ function FileCard({
       <div className="px-3 py-2.5">
         {isEditing ? (
           <input
-            className="text-[14px] font-medium text-foreground bg-white border border-border rounded-[5px] px-2 py-0.5 w-full outline-none focus:ring-1 focus:ring-ring"
+            className="text-[14px] font-medium text-foreground bg-background border border-border rounded-[5px] px-2 py-0.5 w-full outline-none focus:ring-1 focus:ring-ring"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onBlur={() => { if (editValue.trim()) onSaveEdit(editValue.trim()); else onCancelEdit() }}
@@ -781,7 +781,7 @@ function FileCard({
             <div className="flex items-center gap-1.5">
               <span className="text-[14px] font-medium text-foreground truncate">{file.name}</span>
             </div>
-            <p className="text-[12px] text-muted-foreground/60 mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {file.isScratchpad ? 'Your permanent draft' : `Edited ${timeAgo(file.updatedAt)}`}
             </p>
           </>
@@ -816,15 +816,15 @@ function FileListRow({
       draggable={!file.isScratchpad}
       onDragStart={(e) => { e.dataTransfer.setData(FILE_DND, file.id); e.dataTransfer.effectAllowed = 'move' }}
     >
-      <FileText className="w-5 h-5 text-muted-foreground/40 shrink-0" />
+      <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
       <div className="flex-1 min-w-0">
         <span className="text-[14px] font-medium text-foreground">{file.name}</span>
-        {file.isScratchpad && <span className="text-[11px] text-muted-foreground/50 ml-2">Draft</span>}
+        {file.isScratchpad && <span className="text-[11px] text-muted-foreground ml-2">Draft</span>}
       </div>
-      <span className="text-[12px] text-muted-foreground/50 shrink-0 tabular-nums">
+      <span className="text-[12px] text-muted-foreground shrink-0 tabular-nums">
         {file.pages.length} page{file.pages.length !== 1 ? 's' : ''}
       </span>
-      <span className="text-[12px] text-muted-foreground/50 shrink-0 w-24 text-right">
+      <span className="text-[12px] text-muted-foreground shrink-0 w-24 text-right">
         {timeAgo(file.updatedAt)}
       </span>
       {!file.isScratchpad && (
@@ -871,7 +871,7 @@ function LibraryContextMenu({ menu, onClose }: { menu: { x: number; y: number; i
   const top = Math.min(menu.y, window.innerHeight - (menu.items.length * 34 + 12))
   return createPortal(
     <div
-      className="fixed z-[200] min-w-[184px] rounded-[10px] border border-black/5 bg-white/98 p-1 shadow-[0_10px_34px_rgba(0,0,0,0.16)] backdrop-blur"
+      className="fixed z-[200] min-w-[184px] rounded-[10px] border border-border bg-popover/98 p-1 shadow-[0_10px_34px_rgba(0,0,0,0.16)] backdrop-blur"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}
@@ -880,7 +880,7 @@ function LibraryContextMenu({ menu, onClose }: { menu: { x: number; y: number; i
         <button
           key={i}
           className={`flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-1.5 text-[13px] transition-colors cursor-pointer ${
-            it.danger ? 'text-red-600 hover:bg-red-50' : 'text-foreground hover:bg-muted'
+            it.danger ? 'text-destructive hover:bg-destructive/10' : 'text-foreground hover:bg-muted'
           }`}
           onClick={() => { it.on(); onClose() }}
         >
@@ -920,7 +920,7 @@ function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; on
           </div>
           <p className="text-[13px] leading-relaxed text-muted-foreground">
             A fast, local-first canvas for posts, ads, and quick graphics — everything stays in your browser.
-            Start from a template or a blank file, then press <kbd className="rounded-[4px] border border-black/10 bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">⌘K</kbd> for commands and <kbd className="rounded-[4px] border border-black/10 bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">?</kbd> for shortcuts.
+            Start from a template or a blank file, then press <kbd className="rounded-[4px] border border-border bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">⌘K</kbd> for commands and <kbd className="rounded-[4px] border border-border bg-muted px-1 py-0.5 text-[11px] font-medium text-foreground/80">?</kbd> for shortcuts.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -934,7 +934,7 @@ function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; on
       </div>
       <button
         aria-label="Dismiss"
-        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
         onClick={dismiss}
       >
         <X className="h-4 w-4" />

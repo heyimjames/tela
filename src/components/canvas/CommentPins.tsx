@@ -120,7 +120,7 @@ export function CommentPins({ zoom }: CommentPinsProps) {
                 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums
                 shadow-[0_2px_8px_rgba(0,0,0,0.15)] cursor-pointer transition-[color,background-color,transform,opacity] duration-150
                 ${isResolved
-                  ? 'bg-muted text-muted-foreground/50 opacity-50'
+                  ? 'bg-muted text-muted-foreground opacity-50'
                   : 'bg-primary text-primary-foreground hover:scale-110'}
               `}
               onClick={(e) => {
@@ -140,7 +140,7 @@ export function CommentPins({ zoom }: CommentPinsProps) {
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <span className="text-[11px] font-medium text-foreground">{comment.author}</span>
-                  <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                  <span className="text-[10px] text-muted-foreground shrink-0">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -157,7 +157,7 @@ export function CommentPins({ zoom }: CommentPinsProps) {
                   </button>
                 )}
                 {isResolved && (
-                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Check className="w-3 h-3" />
                     Resolved
                   </span>
@@ -188,7 +188,7 @@ export function CommentPins({ zoom }: CommentPinsProps) {
             <div className="flex items-center gap-1.5">
               <input
                 ref={inputRef}
-                className="flex-1 px-2 py-1.5 text-[13px] bg-white border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 px-2 py-1.5 text-[13px] bg-background border border-border rounded-[5px] outline-none focus:ring-1 focus:ring-ring"
                 placeholder="Add a comment..."
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}

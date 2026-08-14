@@ -208,7 +208,7 @@ export function DrawToolPanel() {
         </>
       )}
 
-      <p className="text-[11px] leading-relaxed text-muted-foreground/60">
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
         {isHighlighter
           ? 'Translucent marker — overlapping colours blend without darkening. Each stroke becomes a layer you can move, resize, and restyle.'
           : 'Pressure-variable ink. Taper shapes the ends (round → pointed), Pressure sets how much speed thins the line. Each stroke becomes a layer you can move, resize, and restyle.'}
