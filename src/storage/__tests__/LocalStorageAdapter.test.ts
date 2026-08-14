@@ -168,5 +168,22 @@ describe('LocalStorageAdapter', () => {
     it('is not an error for an id that was never stored', async () => {
       await expect(adapter.archiveDocument('never-existed')).resolves.toBeUndefined()
     })
+
+    it('still removes the index entry when storage itself throws', async () => {
+      // Regression guard. `localStorage` throws outright where storage is denied
+      // (private browsing, an iframe without storage permission — how this app is
+      // documented to run). Before the seam existed, delete was a pure store update
+      // that could not fail; if a body-removal failure could abort it, those users
+      // would be unable to delete a file at all, and the confirm dialog would hang.
+      const hostile = new LocalStorageAdapter({
+        getItem: () => null,
+        setItem: () => { throw new Error('storage is disabled') },
+        removeItem: () => { throw new Error('storage is disabled') },
+      })
+      const id = useFileStore.getState().createFile('Deleted under duress')
+
+      await expect(hostile.archiveDocument(id)).resolves.toBeUndefined()
+      expect(useFileStore.getState().files.some((file) => file.id === id)).toBe(false)
+    })
   })
 })

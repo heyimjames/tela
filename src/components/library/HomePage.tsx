@@ -108,12 +108,20 @@ export function HomePage() {
 
   const confirmDelete = async () => {
     if (!pendingDelete) return
-    // Deleting a file retires the document, which is the index entry *and* its
-    // stored bundle. Going through the store action alone would drop the entry and
-    // orphan the body under a key nothing lists any more.
-    if (pendingDelete.kind === 'file') await getStorageAdapter().archiveDocument(pendingDelete.id)
-    else deleteFolder(pendingDelete.id)
-    setPendingDelete(null)
+    // Read once: the await below is a gap in which this could otherwise change.
+    const target = pendingDelete
+    try {
+      // Deleting a file retires the document, which is the index entry *and* its
+      // stored bundle. Going through the store action alone would drop the entry
+      // and orphan the body under a key nothing lists any more.
+      if (target.kind === 'file') await getStorageAdapter().archiveDocument(target.id)
+      else deleteFolder(target.id)
+    } finally {
+      // The dialog closes even if archiving threw. `onConfirm` is typed `() => void`,
+      // so a rejection here is discarded by React — leaving the dialog open would
+      // make a failed delete look like a click that did nothing at all.
+      setPendingDelete(null)
+    }
   }
 
   // Filter and sort files

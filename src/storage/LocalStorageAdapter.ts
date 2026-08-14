@@ -133,11 +133,25 @@ export class LocalStorageAdapter implements StorageAdapter {
    * Remove the body, then the index entry.
    *
    * That order matters: the reverse would, if interrupted between the two, leave an
-   * unreachable body keyed by an id the index no longer lists — storage that nothing
-   * can name and nothing will collect.
+   * unreachable body keyed by an id the index no longer lists.
+   *
+   * The body removal is best effort and deliberately cannot abort the index
+   * removal. `localStorage` throws outright in a storage-restricted context —
+   * private browsing, or an iframe denied storage, which is exactly how this app is
+   * documented to run — and before this seam existed, deleting a file was a pure
+   * store update that could not fail. Letting a body-removal failure propagate would
+   * mean a user in that context could never delete a file: a regression created by
+   * routing delete through storage at all. A stranded body is inert — ids are
+   * unique so nothing reuses the key, and the app-reset helpers clear every `tela-`
+   * key regardless.
    */
   async archiveDocument(id: string): Promise<void> {
-    this.#storage.removeItem(documentKey(id))
+    try {
+      this.#storage.removeItem(documentKey(id))
+    } catch {
+      // Deliberately swallowed; see above. The index removal below is what the user
+      // asked for and it must happen.
+    }
     const { files, deleteFile } = useFileStore.getState()
     if (files.some((file) => file.id === id)) deleteFile(id)
   }
