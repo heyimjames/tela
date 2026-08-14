@@ -9,7 +9,8 @@
     ],
     "module": "ESNext",
     "types": [
-      "node"
+      "node",
+      "vite/client"
     ],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -28,7 +29,8 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "jsx": "react-jsx"
   },
   "include": [
     "src/tela/nodeIo.ts",
