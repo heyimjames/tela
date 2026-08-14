@@ -29,7 +29,7 @@ export function AutoLayoutPanel({ groupId, activeLayer }: { groupId: string; act
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
           Auto Layout
         </span>
         <button

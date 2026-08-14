@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 import { FONT_FAMILY } from '@/engine/textMeasure'
@@ -114,7 +115,7 @@ export function TextEditOverlay({ zoom }: Props) {
     margin: 0,
     padding: 0,
     // Outline (not border) so the text box isn't inset — text stays put.
-    outline: '2px solid #0017c7',
+    outline: `2px solid ${CHROME_ACCENT}`,
     outlineOffset: '0px',
     borderRadius: '2px',
     background: 'rgba(255,255,255,0.15)',

@@ -79,7 +79,7 @@ function NoSelectionPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
         Canvas
       </div>
       <div className="text-[11px] text-muted-foreground space-y-1">

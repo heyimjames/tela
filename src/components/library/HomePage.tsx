@@ -13,6 +13,8 @@ import { generateFileName } from '@/lib/fileName'
 import type { DesignDocument } from '@/types/design'
 import { getBrandColor } from '@/brand/palette'
 import { BRAND } from '@/brand/brand.config'
+import { BrandLockup } from '@/components/brand/BrandLockup'
+import { HiveMark } from '@/components/brand/HiveMark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDeleteModal } from '@/components/library/ConfirmDeleteModal'
@@ -214,14 +216,7 @@ export function HomePage() {
       <aside className="hidden md:flex w-[220px] bg-card border-r border-border flex-col shrink-0">
         {/* User */}
         <div className="px-4 py-4 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#3e4576] flex items-center justify-center">
-              <span className="text-[10px] font-bold text-white">
-                {BRAND.productName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-              </span>
-            </div>
-            <span className="text-[14px] font-medium text-foreground">{BRAND.productName}</span>
-          </div>
+          <BrandLockup size={26} />
         </div>
 
         {/* Navigation */}
@@ -248,7 +243,7 @@ export function HomePage() {
           {/* Folders */}
           {folders.length > 0 && (
             <div className="pt-4">
-              <div className="px-3 mb-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground/50 font-medium">
+              <div className="px-3 mb-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/50 font-medium">
                 Folders
               </div>
               {folders.filter((f) => f.parentId === null).map((folder) => (
@@ -283,14 +278,7 @@ export function HomePage() {
         {/* Mobile top bar — brand + nav pills + settings (replaces the sidebar) */}
         <div className="md:hidden sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#3e4576] flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white">
-                  {BRAND.productName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-              <span className="text-[15px] font-semibold text-foreground">{BRAND.productName}</span>
-            </div>
+            <BrandLockup size={26} />
             <button
               aria-label="Settings"
               className="h-10 w-10 flex items-center justify-center rounded-full text-muted-foreground active:bg-muted/50"
@@ -926,7 +914,7 @@ function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; on
       <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-[520px]">
           <div className="mb-1 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <HiveMark size={18} />
             <h2 className="text-[16px] font-semibold text-foreground">Welcome to {BRAND.productName}</h2>
           </div>
           <p className="text-[13px] leading-relaxed text-muted-foreground">

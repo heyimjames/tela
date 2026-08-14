@@ -63,7 +63,7 @@ export function BackgroundPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
         Background
       </div>
 
@@ -145,7 +145,7 @@ export function BackgroundPanel() {
 
           {/* Gradient stops */}
           <div className="space-y-2">
-            <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+            <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
               Stops
             </div>
             {fill.stops.map((stop, i) => (
@@ -244,7 +244,7 @@ export function BackgroundPanel() {
         <div className="space-y-3">
           {/* Shader kind */}
           <div className="space-y-1.5">
-            <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+            <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
               Style
             </div>
             <div className="grid grid-cols-3 gap-1">
@@ -268,7 +268,7 @@ export function BackgroundPanel() {
 
           {/* Brand palettes */}
           <div className="space-y-1.5">
-            <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+            <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
               Palette
             </div>
             <div className="flex flex-wrap gap-1.5">

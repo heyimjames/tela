@@ -26,7 +26,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
         </button>
       )}
 
-      <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
         AI Settings
       </div>
 
@@ -46,7 +46,7 @@ export function AISettingsInline({ onDone, showBackButton }: { onDone?: () => vo
 
       {/* Product context */}
       <div className="space-y-3 pt-3 border-t border-border">
-        <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+        <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
           Product Context
         </div>
 

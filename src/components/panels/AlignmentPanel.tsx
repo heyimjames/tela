@@ -218,7 +218,7 @@ export function AlignmentPanel() {
 
   return (
     <div className="space-y-3 pb-3 mb-3 border-b border-border">
-      <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
         Alignment
       </div>
       <div className="grid grid-cols-6 gap-1">

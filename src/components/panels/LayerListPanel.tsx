@@ -241,7 +241,7 @@ export function LayerListPanel() {
       {/* Pages — vertical list */}
       <div className="border-b border-border shrink-0 px-3 py-2 space-y-0.5">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">Pages</span>
+          <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">Pages</span>
           <button
             className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
             onClick={() => addPage()}
@@ -307,7 +307,7 @@ export function LayerListPanel() {
             {activePage.frames.length > 0 && (
               <div>
                 <div className="flex items-center justify-between px-4 py-2">
-                  <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">Frames</span>
+                  <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">Frames</span>
                   <button
                     className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
                     onClick={() => addFrame()}
@@ -393,7 +393,7 @@ export function LayerListPanel() {
             {activePage.frames.length === 0 && (
               <div>
                 <div className="flex items-center justify-between px-4 py-2">
-                  <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">Layers</span>
+                  <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">Layers</span>
                   <button
                     className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
                     onClick={() => addFrame()}

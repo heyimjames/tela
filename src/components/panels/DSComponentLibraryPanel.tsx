@@ -58,7 +58,7 @@ export function DSComponentLibraryPanel() {
 
   return (
     <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+      <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
         Components
       </div>
 

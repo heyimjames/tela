@@ -34,19 +34,20 @@ function makeRng(seed: string): () => number {
 }
 
 // Curated anchor hues (OKLCH degrees) — tasteful bands that each read cleanly on
-// their own. Weighted toward blues/indigo, with a few warm and
-// cool alternates so cards vary without any single card mixing bands.
+// their own. Weighted toward the hive teal band the product now lives in, with
+// the sibling Clickt division accents (perf lime, studio violet) and the master
+// ember as alternates, so cards vary without leaving the brand system.
 const ANCHOR_HUES = [
-  255, // indigo-blue (brand)
-  238, // blue
-  262, // periwinkle
-  210, // sky
-  195, // teal
+  195, // hive teal (brand)
+  185, // cyan-teal
+  205, // deep aqua
+  168, // sea green
   158, // green
-  92, // gold/amber (brand)
-  38, // coral/ember (brand)
+  128, // perf lime (sibling division)
+  300, // studio violet (sibling division)
+  38, // ember (master accent)
+  255, // indigo
   350, // rose
-  300, // violet
 ]
 
 const okl = (l: number, c: number, h: number) =>

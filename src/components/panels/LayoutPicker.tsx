@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CHROME_SIGNAL } from '@/brand/chrome'
 import { DESIGN_LAYOUTS, type DesignLayout, type LayoutLayer } from '@/brand/layouts'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -100,7 +101,7 @@ function LayoutThumb({ layout, w, h }: { layout: DesignLayout; w: number; h: num
         const x = l.x * s, y = l.y * s, lw = l.width * s, lh = l.height * s
         if (l.type === 'shape') {
           const isPill = (l as { shape?: string }).shape === 'pill'
-          return <rect key={i} x={x} y={y} width={lw} height={lh} rx={isPill ? lh / 2 : 3} fill={isPill ? '#F56139' : '#e2ded3'} />
+          return <rect key={i} x={x} y={y} width={lw} height={lh} rx={isPill ? lh / 2 : 3} fill={isPill ? CHROME_SIGNAL : '#e2ded3'} />
         }
         // text → a stack of bars filling roughly the text box
         const rows = Math.max(1, Math.round(lh / 6))

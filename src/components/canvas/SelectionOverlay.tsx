@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 
@@ -71,18 +72,18 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
                 is selected — keyed by layer.id so it re-pops per new selection
                 but doesn't re-animate while dragging/resizing. */}
             <motion.rect
-              x={0} y={0} width={w} height={h} fill="none" stroke="#0017c7" strokeWidth={1.5}
+              x={0} y={0} width={w} height={h} fill="none" stroke={CHROME_ACCENT} strokeWidth={1.5}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
             />
             {/* Rotation handle: round grip above the top-center, on a short stem. */}
             <line
               x1={w / 2} y1={0} x2={w / 2} y2={-ROTATE_HANDLE_OFFSET}
-              stroke="#0017c7" strokeWidth={1.5}
+              stroke={CHROME_ACCENT} strokeWidth={1.5}
             />
             <motion.circle
               cx={w / 2} cy={-ROTATE_HANDLE_OFFSET} r={ROTATE_HANDLE_R}
-              fill="#ffffff" stroke="#0017c7" strokeWidth={1.5}
+              fill="#ffffff" stroke={CHROME_ACCENT} strokeWidth={1.5}
               className="pointer-events-auto"
               style={{ cursor: 'grab', transformBox: 'fill-box', transformOrigin: 'center' }}
               initial={{ scale: 0, opacity: 0 }}
@@ -95,7 +96,7 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
                 key={handle.id}
                 x={handle.cx - HANDLE_HALF} y={handle.cy - HANDLE_HALF}
                 width={HANDLE_SIZE} height={HANDLE_SIZE}
-                fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={HANDLE_RX}
+                fill="#ffffff" stroke={CHROME_ACCENT} strokeWidth={1.5} rx={HANDLE_RX}
                 className="pointer-events-auto"
                 style={{ cursor: handle.cursor, transformBox: 'fill-box', transformOrigin: 'center' }}
                 initial={{ scale: 0, opacity: 0 }}
@@ -127,17 +128,17 @@ export function SelectionOverlay({ zoom, onResizeStart, onGroupResizeStart }: Pr
                 key={layer.id}
                 x={layer.x * zoom} y={layer.y * zoom}
                 width={layer.width * zoom} height={layer.height * zoom}
-                fill="none" stroke="#0017c7" strokeWidth={1} strokeOpacity={0.4}
+                fill="none" stroke={CHROME_ACCENT} strokeWidth={1} strokeOpacity={0.4}
               />
             ))}
             <g transform={`translate(${bx}, ${by})`}>
-              <rect x={0} y={0} width={bw} height={bh} fill="none" stroke="#0017c7" strokeWidth={1.5} strokeDasharray="4 3" />
+              <rect x={0} y={0} width={bw} height={bh} fill="none" stroke={CHROME_ACCENT} strokeWidth={1.5} strokeDasharray="4 3" />
               {HANDLE_DEFS(bw, bh).map((handle) => (
                 <rect
                   key={handle.id}
                   x={handle.cx - HANDLE_HALF} y={handle.cy - HANDLE_HALF}
                   width={HANDLE_SIZE} height={HANDLE_SIZE}
-                  fill="#ffffff" stroke="#0017c7" strokeWidth={1.5} rx={HANDLE_RX}
+                  fill="#ffffff" stroke={CHROME_ACCENT} strokeWidth={1.5} rx={HANDLE_RX}
                   className="pointer-events-auto" style={{ cursor: handle.cursor }}
                   onPointerDown={(e) => { e.stopPropagation(); onGroupResizeStart(handle.id, e) }}
                 />

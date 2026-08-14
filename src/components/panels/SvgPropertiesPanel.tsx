@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { useDesignStore } from '@/store/useDesignStore'
 import { BrandColorPicker } from '@/components/panels/BrandColorPicker'
 import { SliderField } from '@/components/controls/SliderField'
@@ -66,7 +67,7 @@ export function SvgPropertiesPanel({ layer }: Props) {
         className="w-8 h-8 rounded-[5px] border transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
         style={{
           backgroundColor: currentHex(original),
-          borderColor: isActive ? '#0017c7' : 'var(--border)',
+          borderColor: isActive ? CHROME_ACCENT : 'var(--border)',
           borderWidth: isActive ? '2px' : '1px',
         }}
         onClick={() => setSelected(original)}
@@ -143,7 +144,7 @@ function ColorGroup({ label, children }: { label: string; children: ReactNode })
 
 function Header({ count }: { count?: number }) {
   return (
-    <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+    <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
       {count != null ? `SVG · ${count} colour${count === 1 ? '' : 's'}` : 'SVG'}
     </div>
   )

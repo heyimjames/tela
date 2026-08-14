@@ -1,4 +1,5 @@
 import { useDesignStore } from '@/store/useDesignStore'
+import { CHROME_ACCENT, CHROME_SIGNAL } from '@/brand/chrome'
 import { useUIStore, resolveGrid, type GridConfig } from '@/store/useUIStore'
 
 interface Props {
@@ -42,17 +43,17 @@ export function GridOverlay({ zoom }: Props) {
       <rect
         x={padding * zoom} y={padding * zoom}
         width={innerW * zoom} height={innerH * zoom}
-        fill="none" stroke="#0017c7" strokeWidth={0.5} strokeDasharray="4 4" opacity={0.2}
+        fill="none" stroke={CHROME_ACCENT} strokeWidth={0.5} strokeDasharray="4 4" opacity={0.2}
       />
       {cells.map((cell, i) => (
         <rect key={i}
           x={cell.x} y={cell.y} width={cell.w} height={cell.h}
-          fill="#0017c7" fillOpacity={0.04}
-          stroke="#0017c7" strokeWidth={0.5} strokeOpacity={0.15}
+          fill={CHROME_ACCENT} fillOpacity={0.04}
+          stroke={CHROME_ACCENT} strokeWidth={0.5} strokeOpacity={0.15}
         />
       ))}
-      <line x1={w / 2} y1={0} x2={w / 2} y2={h} stroke="#F56139" strokeWidth={0.5} strokeDasharray="6 4" opacity={0.25} />
-      <line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="#F56139" strokeWidth={0.5} strokeDasharray="6 4" opacity={0.25} />
+      <line x1={w / 2} y1={0} x2={w / 2} y2={h} stroke={CHROME_SIGNAL} strokeWidth={0.5} strokeDasharray="6 4" opacity={0.25} />
+      <line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke={CHROME_SIGNAL} strokeWidth={0.5} strokeDasharray="6 4" opacity={0.25} />
     </svg>
   )
 }

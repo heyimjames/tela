@@ -1,9 +1,10 @@
 import { useDesignStore } from '@/store/useDesignStore'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 import { getDrawPath } from '@/engine/freehand'
 import type { DrawLayer } from '@/types/design'
 
-const HOVER = '#0017c7' // brand-primary — same hue as selection, softer treatment
+const HOVER = CHROME_ACCENT // brand-primary — same hue as selection, softer treatment
 
 interface Props {
   zoom: number

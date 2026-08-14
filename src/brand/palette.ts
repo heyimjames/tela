@@ -1,24 +1,39 @@
 import type { BrandToken } from '@/types/brand'
 
+/**
+ * HiveMind | Design brand palette.
+ *
+ * The "Brand" group is the HiveMind division's hive teal ramp, taken verbatim
+ * from the Clickt division lockup sheet (`--hive-50 … --hive-900`). Token *keys*
+ * are deliberately unchanged from the values they replace (`brand-primary`,
+ * `brand-dark`, `brand-accent`): documents, MCP `tela_set_brand_context` calls,
+ * and saved `.tela` bundles address colours by key, so re-keying the ramp would
+ * silently orphan every existing document. Labels carry the hive names.
+ */
 export const BRAND_PALETTE: Record<string, BrandToken> = {
-  // --- Neutrals ---
-  'charcoal':     { label: 'Charcoal',     hex: '#100f0f', group: 'neutrals' },
-  'charcoal-60':  { label: 'Charcoal 60',  hex: '#100f0f99', group: 'neutrals' },
+  // --- Neutrals --- (division ink/offwhite/mist/cloud/slate)
+  'charcoal':     { label: 'Ink',           hex: '#0b0f0e', group: 'neutrals' },
+  'charcoal-60':  { label: 'Ink 60',        hex: '#0b0f0e99', group: 'neutrals' },
   'white':        { label: 'White',         hex: '#ffffff', group: 'neutrals' },
-  'cloud':        { label: 'Cloud',         hex: '#f8f8f3', group: 'neutrals' },
-  'paper':        { label: 'Paper',         hex: '#f2f2eb', group: 'neutrals' },
-  'stone':        { label: 'Stone',         hex: '#ebe9e1', group: 'neutrals' },
+  'cloud':        { label: 'Cloud',         hex: '#f3f4f6', group: 'neutrals' },
+  'paper':        { label: 'Offwhite',      hex: '#eef1f3', group: 'neutrals' },
+  'stone':        { label: 'Mist',          hex: '#e7eaed', group: 'neutrals' },
+  'slate':        { label: 'Slate',         hex: '#5c6470', group: 'neutrals' },
 
-  // --- Brand ---
-  'brand-dark':    { label: 'Brand Dark',    hex: '#3e4576', group: 'brand' },
-  'brand-primary': { label: 'Brand Primary', hex: '#0017c7', group: 'brand' },
-  'brand-accent':  { label: 'Brand Accent',  hex: '#d0e6e8', group: 'brand' },
+  // --- Brand --- (hive ramp, HiveMind division)
+  'brand-wash':    { label: 'Hive 50',       hex: '#dae9e6', group: 'brand' },
+  'brand-accent':  { label: 'Hive 100',      hex: '#97c4bd', group: 'brand' },
+  'brand-mid':     { label: 'Hive 300',      hex: '#5ba89a', group: 'brand' },
+  'brand-primary': { label: 'Hive 500',      hex: '#1f7a82', group: 'brand' },
+  'brand-dark':    { label: 'Hive 700',      hex: '#0f4a52', group: 'brand' },
+  'brand-ink':     { label: 'Hive 900',      hex: '#07262b', group: 'brand' },
 
-  // --- Accent --- (swap these for your own brand accents)
-  'accent-1':      { label: 'Accent 1', hex: '#dddde2', group: 'accent' },
-  'accent-2':      { label: 'Accent 2', hex: '#4c5ce0', group: 'accent' },
-  'accent-3':      { label: 'Accent 3', hex: '#e9e0c0', group: 'accent' },
-  'accent-4':      { label: 'Accent 4', hex: '#e75901', group: 'accent' },
+  // --- Accent --- (sibling Clickt divisions + the shared ember, so an accent
+  // dropped next to the hive ramp still belongs to the same brand system)
+  'accent-1':      { label: 'Perf',   hex: '#b4e01f', group: 'accent' },
+  'accent-2':      { label: 'Studio', hex: '#4e4060', group: 'accent' },
+  'accent-3':      { label: 'Ember',  hex: '#f86b3c', group: 'accent' },
+  'accent-4':      { label: 'Slate',  hex: '#5c6470', group: 'accent' },
 
   // --- Traffic ---
   'green':   { label: 'Green',   hex: '#78d55c', group: 'traffic' },
@@ -66,18 +81,21 @@ export const BRAND_PALETTE: Record<string, BrandToken> = {
   'gold-900': { label: 'Gold 900', hex: '#4C3F1A', group: 'gold' },
   'gold-950': { label: 'Gold 950', hex: '#2E260F', group: 'gold' },
 
-  // --- Teal scale ---
-  'teal-50':  { label: 'Teal 50',  hex: '#EFF8F9', group: 'teal' },
-  'teal-100': { label: 'Teal 100', hex: '#D5EEF0', group: 'teal' },
-  'teal-200': { label: 'Teal 200', hex: '#AADCE1', group: 'teal' },
-  'teal-300': { label: 'Teal 300', hex: '#70C3CC', group: 'teal' },
-  'teal-400': { label: 'Teal 400', hex: '#3FA8B4', group: 'teal' },
-  'teal-500': { label: 'Teal 500', hex: '#268A96', group: 'teal' },
-  'teal-600': { label: 'Teal 600', hex: '#1A6B75', group: 'teal' },
-  'teal-700': { label: 'Teal 700', hex: '#12525B', group: 'teal' },
-  'teal-800': { label: 'Teal 800', hex: '#4A5289', group: 'teal' },
-  'teal-900': { label: 'Teal 900', hex: '#3E4576', group: 'teal' },
-  'teal-950': { label: 'Teal 950', hex: '#2E3359', group: 'teal' },
+  // --- Teal scale --- (interpolated through the hive anchors: 100/300/400 are
+  // hive-50/100/300, 600/800/950 are hive-500/700/900. The pre-re-skin scale
+  // slid off-hue into indigo at 800–950, which is why gradients built on
+  // `teal-800` + `brand-dark` used to match; they now share the hive hue.)
+  'teal-50':  { label: 'Teal 50',  hex: '#F1F8F7', group: 'teal' },
+  'teal-100': { label: 'Teal 100', hex: '#DAE9E6', group: 'teal' },
+  'teal-200': { label: 'Teal 200', hex: '#B9D8D3', group: 'teal' },
+  'teal-300': { label: 'Teal 300', hex: '#97C4BD', group: 'teal' },
+  'teal-400': { label: 'Teal 400', hex: '#5BA89A', group: 'teal' },
+  'teal-500': { label: 'Teal 500', hex: '#2F8E90', group: 'teal' },
+  'teal-600': { label: 'Teal 600', hex: '#1F7A82', group: 'teal' },
+  'teal-700': { label: 'Teal 700', hex: '#17636B', group: 'teal' },
+  'teal-800': { label: 'Teal 800', hex: '#0F4A52', group: 'teal' },
+  'teal-900': { label: 'Teal 900', hex: '#0A363C', group: 'teal' },
+  'teal-950': { label: 'Teal 950', hex: '#07262B', group: 'teal' },
 } as const
 
 export const BRAND_GROUPS = [

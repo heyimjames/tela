@@ -29,7 +29,7 @@ export function FormatSelector({ onClose }: Props) {
     <div className="space-y-3 p-1">
       {Object.entries(grouped).map(([platform, formats]) => (
         <div key={platform}>
-          <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium px-2 mb-1">
+          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium px-2 mb-1">
             {PLATFORM_LABELS[platform] ?? platform}
           </div>
           {formats.map((format) => {

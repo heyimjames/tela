@@ -3,6 +3,7 @@ import { useAIStore } from '@/store/useAIStore'
 import { useDesignStore } from '@/store/useDesignStore'
 import { Sparkles, Settings } from 'lucide-react'
 import type { TextLayer, ShapeLayer, BackgroundLayer } from '@/types/design'
+import { getTokensByGroup } from '@/brand/palette'
 
 import { streamAIResponse } from '@/components/panels/ai/streamParser'
 import { MessageBubble, StreamingMessage, ThinkingIndicator } from '@/components/panels/ai/AIChatMessages'
@@ -12,6 +13,13 @@ import type { QuickAction } from '@/components/panels/ai/AIChatInput'
 import { AISettingsInline } from '@/components/panels/ai/AISettingsInline'
 
 // --- Build system prompt with canvas context ---
+
+// The colours offered to the model are derived from the palette, never retyped:
+// a hand-maintained list silently drifts from the brand the moment it is re-skinned.
+const BRAND_COLOR_LIST = ['neutrals', 'brand', 'accent']
+  .flatMap((group) => getTokensByGroup(group))
+  .map((t) => `${t.token} (${t.hex})`)
+  .join(', ')
 
 function buildSystemPrompt(action?: QuickAction): string {
   const ai = useAIStore.getState()
@@ -38,7 +46,7 @@ Canvas: ${format.width}x${format.height} (${format.label})
 Current layers:
 ${layerSummary}
 
-Available brand colors: charcoal (#100f0f), white (#ffffff), cloud (#f8f8f3), paper (#f2f2eb), brand-dark (#3e4576), brand-primary (#0017c7), brand-accent (#d0e6e8), ember-500 (#F56139)
+Available brand colors: ${BRAND_COLOR_LIST}
 `
 
   if (action === 'design') {

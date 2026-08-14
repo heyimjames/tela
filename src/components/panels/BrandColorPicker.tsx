@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { BRAND_PALETTE, BRAND_GROUPS, getTokensByGroup } from '@/brand/palette'
 import type { BrandColor } from '@/types/design'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
@@ -99,7 +100,7 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
             return (
               <div key={group.id}>
                 <button
-                  className="flex items-center gap-1 w-full text-left text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium py-1 hover:text-muted-foreground transition-colors cursor-pointer"
+                  className="flex items-center gap-1 w-full text-left text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium py-1 hover:text-muted-foreground transition-colors cursor-pointer"
                   onClick={() => toggleCollapse(group.id)}
                 >
                   {isCollapsed
@@ -121,7 +122,7 @@ export function BrandColorPicker({ value, onChange, label }: Props) {
                               className="w-7 h-7 rounded-[5px] border transition-transform duration-150 hover:scale-110 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                               style={{
                                 backgroundColor: t.hex,
-                                borderColor: value.token === t.token ? '#0017c7' : 'var(--border)',
+                                borderColor: value.token === t.token ? CHROME_ACCENT : 'var(--border)',
                                 borderWidth: value.token === t.token ? '2px' : '1px',
                               }}
                               onClick={() => onChange({ token: t.token, hex: t.hex })}

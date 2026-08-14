@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactElement } from 'react'
+import { CHROME_ACCENT } from '@/brand/chrome'
 import { motion } from 'motion/react'
 import {
   MeshGradient,
@@ -34,7 +35,7 @@ export function renderShaderElement(fill: ShaderFill, opts: RenderOpts = {}): Re
   const speed = opts.speed ?? fill.speed
   const frame = opts.frame ?? fill.frame
   const style = { ...FILL_STYLE, ...opts.style }
-  const colors = fill.colors.length ? fill.colors : ['#0017c7']
+  const colors = fill.colors.length ? fill.colors : [CHROME_ACCENT]
   const common = { speed, frame, scale: fill.scale, rotation: fill.rotation, fit: 'cover' as const, style }
 
   switch (fill.kind) {

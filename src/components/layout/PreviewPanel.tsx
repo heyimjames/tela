@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { CHROME_SIGNAL } from '@/brand/chrome'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { relayoutActiveFrame } from '@/store/useAIStore'
@@ -773,8 +774,8 @@ export function PreviewPanel() {
           <svg className="absolute top-0 left-0 pointer-events-none" width={activeW} height={activeH} style={{ overflow: 'visible' }}>
             {/* Guides draw in (not hard-appear) so a snap reads as a quick "tick". */}
             {snapGuides.map((g: any, i: number) => g.orientation === 'v'
-              ? <motion.line key={`v-${i}`} initial={{ opacity: 0, pathLength: 0 }} animate={{ opacity: 1, pathLength: 1 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }} x1={g.position * zoom} y1={0} x2={g.position * zoom} y2={activeH} stroke="#F56139" strokeWidth={1} strokeDasharray="4 3" />
-              : <motion.line key={`h-${i}`} initial={{ opacity: 0, pathLength: 0 }} animate={{ opacity: 1, pathLength: 1 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }} x1={0} y1={g.position * zoom} x2={activeW} y2={g.position * zoom} stroke="#F56139" strokeWidth={1} strokeDasharray="4 3" />
+              ? <motion.line key={`v-${i}`} initial={{ opacity: 0, pathLength: 0 }} animate={{ opacity: 1, pathLength: 1 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }} x1={g.position * zoom} y1={0} x2={g.position * zoom} y2={activeH} stroke={CHROME_SIGNAL} strokeWidth={1} strokeDasharray="4 3" />
+              : <motion.line key={`h-${i}`} initial={{ opacity: 0, pathLength: 0 }} animate={{ opacity: 1, pathLength: 1 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }} x1={0} y1={g.position * zoom} x2={activeW} y2={g.position * zoom} stroke={CHROME_SIGNAL} strokeWidth={1} strokeDasharray="4 3" />
             )}
           </svg>
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CHROME_SIGNAL } from '@/brand/chrome'
 import { useDesignStore } from '@/store/useDesignStore'
 
 interface Measurement {
@@ -86,20 +87,20 @@ export function DistanceMeasurement({ zoom }: Props) {
           <g key={i}>
             <line
               x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke="#F56139"
+              stroke={CHROME_SIGNAL}
               strokeWidth={1}
               strokeDasharray="3 2"
             />
             {/* End caps */}
             {isVertical ? (
               <>
-                <line x1={x1 - 4} y1={y1} x2={x1 + 4} y2={y1} stroke="#F56139" strokeWidth={1} />
-                <line x1={x2 - 4} y1={y2} x2={x2 + 4} y2={y2} stroke="#F56139" strokeWidth={1} />
+                <line x1={x1 - 4} y1={y1} x2={x1 + 4} y2={y1} stroke={CHROME_SIGNAL} strokeWidth={1} />
+                <line x1={x2 - 4} y1={y2} x2={x2 + 4} y2={y2} stroke={CHROME_SIGNAL} strokeWidth={1} />
               </>
             ) : (
               <>
-                <line x1={x1} y1={y1 - 4} x2={x1} y2={y1 + 4} stroke="#F56139" strokeWidth={1} />
-                <line x1={x2} y1={y2 - 4} x2={x2} y2={y2 + 4} stroke="#F56139" strokeWidth={1} />
+                <line x1={x1} y1={y1 - 4} x2={x1} y2={y1 + 4} stroke={CHROME_SIGNAL} strokeWidth={1} />
+                <line x1={x2} y1={y2 - 4} x2={x2} y2={y2 + 4} stroke={CHROME_SIGNAL} strokeWidth={1} />
               </>
             )}
             {/* Label */}
@@ -109,7 +110,7 @@ export function DistanceMeasurement({ zoom }: Props) {
               width={32}
               height={16}
               rx={3}
-              fill="#F56139"
+              fill={CHROME_SIGNAL}
             />
             <text
               x={midLX}

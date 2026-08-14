@@ -34,7 +34,7 @@ export function EffectsPanel({ layer }: Props) {
   return (
     <div className="space-y-3 pt-3 mt-3 border-t border-border">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60 font-medium">
+        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 font-medium">
           Effects
         </span>
       </div>
