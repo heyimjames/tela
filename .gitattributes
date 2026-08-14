@@ -1,0 +1,27 @@
+# Line endings are part of this repository's output, not a local preference.
+#
+# `schemas/*.json` are published artifacts: other tools read them, and the test
+# suite compares them byte-for-byte against the schemas generated from the zod
+# definitions. A checkout that rewrote them to CRLF would fail that comparison
+# on Windows and, worse, would mean the "published schema" differs per platform.
+# The same reasoning applies to every text file here — nothing in this repository
+# requires CRLF (there are no PowerShell, batch, or shell scripts), so LF is
+# enforced repository-wide in the working tree as well as in the index.
+* text=auto eol=lf
+
+# Belt and braces for the binary assets. `text=auto` already detects these, but
+# stating it means a corrupting eol conversion can never depend on heuristics.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tela binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary

@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtemp, rm, readdir, readFile, writeFile, stat, chmod } from 'node:fs/promises'
+import { mkdtemp, rm, readdir, readFile, writeFile, stat, chmod, unlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -46,7 +46,14 @@ describe('atomic save', () => {
     expect(manifest.format).toBe('tela-bundle')
   })
 
-  it('writes the file with mode 0644', async () => {
+  // POSIX-only, and deliberately not relaxed to a range: the save path asks for
+  // 0644 and must get exactly that, so a stray 0666 or 0600 is a regression.
+  // Windows has no POSIX mode bits — NTFS permissions are ACLs, and Node
+  // synthesises `mode` from the read-only attribute alone, reporting 0666 for
+  // every writable file no matter what mode `open()` was given. There is nothing
+  // to assert there. This is a property of the file on disk, not of the bundle
+  // bytes, so it is not part of the byte-determinism claim.
+  it.skipIf(process.platform === 'win32')('writes the file with mode 0644', async () => {
     await saveTelaFile(target, makeFullCoverageDocument())
     expect((await stat(target)).mode & 0o777).toBe(0o644)
   })
@@ -143,7 +150,13 @@ describe('a failed save never damages the last valid master', () => {
     expect(await temporaryFiles()).toEqual([])
   })
 
-  it('leaves the master intact when the directory is read-only', async () => {
+  // POSIX-only. `chmod(directory, 0o500)` is not a portable way to deny a write:
+  // Windows derives directory access from ACLs, ignores the mode bits Node maps
+  // onto `chmod`, and the owning account keeps write access regardless — the save
+  // simply succeeds and the test loses its premise. Rather than assert something
+  // weaker on Windows, this case stays POSIX-only and the case below covers the
+  // same guarantee everywhere.
+  it.skipIf(process.platform === 'win32')('leaves the master intact when the directory is read-only', async () => {
     const before = await seedValidMaster()
     await chmod(directory, 0o500)
     try {
@@ -151,6 +164,29 @@ describe('a failed save never damages the last valid master', () => {
     } finally {
       await chmod(directory, 0o700)
     }
+    expect(digest(await readFile(target))).toBe(before)
+    expect(await temporaryFiles()).toEqual([])
+  })
+
+  // The platform-independent counterpart to the read-only-directory case, so the
+  // "a failed save never damages the last valid master" guarantee is exercised on
+  // Windows too rather than only on POSIX.
+  //
+  // The failure injected here is not a thrown hook — the two cases above already
+  // cover that. Removing the temporary file before the rename makes `rename(2)`
+  // itself fail with a genuine operating-system error, so this drives the real
+  // failure path inside `writeFileAtomic`: the catch block cleans up, and
+  // `saveTelaFile` surfaces it as `io_failed`. The three assertions are the same
+  // ones the read-only case makes.
+  it('leaves the master intact when the operating system fails the rename', async () => {
+    const before = await seedValidMaster()
+
+    await expect(
+      saveTelaFile(target, makeFullCoverageDocument(), {
+        hooks: { beforeRename: (temporaryPath) => unlink(temporaryPath) },
+      }),
+    ).rejects.toMatchObject({ code: 'io_failed' })
+
     expect(digest(await readFile(target))).toBe(before)
     expect(await temporaryFiles()).toEqual([])
   })

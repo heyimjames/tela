@@ -13,6 +13,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { createRequire } from 'node:module'
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -25,8 +26,15 @@ const run = promisify(execFile)
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 const REPOSITORY_ROOT = resolve(import.meta.dirname, '../..')
-const VITE_NODE = join(REPOSITORY_ROOT, 'node_modules/.bin/vite-node')
 const CHILD = join(REPOSITORY_ROOT, 'src/tela/__fixtures__/freshProcess.child.ts')
+
+// Spawn the child as `node <vite-node entry> <script>` rather than through
+// `node_modules/.bin/vite-node`. On Windows that bin entry is a `.cmd`/`.ps1`
+// shim, not something `execFile` can execute directly (ENOENT), and running it
+// via a shell would mean interpolating paths into a command line. Resolving the
+// package's own JS entry point keeps the child a plain Node process on every
+// platform, and keeps it a *fresh* process, which is the point of this file.
+const VITE_NODE = createRequire(import.meta.url).resolve('vite-node/vite-node.mjs')
 
 let directory: string
 
@@ -47,7 +55,7 @@ describe('export → fresh process → import → export', () => {
     const written = writeBundle(makeFullCoverageDocument())
     await writeFile(input, written)
 
-    await run(VITE_NODE, [CHILD], {
+    await run(process.execPath, [VITE_NODE, CHILD], {
       cwd: REPOSITORY_ROOT,
       // A different timezone and locale in the child, so any dependence on either
       // would surface as a byte difference rather than passing silently.
@@ -90,7 +98,7 @@ describe('export → fresh process → import → export', () => {
     const reportPath = join(directory, 'locale-report.json')
 
     await writeFile(input, writeBundle(makeFullCoverageDocument()))
-    await run(VITE_NODE, [CHILD], {
+    await run(process.execPath, [VITE_NODE, CHILD], {
       cwd: REPOSITORY_ROOT,
       env: {
         ...process.env,
