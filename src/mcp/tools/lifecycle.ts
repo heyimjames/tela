@@ -153,7 +153,7 @@ export function registerLifecycleTools(server: McpServer): void {
     outputSchema: z.strictObject({ design: z.string(), closed: z.boolean(), discarded_changes: z.boolean() }),
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     handler: async (args) => {
-      const result = closeDesign(args.design, args.discard_changes)
+      const result = await closeDesign(args.design, args.discard_changes)
       const data = { design: args.design, closed: result.closed, discarded_changes: result.discardedChanges }
       return {
         data,
@@ -275,7 +275,12 @@ export function registerLifecycleTools(server: McpServer): void {
       archived_layer_count: z.int().nonnegative(),
       archived_to: z.string().nullable(),
     }),
-    annotations: ADDITIVE,
+    // DESTRUCTIVE, not ADDITIVE: with replace_existing the whole frame's
+    // composition is archived and removed. A host that auto-approves on
+    // destructiveHint:false would strip a hand-authored frame without asking,
+    // which is exactly what the hint exists to prevent. The annotation has to
+    // cover the tool's worst argument, not its default one.
+    annotations: DESTRUCTIVE,
     handler: async (args) => {
       const { applyLayoutToFrame } = await import('./layoutApply')
       return applyLayoutToFrame(args)

@@ -171,19 +171,30 @@ export async function openEditor(document: TelaDocument, signal: AbortSignal): P
 }
 
 /**
+ * The slug half of an export filename. Exported as its own step because
+ * collision detection has to key on *this*, not on the frame name: "Hero A" and
+ * "Hero-A" are distinct names that slug to the same thing.
+ */
+export function exportSlug(frameName: string): string {
+  return (
+    frameName
+      .toLowerCase()
+      .replace(/[^\w]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'frame'
+  )
+}
+
+/**
  * Deterministic export filename.
  *
  * Slug from the frame name, then the format id and the scale. Two different
- * frames with the same name in the same batch would collide, so the frame id's
+ * frames whose names slug the same in one batch would collide, so the frame id's
  * prefix is appended when the slug is not unique within the batch — the id is
  * the only thing guaranteed distinct.
  */
 export function exportFileName(frameName: string, formatId: string, extension: string, dpr: number, disambiguator?: string): string {
-  const slug = frameName
-    .toLowerCase()
-    .replace(/[^\w]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'frame'
+  const slug = exportSlug(frameName)
   const suffix = disambiguator ? `-${disambiguator.replace(/[^\w]/g, '').slice(0, 8)}` : ''
   return `${slug}${suffix}-${formatId}-${dpr}x.${extension}`
 }
@@ -200,15 +211,20 @@ export interface WrittenExport extends Omit<RenderedImage, 'base64'> {
 export async function writeExports(images: RenderedImage[], destination: string, dpr: number): Promise<WrittenExport[]> {
   // Count first, then write: whether a name needs disambiguating depends on the
   // whole batch, which is not knowable while streaming through it.
+  // Keyed on the *slug*, not the raw frame name: "Hero A" and "Hero-A" are two
+  // keys by name but one filename, so a name-keyed map reports no collision and
+  // the second write silently overwrites the first while both frames are
+  // reported as written — the path for frame A holding frame B's pixels.
+  const nameKey = (image: RenderedImage) => `${exportSlug(image.frameName)}|${image.formatId}|${extensionFor(image.format)}`
   const names = new Map<string, number>()
   for (const image of images) {
-    const key = `${image.frameName}|${image.formatId}`
+    const key = nameKey(image)
     names.set(key, (names.get(key) ?? 0) + 1)
   }
 
   const written: WrittenExport[] = []
   for (const image of images) {
-    const collides = (names.get(`${image.frameName}|${image.formatId}`) ?? 0) > 1
+    const collides = (names.get(nameKey(image)) ?? 0) > 1
     const fileName = exportFileName(
       image.frameName,
       image.formatId,

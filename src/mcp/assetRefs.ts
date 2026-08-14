@@ -22,7 +22,7 @@
 
 import { hashFromRef } from '../tela/assets'
 import { sha256Hex } from '../tela/sha256'
-import type { TelaDocument } from '../tela/schema'
+import type { TelaDocument, TelaLayer } from '../tela/schema'
 import { toolError } from './errors'
 
 const DATA_URL = /^data:([a-z]+\/[a-z0-9.+-]+);base64,(.*)$/i
@@ -67,17 +67,30 @@ export function buildRefIndex(document: TelaDocument): RefIndex {
     if (!toSession.has(portable)) toSession.set(portable, value)
   }
 
+  const recordLayers = (layers: readonly TelaLayer[]) => {
+    for (const layer of layers) {
+      if (layer.type === 'image') record(layer.imageUrl)
+      else if (layer.type === 'background' && layer.fill.type === 'image') record(layer.fill.imageUrl)
+    }
+  }
+
   for (const asset of document.assets) record(asset.ref)
   for (const font of document.fonts) record(font.ref)
   for (const page of document.pages) {
     for (const frame of page.frames) {
       if (frame.backgroundFill.type === 'image') record(frame.backgroundFill.imageUrl)
-      for (const layer of [...frame.layers, ...page.looseElements]) {
-        if (layer.type === 'image') record(layer.imageUrl)
-        else if (layer.type === 'background' && layer.fill.type === 'image') record(layer.fill.imageUrl)
-      }
+      recordLayers(frame.layers)
     }
+    // Once per page, not once per frame. Nested in the frame loop, a page with
+    // no frames (a fresh tela_add_page, or one whose frames were archived) never
+    // indexes its loose elements at all — so a ref the design demonstrably holds
+    // reads back fine via hashFallback but is refused as not_found on the way in.
+    recordLayers(page.looseElements)
   }
+  // Version snapshots hold layers too. A payload that survives only inside a
+  // saved version is still a payload this design holds, and it becomes live
+  // again the moment tela_restore_version runs.
+  for (const version of document.versions) recordLayers(version.document.layers)
 
   return { toSession, toPortable }
 }
@@ -128,20 +141,42 @@ function hashFallback(reference: string): string {
 /**
  * Portable form → session form, for anything arriving from a client.
  *
+ * `asset://<sha256>` is the *only* reference form accepted from a client, and
+ * that is enforced here rather than left to each schema's `.describe()`.
+ * Passing anything else through untouched would make every layer tool a second,
+ * unpoliced ingestion path: an inline `data:image/svg+xml,…` would land in the
+ * canonical document without tela_import_asset's sniff, SVG sanitization, or
+ * size cap, and an `https://…` or an oversized payload would be accepted at
+ * mutation time only to explode many calls later at save with an
+ * `unresolved_reference` naming no layer. Delayed, unattributable failure is
+ * exactly what this boundary exists to prevent.
+ *
  * An `asset://` reference naming bytes the design does not hold is refused with
- * the fix in the message. Accepting it would produce a document that fails its
- * own invariants at save time, several calls later, with no clue as to which
- * layer caused it.
+ * the fix in the message, for the same reason.
  */
 export function toSessionRefs<T>(value: T, index: RefIndex): T {
   return rewrite(value, (reference) => {
-    if (reference === '' || !reference.startsWith('asset://')) return reference
+    if (reference === '') return reference
+    if (!reference.startsWith('asset://')) {
+      throw toolError(
+        'invalid_input',
+        `"${reference.slice(0, 48)}${reference.length > 48 ? '…' : ''}" is not an asset:// reference`,
+        'asset references must be asset://<sha256>. Import the file with tela_import_asset (it sniffs the type, sanitizes SVG, and enforces the size cap) and use the ref it returns; tela_list_assets shows what this design already holds',
+      )
+    }
+    const hash = hashFromRef(reference)
+    if (!hash) {
+      throw toolError(
+        'invalid_input',
+        `"${reference}" is not a well-formed asset:// reference`,
+        'an asset reference is asset:// followed by the 64-character lowercase sha256 hex of the payload, exactly as tela_import_asset returns it',
+      )
+    }
     const resolved = index.toSession.get(reference)
     if (!resolved) {
-      const hash = hashFromRef(reference)
       throw toolError(
         'not_found',
-        `this design holds no asset ${hash ? `with hash ${hash.slice(0, 12)}…` : `for reference "${reference}"`}`,
+        `this design holds no asset with hash ${hash.slice(0, 12)}…`,
         'import the file with tela_import_asset first and use the ref it returns; tela_list_assets shows what this design already holds',
       )
     }

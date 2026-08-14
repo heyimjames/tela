@@ -7,9 +7,13 @@
  *    Claude session) may both be editing; they share the process, so they share
  *    the session. That is deliberate — two independent in-memory copies of one
  *    file is the lost-update bug, not a feature.
- *  - **A per-source lock.** Every mutation runs inside a promise chain keyed by
- *    the path, so mutations against one design are strictly serialized even
- *    though the server handles requests concurrently.
+ *  - **A per-source lock.** Every operation on a design — session mutations,
+ *    reads, saves, *and* the file-level lifecycle (create, import, duplicate,
+ *    archive, close) — runs inside a promise chain keyed by the root-relative
+ *    path, so work against one design is strictly serialized even though the
+ *    server handles requests concurrently. The lock is keyed on the path rather
+ *    than on the session, because an archive that renames the file out from
+ *    under an in-flight save races just as badly as two saves do.
  *  - **Expected session revision on every mutation.** A monotonic counter that
  *    increments on each accepted change. A caller that read the design, then
  *    acted on what it read, passes the revision it saw; if anything landed in
@@ -50,16 +54,23 @@ export interface Session {
   migrationsApplied: string[]
 }
 
-interface SessionEntry extends Session {
-  /** Tail of the per-source serialization chain. */
-  lock: Promise<unknown>
-}
+type SessionEntry = Session
 
 const sessions = new Map<string, SessionEntry>()
+
+/**
+ * Tail of the per-path serialization chain, keyed by root-relative path.
+ *
+ * Deliberately *not* stored on the session: a path with no open session still
+ * has to serialize (create, import, duplicate, archive), and a session that is
+ * closed and reopened mid-queue must not hand out a fresh, empty chain.
+ */
+const locks = new Map<string, Promise<unknown>>()
 
 /** Test seam: drop all in-memory sessions without touching disk. */
 export function resetSessions(): void {
   sessions.clear()
+  locks.clear()
 }
 
 export function listOpenSessions(): Session[] {
@@ -67,8 +78,7 @@ export function listOpenSessions(): Session[] {
 }
 
 function toPublic(entry: SessionEntry): Session {
-  const { lock: _lock, ...rest } = entry
-  return rest
+  return { ...entry }
 }
 
 export function getSession(design: string): Session | undefined {
@@ -76,7 +86,7 @@ export function getSession(design: string): Session | undefined {
   return entry ? toPublic(entry) : undefined
 }
 
-export function requireSession(design: string): Session {
+function requireEntry(design: string): SessionEntry {
   const entry = sessions.get(design)
   if (!entry) {
     throw toolError(
@@ -85,24 +95,39 @@ export function requireSession(design: string): Session {
       `call tela_open_design with design "${design}" first; tela_list_designs shows every design under the approved root`,
     )
   }
-  return toPublic(entry)
+  return entry
+}
+
+export function requireSession(design: string): Session {
+  return toPublic(requireEntry(design))
 }
 
 /**
- * Run `work` under the design's lock.
+ * Run `work` under the path's lock.
  *
  * The chain is advanced before awaiting so a second caller queues behind this
  * one rather than racing it, and the `catch` on the stored tail keeps one
- * failed mutation from poisoning every later one.
+ * failed operation from poisoning every later one.
+ *
+ * `work` must re-look-up the session itself (via `requireEntry`) rather than
+ * closing over one captured before the await: by the time the queue reaches it,
+ * a concurrent close or archive may have removed the session, and a stale entry
+ * would either crash or apply a transform to a document nobody asked for.
  */
-async function withLock<T>(design: string, work: () => Promise<T>): Promise<T> {
-  const entry = sessions.get(design)
-  if (!entry) {
-    throw toolError('not_open', `no open session for "${design}"`, `call tela_open_design with design "${design}" first`)
-  }
-  const result = entry.lock.then(work, work)
-  entry.lock = result.catch(() => undefined)
+async function withLock<T>(key: string, work: () => Promise<T>): Promise<T> {
+  const tail = locks.get(key) ?? Promise.resolve()
+  const result = tail.then(work, work)
+  locks.set(key, result.catch(() => undefined))
   return result
+}
+
+/** Acquire several path locks in a fixed (sorted) order, so two callers taking
+    the same pair cannot deadlock by taking them in opposite orders. */
+async function withLocks<T>(keys: string[], work: () => Promise<T>): Promise<T> {
+  const ordered = [...new Set(keys)].sort()
+  const acquire = (index: number): Promise<T> =>
+    index >= ordered.length ? work() : withLock(ordered[index], () => acquire(index + 1))
+  return acquire(0)
 }
 
 function assertSessionRevision(entry: SessionEntry, expected: number): void {
@@ -125,23 +150,24 @@ export interface OpenResult {
 export async function openDesign(designPath: string): Promise<OpenResult> {
   const resolved = await resolveInRoot(designPath, 'design')
   assertTelaExtension(resolved.relative)
-  const existing = sessions.get(resolved.relative)
-  if (existing) return { session: toPublic(existing), reused: true }
+  return withLock(resolved.relative, async () => {
+    const existing = sessions.get(resolved.relative)
+    if (existing) return { session: toPublic(existing), reused: true }
 
-  const { document, migrationsApplied } = await readBundleFile(resolved)
-  const entry: SessionEntry = {
-    design: resolved.relative,
-    absolutePath: resolved.absolute,
-    document,
-    sessionRevision: 0,
-    diskRevision: computeContentRevision(document),
-    dirty: false,
-    openedAt: nowIso(),
-    migrationsApplied,
-    lock: Promise.resolve(),
-  }
-  sessions.set(resolved.relative, entry)
-  return { session: toPublic(entry), reused: false }
+    const { document, migrationsApplied } = await readBundleFile(resolved)
+    const entry: SessionEntry = {
+      design: resolved.relative,
+      absolutePath: resolved.absolute,
+      document,
+      sessionRevision: 0,
+      diskRevision: computeContentRevision(document),
+      dirty: false,
+      openedAt: nowIso(),
+      migrationsApplied,
+    }
+    sessions.set(resolved.relative, entry)
+    return { session: toPublic(entry), reused: false }
+  })
 }
 
 async function readBundleFile(resolved: ResolvedPath): Promise<{ document: TelaDocument; migrationsApplied: string[] }> {
@@ -159,18 +185,29 @@ async function readBundleFile(resolved: ResolvedPath): Promise<{ document: TelaD
   return { document: result.document, migrationsApplied: result.migrationsApplied }
 }
 
-export function closeDesign(design: string, discardChanges: boolean): { closed: boolean; discardedChanges: boolean } {
-  const entry = sessions.get(design)
-  if (!entry) return { closed: false, discardedChanges: false }
-  if (entry.dirty && !discardChanges) {
-    throw toolError(
-      'conflict',
-      `design "${design}" has unsaved changes`,
-      'call tela_save_design first, or pass discard_changes: true to close and lose them',
-    )
-  }
-  sessions.delete(design)
-  return { closed: true, discardedChanges: entry.dirty }
+/**
+ * Close under the lock, like every other operation on this path.
+ *
+ * Dropping the session outside the lock would let a close land between a queued
+ * mutation's `await` and its session lookup — and worse, a close-then-reopen
+ * would hand the queued transform a fresh session whose revision counter is back
+ * at 0, so the revision gate would pass and a stale edit would be applied to a
+ * freshly loaded document.
+ */
+export async function closeDesign(design: string, discardChanges: boolean): Promise<{ closed: boolean; discardedChanges: boolean }> {
+  return withLock(design, async () => {
+    const entry = sessions.get(design)
+    if (!entry) return { closed: false, discardedChanges: false }
+    if (entry.dirty && !discardChanges) {
+      throw toolError(
+        'conflict',
+        `design "${design}" has unsaved changes`,
+        'call tela_save_design first, or pass discard_changes: true to close and lose them',
+      )
+    }
+    sessions.delete(design)
+    return { closed: true, discardedChanges: entry.dirty }
+  })
 }
 
 // --- Mutation ----------------------------------------------------------------
@@ -194,7 +231,10 @@ export async function mutateSession<T>(
   mutate: (document: TelaDocument) => { document: TelaDocument; value: T } | Promise<{ document: TelaDocument; value: T }>,
 ): Promise<MutationResult<T>> {
   return withLock(design, async () => {
-    const entry = sessions.get(design)!
+    // Looked up *after* the await, not before: the session may have been closed
+    // or archived while this call sat in the queue, and `not_open` is the
+    // contracted answer for that — not a TypeError surfaced as `internal`.
+    const entry = requireEntry(design)
     assertSessionRevision(entry, expectedSessionRevision)
     const next = await mutate(entry.document)
     entry.document = next.document
@@ -206,7 +246,7 @@ export async function mutateSession<T>(
 
 /** Read under the lock, so a read never observes a half-applied mutation. */
 export async function readSession<T>(design: string, read: (document: TelaDocument) => T): Promise<T> {
-  return withLock(design, async () => read(sessions.get(design)!.document))
+  return withLock(design, async () => read(requireEntry(design).document))
 }
 
 // --- Save --------------------------------------------------------------------
@@ -225,7 +265,7 @@ export async function saveDesign(
   expectedDiskRevision: string,
 ): Promise<SaveResult> {
   return withLock(design, async () => {
-    const entry = sessions.get(design)!
+    const entry = requireEntry(design)
     assertSessionRevision(entry, expectedSessionRevision)
 
     // The disk gate. Re-read what is actually on disk rather than trusting the
@@ -360,9 +400,13 @@ async function assertAbsent(resolved: ResolvedPath, field: string): Promise<void
 export async function createDesignFile(designPath: string, document: TelaDocument): Promise<{ design: string; bytes: number; diskRevision: string }> {
   const resolved = await resolveInRoot(designPath, 'design', { forWrite: true, createParents: true })
   assertTelaExtension(resolved.relative)
-  await assertAbsent(resolved, 'design')
-  const bytes = await saveTelaFile(resolved.absolute, document, { createDirectory: true })
-  return { design: resolved.relative, bytes: bytes.length, diskRevision: computeContentRevision(document) }
+  // Under the path lock: the exists-check and the write have to be one step, or
+  // two concurrent creates both see "absent" and the second silently wins.
+  return withLock(resolved.relative, async () => {
+    await assertAbsent(resolved, 'design')
+    const bytes = await saveTelaFile(resolved.absolute, document, { createDirectory: true })
+    return { design: resolved.relative, bytes: bytes.length, diskRevision: computeContentRevision(document) }
+  })
 }
 
 export async function duplicateDesignFile(sourcePath: string, targetPath: string): Promise<{ design: string; bytes: number }> {
@@ -370,15 +414,20 @@ export async function duplicateDesignFile(sourcePath: string, targetPath: string
   const target = await resolveInRoot(targetPath, 'target_design', { forWrite: true, createParents: true })
   assertTelaExtension(source.relative)
   assertTelaExtension(target.relative)
-  await assertAbsent(target, 'target_design')
 
-  // Copy the *saved* file, not the in-memory session: a duplicate of a design
-  // with unsaved edits should be a duplicate of what is on disk, and any other
-  // choice makes "duplicate" mean two different things depending on hidden state.
-  const { document } = await readBundleFile(source)
-  const bytes = writeBundle(document)
-  await saveTelaFile(target.absolute, document, { createDirectory: true })
-  return { design: target.relative, bytes: bytes.length }
+  // Both paths under lock: the source must not be saved or archived between the
+  // read and the write, and the target must not be created by anyone else
+  // between the exists-check and the write.
+  return withLocks([source.relative, target.relative], async () => {
+    await assertAbsent(target, 'target_design')
+    // Copy the *saved* file, not the in-memory session: a duplicate of a design
+    // with unsaved edits should be a duplicate of what is on disk, and any other
+    // choice makes "duplicate" mean two different things depending on hidden state.
+    const { document } = await readBundleFile(source)
+    const bytes = writeBundle(document)
+    await saveTelaFile(target.absolute, document, { createDirectory: true })
+    return { design: target.relative, bytes: bytes.length }
+  })
 }
 
 /**
@@ -391,14 +440,16 @@ export async function importDesignFile(sourcePath: string, targetPath: string): 
   const source = await resolveInRoot(sourcePath, 'source')
   const target = await resolveInRoot(targetPath, 'design', { forWrite: true, createParents: true })
   assertTelaExtension(target.relative)
-  await assertAbsent(target, 'design')
 
-  // Read through the validating reader before writing anything: an invalid or
-  // hostile bundle is refused at the boundary rather than copied in and
-  // discovered later.
-  const { document, migrationsApplied } = await readBundleFile(source)
-  const bytes = await saveTelaFile(target.absolute, document, { createDirectory: true })
-  return { design: target.relative, bytes: bytes.length, migrationsApplied }
+  return withLocks([source.relative, target.relative], async () => {
+    await assertAbsent(target, 'design')
+    // Read through the validating reader before writing anything: an invalid or
+    // hostile bundle is refused at the boundary rather than copied in and
+    // discovered later.
+    const { document, migrationsApplied } = await readBundleFile(source)
+    const bytes = await saveTelaFile(target.absolute, document, { createDirectory: true })
+    return { design: target.relative, bytes: bytes.length, migrationsApplied }
+  })
 }
 
 /**
@@ -410,37 +461,44 @@ export async function importDesignFile(sourcePath: string, targetPath: string): 
 export async function archiveDesignFile(designPath: string): Promise<{ design: string; archivedAs: string }> {
   const resolved = await resolveInRoot(designPath, 'design', { forWrite: true })
   assertTelaExtension(resolved.relative)
-  const entry = sessions.get(resolved.relative)
-  if (entry?.dirty) {
-    throw toolError(
-      'conflict',
-      `design "${resolved.relative}" has unsaved changes`,
-      'save it with tela_save_design or close it with tela_close_design and discard_changes: true before archiving',
-    )
-  }
-  try {
-    await stat(resolved.absolute)
-  } catch {
-    throw toolError('not_found', `no design at "${resolved.relative}"`, 'call tela_list_designs to see what exists under the approved root')
-  }
+  // Whole thing under the path lock. Outside it, the dirty check, the stat, the
+  // rename, and the session drop each sit on the other side of an await from a
+  // concurrent save: the save's atomic rename would recreate the file after the
+  // archive moved it, leaving the design both archived and present, with the
+  // trashed copy holding pre-save content.
+  return withLock(resolved.relative, async () => {
+    const entry = sessions.get(resolved.relative)
+    if (entry?.dirty) {
+      throw toolError(
+        'conflict',
+        `design "${resolved.relative}" has unsaved changes`,
+        'save it with tela_save_design or close it with tela_close_design and discard_changes: true before archiving',
+      )
+    }
+    try {
+      await stat(resolved.absolute)
+    } catch {
+      throw toolError('not_found', `no design at "${resolved.relative}"`, 'call tela_list_designs to see what exists under the approved root')
+    }
 
-  const trash = trashDirectory()
-  await mkdir(trash, { recursive: true })
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const archivedName = `${basename(resolved.relative, TELA_EXTENSION)}.${stamp}${TELA_EXTENSION}`
-  const archivedPath = join(trash, archivedName)
-  try {
-    await rename(resolved.absolute, archivedPath)
-  } catch {
-    // A rename can fail across devices even inside one root (a bind mount).
-    // Copy-then-verify is the fallback; the original is left in place if the
-    // copy did not land, so an archive never loses the file.
-    await copyFile(resolved.absolute, archivedPath)
-    const { unlink } = await import('node:fs/promises')
-    await unlink(resolved.absolute)
-  }
-  sessions.delete(resolved.relative)
-  return { design: resolved.relative, archivedAs: toPosix(`.trash/${archivedName}`) }
+    const trash = trashDirectory()
+    await mkdir(trash, { recursive: true })
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const archivedName = `${basename(resolved.relative, TELA_EXTENSION)}.${stamp}${TELA_EXTENSION}`
+    const archivedPath = join(trash, archivedName)
+    try {
+      await rename(resolved.absolute, archivedPath)
+    } catch {
+      // A rename can fail across devices even inside one root (a bind mount).
+      // Copy-then-verify is the fallback; the original is left in place if the
+      // copy did not land, so an archive never loses the file.
+      await copyFile(resolved.absolute, archivedPath)
+      const { unlink } = await import('node:fs/promises')
+      await unlink(resolved.absolute)
+    }
+    sessions.delete(resolved.relative)
+    return { design: resolved.relative, archivedAs: toPosix(`.trash/${archivedName}`) }
+  })
 }
 
 /** Park an excised fragment (page, frame, layers) in the trash as JSON. */

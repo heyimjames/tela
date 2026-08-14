@@ -20,7 +20,7 @@ import { approvedRoot } from '../paths'
 import { markdownRecord, markdownTable, pageText, paginate, paginationInputShape, paginationOutputShape, responseFormatSchema } from '../format'
 import { listDesigns, listOpenSessions, readSession, requireSession, validateDocument } from '../sessions'
 import { requireFrame } from '../documentOps'
-import { buildRefIndex, toPortableRefs } from '../assetRefs'
+import { buildRefIndex, toPortableRefs, type RefIndex } from '../assetRefs'
 import { assertDocumentInvariants } from '../../tela/invariants'
 import { defineTool, READ_ONLY, registeredToolNames } from '../tooling'
 import { designArg, frameArg } from './common'
@@ -456,12 +456,13 @@ export function registerRuntimeTools(server: McpServer): void {
     annotations: READ_ONLY,
     handler: async (args) => {
       const document = await readSession(args.design, (current) => current)
+      const index = buildRefIndex(document)
       const images = document.assets.map((asset) => ({
         asset_id: asset.id,
         name: asset.name,
         kind: asset.type,
         category: asset.category,
-        ref: refOf(asset.ref),
+        ref: refOf(asset.ref, index),
         ...(asset.width !== undefined ? { width: asset.width } : {}),
         ...(asset.height !== undefined ? { height: asset.height } : {}),
         created_at: asset.createdAt,
@@ -471,7 +472,7 @@ export function registerRuntimeTools(server: McpServer): void {
         name: `${font.family} ${font.weight}${font.style === 'italic' ? ' italic' : ''}`,
         kind: 'font',
         category: 'fonts',
-        ref: refOf(font.ref),
+        ref: refOf(font.ref, index),
         created_at: font.createdAt,
         license: font.license,
       }))
@@ -524,11 +525,17 @@ export function registerRuntimeTools(server: McpServer): void {
 
 /**
  * A session holds payloads inline as `data:` URLs; the file holds
- * `asset://<sha>`. Listing the inline form would emit the whole payload, so
- * only the portable form is ever reported.
+ * `asset://<sha>`. Listing the inline form would emit the whole payload, so it
+ * is *translated*, not blanked.
+ *
+ * Blanking is what a naive `startsWith('asset://') ? ref : ''` does — and since
+ * an open session inlines every payload on read, that is every asset of every
+ * design in every state. This tool's whole job is to hand back the reference to
+ * put on a layer, so it has to produce one.
  */
-function refOf(ref: string): string {
-  return ref.startsWith('asset://') ? ref : ''
+function refOf(ref: string, index: RefIndex): string {
+  if (ref.startsWith('asset://')) return ref
+  return index.toPortable.get(ref) ?? ''
 }
 
 /** Re-exported so the resource layer can advertise the same catalogues. */

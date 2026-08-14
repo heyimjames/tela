@@ -151,11 +151,18 @@ export async function resolveInRoot(input: string, field: string, options: Resol
     )
   }
 
+  // Check before creating. `mkdir -p` follows symlinked components, so creating
+  // the parents first would let a call that is ultimately *refused* still write
+  // directories outside the root through a link inside it. The order here is the
+  // module's stated check-then-act policy, and it has to hold literally.
+  await assertNoEscapingComponents(root, absolute, field, options.forWrite === true)
+
   if (options.createParents) {
     await mkdir(dirname(absolute), { recursive: true })
+    // Re-verify: the chain the first pass found missing now exists, and between
+    // the two passes it could have been created as a link by someone else.
+    await assertNoEscapingComponents(root, absolute, field, options.forWrite === true)
   }
-
-  await assertNoEscapingComponents(root, absolute, field, options.forWrite === true)
 
   return { absolute, relative: toPosix(relative(root, absolute)) }
 }

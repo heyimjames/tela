@@ -12,7 +12,14 @@ import type { DesignDocument, Layer } from '@/types/design'
  * the one channel the architecture allows — `page.evaluate(window.tela.dispatch)`
  * — instead of a wildcard postMessage or an injected script.
  *
- * They are **internal**. The MCP server exposes `tela_render_preview` and
+ * They are **internal**, and that is enforced rather than asserted: they live in
+ * their own table (`BRIDGE_COMMANDS` in commands.ts) which only the same-page
+ * `window.tela.dispatch` handle resolves. The postMessage listener in rpc.ts
+ * routes to `dispatchPublic`, which cannot see them — so a page that frames this
+ * app cannot reach `applyDocument` and replace the user's editing session, nor
+ * `renderDocument` and use this origin as a rasterizer.
+ *
+ * On the MCP side: the server exposes `tela_render_preview` and
  * `tela_export_frames`, which call these; it exposes no tool that lets a client
  * name an arbitrary op. The command bus is not, and must not become, a publicly
  * reachable generic dispatch surface.

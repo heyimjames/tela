@@ -253,22 +253,39 @@ const COMMANDS: Record<string, CommandDef> = {
     },
   },
 
-  // ── Bridge (internal) ─────────────────────────────────────────────────
-  // Used by the MCP server's browser bridge for render/export/open-editor.
-  // See renderOps.ts: these are not, and must not become, MCP tools.
-  ...RENDER_COMMANDS,
 }
 
-/** Run one command. Never throws — failures come back as { ok:false, error }.
-    Async because some ops (AI re-layout) await the LLM. */
-export async function dispatch(command: { op: string; [k: string]: unknown }): Promise<CommandResult> {
-  const def = command && COMMANDS[command.op]
+/**
+ * The full table the same-page bridge sees: the public commands plus the
+ * bridge-only render ops.
+ *
+ * They are kept out of `COMMANDS` deliberately. `COMMANDS` is what
+ * `dispatchPublic` — and therefore the postMessage listener in rpc.ts — can
+ * reach, and `applyDocument` replacing the whole editing session is not
+ * something a framing page may do. See renderOps.ts.
+ */
+const BRIDGE_COMMANDS: Record<string, CommandDef> = { ...COMMANDS, ...RENDER_COMMANDS }
+
+async function run(table: Record<string, CommandDef>, command: { op: string; [k: string]: unknown }): Promise<CommandResult> {
+  const def = command && Object.prototype.hasOwnProperty.call(table, command.op) ? table[command.op] : undefined
   if (!def) return { ok: false, error: `Unknown command "${command?.op}". Call { op: "getSchema" } for the list.` }
   try {
     return { ok: true, result: await def.handler(command) }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
+}
+
+/** Run one command, bridge ops included. Same-page callers only (`window.tela`).
+    Never throws — failures come back as { ok:false, error }. Async because some
+    ops (AI re-layout) await the LLM. */
+export async function dispatch(command: { op: string; [k: string]: unknown }): Promise<CommandResult> {
+  return run(BRIDGE_COMMANDS, command)
+}
+
+/** Run one *public* command. This is the only surface postMessage can reach. */
+export async function dispatchPublic(command: { op: string; [k: string]: unknown }): Promise<CommandResult> {
+  return run(COMMANDS, command)
 }
 
 export function getSchema() {

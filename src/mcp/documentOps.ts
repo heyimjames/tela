@@ -851,7 +851,12 @@ export function restoreVersion(document: TelaDocument, versionId: string, frameI
     width: version.document.format.width,
     height: version.document.format.height,
     layers: renumber(clone(version.document.layers) as TelaLayer[]),
-    ...(version.document.autoLayouts ? { autoLayouts: clone(version.document.autoLayouts) } : {}),
+    // Unconditionally the snapshot's, never merged with the frame's current
+    // ones. `layers` is replaced wholesale, so a surviving auto-layout config
+    // would be keyed by a group id the restore just deleted — and finalize()
+    // then refuses the restore forever with "auto-layout config for group has
+    // no member layers", pointing at tela_validate_design rather than the cause.
+    autoLayouts: clone(version.document.autoLayouts ?? {}),
   }))
   return { document: finalize(next), frameId: target }
 }
