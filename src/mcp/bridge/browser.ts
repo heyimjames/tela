@@ -28,6 +28,7 @@ import type { Browser, BrowserContext, Page } from 'playwright'
 import { toolError } from '../errors'
 import { log } from '../logging'
 import { startBridgeServer, TOKEN_HEADER, type BridgeServer } from './appServer'
+import { childEnvironment } from './childEnv'
 
 interface BridgeState {
   server: BridgeServer
@@ -71,6 +72,14 @@ async function ensureBridge(): Promise<BridgeState> {
         // No remote debugging port, no extensions, no user profile. The browser
         // has nothing in it and nothing pointing at it.
         args: ['--disable-extensions', '--disable-background-networking', '--no-first-run', '--disable-sync'],
+        // Deny-by-default environment. Without this the browser inherits the
+        // operator's shell — including proxy settings that would route the
+        // "no outbound network" runtime through a third party, `LD_PRELOAD`/
+        // `DYLD_INSERT_LIBRARIES`/`NODE_OPTIONS` that inject code into the
+        // process rendering the designs, and every credential the shell happens
+        // to be holding. Playwright passes this straight through to the browser
+        // process, so it is the whole environment the child sees.
+        env: childEnvironment(),
       })
     } catch (cause) {
       await server.close()

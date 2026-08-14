@@ -34,6 +34,7 @@
   },
   "include": [
     "src/tela/nodeIo.ts",
+    "src/tela/journal.ts",
     "src/tela/**/*.test.ts",
     "src/tela/**/*.child.ts",
     "tests/**/*.ts"

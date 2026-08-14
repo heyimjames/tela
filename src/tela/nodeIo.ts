@@ -18,6 +18,11 @@
  *
  * If anything fails, the temp file is removed and the previous master is left
  * byte-identical. A failed save can never destroy the last good version.
+ *
+ * Wrapped around all of it is the write-ahead journal (`journal.ts`): a record
+ * written and fsynced *before* step 1 and cleared after step 3, so that a
+ * process killed outright — where none of the cleanup above runs — leaves an
+ * explicable, recoverable trace rather than an anonymous temp file.
  */
 
 import { open, rename, unlink, readFile, mkdir } from 'node:fs/promises'
@@ -25,6 +30,8 @@ import { dirname, join, basename } from 'node:path'
 import { randomBytes } from 'node:crypto'
 
 import { telaError } from './errors'
+import { clearJournal, writeJournal } from './journal'
+import { sha256Hex } from './sha256'
 import { readBundle, readBundleForEditing, writeBundle, type ReadBundleResult } from './bundle'
 import type { TelaDocument, TelaManifest } from './schema'
 
@@ -39,6 +46,12 @@ export interface AtomicWriteOptions {
   hooks?: AtomicWriteHooks
   /** Create the containing directory if it is missing. Off by default. */
   createDirectory?: boolean
+  /**
+   * Write a journal entry before the data and clear it after the rename, so a
+   * process killed mid-write leaves an explicable record instead of an
+   * anonymous temp file. On by default; see `journal.ts` for why.
+   */
+  journal?: boolean
 }
 
 export async function writeFileAtomic(
@@ -52,7 +65,23 @@ export async function writeFileAtomic(
   // A random suffix rather than a pid or a timestamp: two processes saving the
   // same design at once must not collide on the temp name, and `wx` below turns
   // any collision into an error rather than a silent overwrite.
-  const temporaryPath = join(directory, `.${basename(targetPath)}.${randomBytes(8).toString('hex')}.tmp`)
+  const id = randomBytes(8).toString('hex')
+  const temporaryPath = join(directory, `.${basename(targetPath)}.${id}.tmp`)
+
+  // Journal first, and fsynced, so the record can never reach disk *after* the
+  // temp file it describes. The digest is of the bytes we are about to write,
+  // which is what lets recovery tell a complete pending write from a truncated
+  // one without trusting the file size alone.
+  let journalPath: string | undefined
+  if (options.journal !== false) {
+    journalPath = await writeJournal(targetPath, id, {
+      target: basename(targetPath),
+      temp: basename(temporaryPath),
+      bytes: data.length,
+      sha256: sha256Hex(data),
+      startedAt: new Date().toISOString(),
+    })
+  }
 
   let handle: Awaited<ReturnType<typeof open>> | undefined
   try {
@@ -81,8 +110,15 @@ export async function writeFileAtomic(
       await handle.close().catch(() => {})
     }
     await unlink(temporaryPath).catch(() => {})
+    // The temp file is gone, so there is nothing left to recover and the record
+    // would only be noise on the next open. A crash that skips this line is
+    // precisely the case the journal is kept for.
+    if (journalPath) await clearJournal(journalPath)
     throw cause
   }
+
+  // Committed. The record has done its job.
+  if (journalPath) await clearJournal(journalPath)
 
   // Durability of the rename itself. Best-effort: some platforms and filesystems
   // refuse to open a directory for sync, and failing the whole save over that
