@@ -59,6 +59,14 @@ function checkFrame(frame: TelaFrame, where: string): void {
   for (const layer of frame.layers) if (layer.groupId) groupIds.add(layer.groupId)
 
   const keys = Object.keys(frame.autoLayouts)
+  // An outer auto-layout that wraps only other auto-layout groups has no layer of
+  // its own carrying its id — its membership is expressed by the inner configs'
+  // `parentGroupId`. The editor produces exactly that when auto-layout is applied to
+  // a selection of existing groups, so a config named as someone's parent counts as
+  // having members.
+  for (const config of Object.values(frame.autoLayouts)) {
+    if (config.parentGroupId !== undefined) groupIds.add(config.parentGroupId)
+  }
   for (const groupId of keys) {
     if (!groupIds.has(groupId)) {
       throw telaError(

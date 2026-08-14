@@ -57,23 +57,41 @@ export function base64Encode(bytes: Uint8Array): string {
   return out
 }
 
+/** The 6-bit value of a base64 character, or -1 if it is not one. */
+function sextet(code: number): number {
+  // The table only covers Latin-1; anything above it is not base64 and must fail
+  // closed. Indexing past the table yields `undefined`, which compares false against
+  // -1 and would otherwise be accepted and contribute zero bits — silent corruption.
+  return code < 256 ? B64_INVERSE[code] : -1
+}
+
 export function base64Decode(input: string): Uint8Array {
-  let clean = ''
+  const values: number[] = []
+  let padding = 0
   for (let i = 0; i < input.length; i++) {
     const code = input.charCodeAt(i)
     // Strip whitespace, which data: URLs from real-world sources often contain.
     if (code === 32 || code === 9 || code === 10 || code === 13) continue
-    if (input[i] === '=') break
-    if (B64_INVERSE[code] === -1) throw new Error('invalid base64 input')
-    clean += input[i]
+    if (code === 61 /* = */) {
+      // Padding is only meaningful at the very end, and never more than two of it.
+      padding++
+      if (padding > 2) throw new Error('invalid base64 input')
+      continue
+    }
+    if (padding > 0) throw new Error('invalid base64 input')
+    const value = sextet(code)
+    if (value === -1) throw new Error('invalid base64 input')
+    values.push(value)
   }
-  const byteLength = Math.floor((clean.length * 3) / 4)
-  const out = new Uint8Array(byteLength)
+  // A group of a single character carries fewer than 8 bits and cannot be valid.
+  if (values.length % 4 === 1) throw new Error('invalid base64 input')
+
+  const out = new Uint8Array(Math.floor((values.length * 3) / 4))
   let acc = 0
   let bits = 0
   let index = 0
-  for (let i = 0; i < clean.length; i++) {
-    acc = (acc << 6) | B64_INVERSE[clean.charCodeAt(i)]
+  for (const value of values) {
+    acc = (acc << 6) | value
     bits += 6
     if (bits >= 8) {
       bits -= 8

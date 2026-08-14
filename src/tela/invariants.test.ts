@@ -95,6 +95,18 @@ describe('semantic invariants', () => {
     }, /has no member layers/)
   })
 
+  it('accepts an outer auto-layout whose only members are nested auto-layouts', () => {
+    // The editor produces exactly this when auto-layout is applied to a selection of
+    // groups with no loose layers: the outer config's membership lives in the inner
+    // config's parentGroupId, and no layer carries the outer id.
+    const document = makeFullCoverageDocument()
+    const pages = document.pages as Pages
+    const image = pages[0].frames[0].layers.find((l) => l.id === 'rich-image')!
+    expect(image.groupId).toBe('group-outer')
+    delete image.groupId
+    expect(() => writeBundle(document)).not.toThrow()
+  })
+
   it('rejects an auto-layout naming a parent that is not an auto-layout here', () => {
     expectInvariantViolation((document) => {
       const pages = document.pages as Pages

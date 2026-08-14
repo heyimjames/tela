@@ -262,12 +262,13 @@ export function readBundle(bytes: Uint8Array, limits: ZipLimits = DEFAULT_ZIP_LI
   const documentRaw = parseJsonEntry(documentEntry, 'document_invalid')
   const migration = migrateDocument(documentRaw)
 
-  if (migration.applied.length === 0) {
-    // Only meaningful for an un-migrated document: a migration legitimately
-    // rewrites bytes, so re-canonicalizing a migrated document will not reproduce
-    // what was stored.
-    assertCanonical(documentEntry, documentRaw, 'document_invalid', DOCUMENT_ENTRY)
-  }
+  // `documentRaw` is the *stored* value, parsed before any migration ran, so
+  // re-canonicalizing it must reproduce the stored bytes whatever schema version it
+  // declares. Skipping this on the migration path would let an older-schema bundle
+  // in with non-canonical bytes. (The contentRevision comparison below is a
+  // different matter: a migration legitimately changes the document, so the stored
+  // revision cannot be expected to match the migrated one.)
+  assertCanonical(documentEntry, documentRaw, 'document_invalid', DOCUMENT_ENTRY)
 
   const documentParsed = telaDocumentSchema.safeParse(migration.document)
   if (!documentParsed.success) {

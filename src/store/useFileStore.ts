@@ -38,6 +38,23 @@ function createDefaultFrame(name?: string): DesignFrame {
   }
 }
 
+/**
+ * Draw layers persisted before `natWidth`/`natHeight` existed have no natural size.
+ * Every render path already guards for that (`layer.natWidth ? … : 1`), but the
+ * `.tela` schema requires both, so a cache holding one of these layers could never be
+ * exported. The natural size *is* the layer's own size for a stroke that has never
+ * been scaled, which is exactly the case for these.
+ */
+function backfillDrawLayers(layers: unknown[]): void {
+  for (const layer of layers) {
+    if (typeof layer !== 'object' || layer === null) continue
+    const record = layer as Record<string, unknown>
+    if (record.type !== 'draw') continue
+    if (typeof record.natWidth !== 'number') record.natWidth = record.width
+    if (typeof record.natHeight !== 'number') record.natHeight = record.height
+  }
+}
+
 function createDefaultPage(name: string = 'Page 1', frameName?: string): DesignPage {
   return {
     id: nanoid(),
@@ -243,8 +260,16 @@ export const useFileStore = create<FileStore>()(
                 fill?.type === 'solid' && fill.color ? fill.color : getBrandColor('cloud')
               frame.locked ??= false
               frame.visible ??= true
+              // The old `createFromTemplate` built frames with no coordinates at
+              // all, and the old whitelisting writer dropped the undefined values,
+              // so a v1 cache can hold frames without x/y. The canvas would place
+              // them at NaN and the lossless save path would reject the document.
+              frame.x ??= 0
+              frame.y ??= 0
             }
             page.looseElements ??= []
+            backfillDrawLayers(frames.flatMap((frame) => (frame.layers ?? []) as unknown[]))
+            backfillDrawLayers((page.looseElements ?? []) as unknown[])
           }
         }
         return persisted

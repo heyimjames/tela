@@ -16,6 +16,7 @@ import { useDesignStore } from '@/store/useDesignStore'
 import { useAssetStore } from '@/store/useAssetStore'
 import { BRAND } from '@/brand/brand.config'
 import { BRAND_PALETTE } from '@/brand/palette'
+import { DEFAULT_FORMAT } from '@/brand/formats'
 import { telaDocumentSchema, CURRENT_DOCUMENT_SCHEMA_VERSION, type TelaDocument } from './schema'
 import { telaError } from './errors'
 
@@ -40,6 +41,26 @@ export function setImportedFonts(fonts: ImportedFont[]): void {
 
 export function getImportedFonts(): ImportedFont[] {
   return importedFonts.map((font) => ({ ...font }))
+}
+
+/**
+ * The brand block belonging to the document currently open, or `null` for a fresh
+ * session that has never opened a bundle.
+ *
+ * It has to be remembered rather than rebuilt from the local `BRAND`/`BRAND_PALETTE`
+ * constants: a bundle authored by another build (or a future producer) carries its
+ * own product name and palette overrides, and rebuilding from the local constants on
+ * save would rewrite them — which would change `document.json`, its hash, and the
+ * content revision on a no-op open/save.
+ */
+let sessionBrand: TelaDocument['brand'] | null = null
+
+export function setSessionBrand(brand: TelaDocument['brand'] | null): void {
+  sessionBrand = brand ? clone(brand) : null
+}
+
+export function getSessionBrand(): TelaDocument['brand'] | null {
+  return sessionBrand ? clone(sessionBrand) : null
 }
 
 function clone<T>(value: T): T {
@@ -84,8 +105,21 @@ export function captureSession(): unknown {
   const activeFrameOnPage =
     activeFrameId && activePage?.frames.some((frame) => frame.id === activeFrameId) ? activeFrameId : null
 
-  const palette: Record<string, string> = {}
-  for (const [token, value] of Object.entries(BRAND_PALETTE)) palette[token] = value.hex
+  // A document opened from a bundle keeps the brand block it arrived with; only a
+  // fresh session falls back to this build's constants.
+  let brand = getSessionBrand()
+  if (!brand) {
+    const palette: Record<string, string> = {}
+    for (const [token, value] of Object.entries(BRAND_PALETTE)) palette[token] = value.hex
+    brand = {
+      productName: BRAND.productName,
+      socialHandle: BRAND.socialHandle,
+      displayName: BRAND.displayName,
+      website: BRAND.website,
+      ai: { ...BRAND.ai },
+      palette,
+    }
+  }
 
   const document = {
     schemaVersion: CURRENT_DOCUMENT_SCHEMA_VERSION,
@@ -101,14 +135,7 @@ export function captureSession(): unknown {
       snapFrames: workspace.snapFrames,
     },
     versions: clone(designState.savedVersions),
-    brand: {
-      productName: BRAND.productName,
-      socialHandle: BRAND.socialHandle,
-      displayName: BRAND.displayName,
-      website: BRAND.website,
-      ai: { ...BRAND.ai },
-      palette,
-    },
+    brand,
     assets: assetState.assets.map((asset) => ({
       id: asset.id,
       name: asset.name,
@@ -149,6 +176,16 @@ export function applySession(input: unknown): TelaDocument {
     ? activePage.frames.find((frame) => frame.id === document.activeFrameId)
     : undefined
 
+  // A page is allowed to hold no frames at all (the app's own Scratchpad starts that
+  // way), so the design store's `format` cannot simply be taken from the active
+  // frame. Search the active page first, then the rest of the document, and fall back
+  // to the default format — `undefined` here would white-screen the editor the moment
+  // anything read `format.label`.
+  const fallbackFormat =
+    activePage.frames[0]?.format ??
+    document.pages.find((page) => page.frames.length > 0)?.frames[0]?.format ??
+    DEFAULT_FORMAT
+
   useWorkspaceStore.setState({
     workspace: {
       id: document.id,
@@ -160,13 +197,17 @@ export function applySession(input: unknown): TelaDocument {
     },
     activeFrameId: activeFrame?.id ?? null,
     selectedFrameIds: new Set<string>(),
+    // The opened bundle is now the master; it is not backed by any library file.
+    // Leaving the previously-open file id in place would make the legacy "Back to
+    // Files" sync write this document's pages over that unrelated file.
+    activeFileId: null,
   })
 
   useDesignStore.setState({
     document: {
       id: document.id,
       name: document.name,
-      format: activeFrame ? clone(activeFrame.format) : clone(activePage.frames[0]?.format ?? document.pages[0].frames[0]?.format),
+      format: clone(activeFrame ? activeFrame.format : fallbackFormat),
       layers: activeFrame ? (clone(activeFrame.layers) as never) : [],
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
@@ -195,6 +236,7 @@ export function applySession(input: unknown): TelaDocument {
   })
 
   setImportedFonts(document.fonts.map((font) => ({ ...font })))
+  setSessionBrand(document.brand)
 
   return document
 }

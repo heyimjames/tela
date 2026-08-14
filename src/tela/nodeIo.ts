@@ -57,7 +57,17 @@ export async function writeFileAtomic(
   let handle: Awaited<ReturnType<typeof open>> | undefined
   try {
     handle = await open(temporaryPath, 'wx', 0o644)
-    await handle.write(data, 0, data.length, 0)
+    // A short write is legal for `write(2)` and does happen near quota limits and on
+    // some network filesystems. Unchecked, the truncated temp file would be fsynced
+    // and renamed over the previous master, destroying the last good version.
+    let written = 0
+    while (written < data.length) {
+      const { bytesWritten } = await handle.write(data, written, data.length - written, written)
+      if (bytesWritten <= 0) {
+        throw new Error(`short write: ${written} of ${data.length} bytes reached the temporary file`)
+      }
+      written += bytesWritten
+    }
     await options.hooks?.afterWrite?.(temporaryPath)
     await handle.sync()
     await options.hooks?.afterSync?.(temporaryPath)

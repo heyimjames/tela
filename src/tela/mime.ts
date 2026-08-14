@@ -49,11 +49,32 @@ const WOFF2 = [0x77, 0x4f, 0x46, 0x32]
  * must be an `<svg` element. Sanitization of that SVG's *contents* is a separate
  * concern owned by the renderer lane; this function only answers "what is it".
  */
+/**
+ * The end of a prefix that does not split a UTF-8 sequence.
+ *
+ * Cutting an arbitrary file at a fixed byte offset can land in the middle of a
+ * multi-byte character, which a strict decoder rejects — that would make a perfectly
+ * valid SVG (a Japanese `<title>`, an accented font name) unsupported and block the
+ * save. Backing up to the last sequence boundary keeps the decode strict without
+ * penalising the payload for where the window happened to fall.
+ */
+function utf8SafeEnd(bytes: Uint8Array, end: number): number {
+  for (let i = end - 1; i >= end - 3 && i >= 0; i--) {
+    const byte = bytes[i]
+    if ((byte & 0xc0) === 0x80) continue // continuation byte; keep walking back
+    if (byte < 0x80) return end // ASCII: the sequence before `end` is complete
+    const length = byte >= 0xf0 ? 4 : byte >= 0xe0 ? 3 : 2
+    return i + length <= end ? end : i
+  }
+  return end
+}
+
 function looksLikeSvg(bytes: Uint8Array): boolean {
   if (bytes.length > 4 * 1024 * 1024) return false
   let text: string
   try {
-    text = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, 4096))
+    const end = Math.min(bytes.length, 4096)
+    text = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, utf8SafeEnd(bytes, end)))
   } catch {
     return false
   }
