@@ -35,12 +35,15 @@
      Chrome ramp — DARK.
 
      The app chrome is dark by default, matching the HiveMind wiki's dark
-     theme (wiki.gethivemind.co, data-theme="dark"). These six values are
-     sampled from that theme and are the ONLY dark hexes in the codebase —
-     everything below maps semantic tokens onto them or onto the brand ramp
-     above. If a component needs a dark colour it takes a token from here;
-     it never re-types a hex (that drift is exactly what the eyebrow
-     regression cost us).
+     theme (wiki.gethivemind.co, data-theme="dark"). --ground and --hairline
+     are sampled straight off that theme; the rest fill in the ramp it
+     implies (--surface / --surface-float / --surface-hover) or are chosen to
+     clear WCAG AA on it (--mist, --alert-300). Text, primary, link and ink
+     are not here at all — they alias the brand ramp above.
+
+     These seven are the ONLY dark hexes in the codebase. If a component
+     needs a dark colour it takes a token from here; it never re-types a hex
+     (that drift is exactly what the eyebrow regression cost us).
 
      Ordering is a lift ramp: ground (darkest) → surface → surface-float,
      with hairline as the only rule colour. Note the document canvas is NOT
