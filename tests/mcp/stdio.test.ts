@@ -14,7 +14,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { copyFile, mkdtemp, rm, stat } from 'node:fs/promises'
+import { copyFile, mkdtemp, readFile, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -106,6 +106,22 @@ async function connect(options: { modern: boolean }): Promise<Connected> {
 }
 
 describe('compiled artifact', () => {
+  it('hands the ESM loader a file:// URL rather than a bare path', async () => {
+    // This guards a defect that is invisible on the platform it is developed on.
+    // A dynamic import specifier is a URL; on Windows an absolute path starts
+    // with a drive letter, so `import("D:\\...")` is read as the scheme `d:` and
+    // rejected with ERR_UNSUPPORTED_ESM_URL_SCHEME before any of our code runs.
+    // On POSIX the bare path happens to work, so the server starts fine on every
+    // developer machine and fails to launch on every Windows host.
+    //
+    // Asserting on the launcher's source is unusual, and it is deliberate: the
+    // behaviour itself cannot be observed from macOS, so without this the only
+    // signal is a red Windows run.
+    const source = await readFile(LAUNCHER, 'utf8')
+    expect(source).toMatch(/pathToFileURL\(/)
+    expect(source, 'the launcher passes a bare filesystem path to import()').not.toMatch(/await import\(\s*compiled\s*\)/)
+  })
+
   it('runs under plain node with no TypeScript loader on the command line', async () => {
     // No tsx, no ts-node, no npx, no --loader, no --experimental flags.
     const child = spawn(process.execPath, [LAUNCHER], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
