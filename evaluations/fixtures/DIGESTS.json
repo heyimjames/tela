@@ -1,0 +1,8 @@
+{
+  "note": "Pinned digests of the immutable evaluation fixtures. The runner verifies these before and after every run; a change here means the fixtures moved and the expected answers must be re-derived.",
+  "designs": {
+    "hiring-q3.tela": "f86c10e4acee3828799360d2a37127cef7e7c6fad766778365ca694b0c50b58d",
+    "legacy-promo.tela": "f994de5b27c5e9d0b669145ba1d4393d6e2b4dbb498ef7737bb8723e72eaedb4",
+    "spring-launch.tela": "f0b9e1a87da167985c1b763aa298f821e983b747eb53df1956ae2f1c65ec94c4"
+  }
+}

@@ -18,7 +18,7 @@ import { EXTERNAL_ID, MCP_BUILDER_PROVENANCE, SERVER_NAME, SERVER_VERSION } from
 import { bridgeStatus } from '../bridge/browser'
 import { approvedRoot } from '../paths'
 import { markdownRecord, markdownTable, pageText, paginate, paginationInputShape, paginationOutputShape, responseFormatSchema } from '../format'
-import { listDesigns, listOpenSessions, readSession, requireSession, validateDocument } from '../sessions'
+import { listDesigns, listOpenSessions, pendingWriteReport, readSession, requireSession, validateDocument } from '../sessions'
 import { requireFrame } from '../documentOps'
 import { buildRefIndex, toPortableRefs, type RefIndex } from '../assetRefs'
 import { assertDocumentInvariants } from '../../tela/invariants'
@@ -40,6 +40,10 @@ export function registerRuntimeTools(server: McpServer): void {
       approved_root_configured: z.boolean().describe('True when TELA_APPROVED_ROOT is set explicitly rather than defaulted.'),
       bridge_running: z.boolean().describe('False until the first tool call that needs a browser. Rendering starts it lazily.'),
       open_designs: z.array(z.strictObject({ design: z.string(), session_revision: z.int(), unsaved_changes: z.boolean() })),
+      interrupted_writes: z
+        .int()
+        .nonnegative()
+        .describe('Writes found journalled but never committed — a previous process was killed mid-save. The bytes were moved to the managed trash and never applied.'),
       ready: z.boolean(),
     }),
     annotations: READ_ONLY,
@@ -65,6 +69,7 @@ export function registerRuntimeTools(server: McpServer): void {
           session_revision: session.sessionRevision,
           unsaved_changes: session.dirty,
         })),
+        interrupted_writes: pendingWriteReport().length,
         ready: rootOk,
       }
       return {

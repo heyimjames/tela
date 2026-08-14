@@ -34,7 +34,11 @@
     "test:watch": "vitest",
     "build:app": "vite build",
     "build:bridge": "vite build --base=./ --outDir dist-bridge",
-    "build:mcp": "node scripts/build-mcp.mjs"
+    "build:mcp": "node scripts/build-mcp.mjs",
+    "release:build": "node scripts/build-release.mjs",
+    "release:verify": "node scripts/verify-release.mjs",
+    "release:reproduce": "node scripts/reproduce-release.mjs",
+    "test:evals": "node evaluations/run.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

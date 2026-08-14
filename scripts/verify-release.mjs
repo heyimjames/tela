@@ -1,0 +1,206 @@
+#!/usr/bin/env node
+/**
+ * Verify a Tela release artifact **without executing any of it**.
+ *
+ * That constraint is the whole point, and it is worth being precise about what
+ * it rules out: this script never `import`s a file from the artifact, never
+ * spawns `node` against one, never launches a browser, and never runs an install.
+ * It opens files, reads bytes, hashes them, and parses JSON. A reviewer can run
+ * it against an artifact they do not trust — which is the only interesting case,
+ * because an artifact you already trust needs no verification.
+ *
+ * What it checks, and why each one is not ceremony:
+ *
+ *  1. **Every file matches SHA256SUMS, with no extras and no omissions.** Extras
+ *     matter as much as mismatches: a manifest that covers nine of ten files is
+ *     a manifest an attacker can add a tenth to.
+ *  2. **The stamped source commit is real and is actually in the compiled
+ *     output.** Provenance that says "built from abc123" while the compiled
+ *     server still carries the all-zero development constant is worse than no
+ *     provenance, because every `.tela` bundle the runtime writes will inherit
+ *     the wrong commit. This is checked by searching the compiled bytes, which
+ *     is a read, not a run.
+ *  3. **The lockfile is present, exact, and covers every declared dependency.**
+ *     Setup installs from it; if it is missing an entry, setup resolves that
+ *     package at install time and the artifact stops being pinned.
+ *  4. **The SBOM agrees with the lockfile.** An SBOM generated from anything
+ *     other than the shipped lock describes a different artifact.
+ *  5. **No browser binaries are bundled.** The contract says setup downloads the
+ *     matched Chromium after approval; a browser that arrived inside the
+ *     artifact would bypass that approval entirely.
+ *
+ * Usage: node scripts/verify-release.mjs <artifact-directory> [--json]
+ * Exit code 0 means every check passed.
+ */
+
+import { createHash } from 'node:crypto'
+import { readFile, readdir, stat } from 'node:fs/promises'
+import { join, resolve, sep } from 'node:path'
+
+import { ALL_ZERO_COMMIT, buildSbom, canonicalJson, parseSums } from './lib/release.mjs'
+
+const REQUIRED = [
+  'bin/tela-mcp.mjs',
+  'dist/mcp/tela-mcp.mjs',
+  'dist-bridge/index.html',
+  'schemas/tela-manifest-v1.schema.json',
+  'schemas/tela-document-v1.schema.json',
+  'package.json',
+  'package-lock.json',
+  'provenance.json',
+  'sbom.json',
+  'NOTICES',
+  'LICENSE',
+  'SHA256SUMS',
+]
+
+/** Names and extensions that would mean a browser or native binary got in. */
+const BINARY_MARKERS = [/(^|\/)chrome-(mac|linux|win)/i, /(^|\/)Chromium\.app(\/|$)/i, /(^|\/)headless_shell/i, /\.(exe|dll|dylib|so)$/i]
+
+async function main() {
+  const [target, ...rest] = process.argv.slice(2)
+  if (!target) throw new Error('usage: node scripts/verify-release.mjs <artifact-directory> [--json]')
+  const asJson = rest.includes('--json')
+  const dir = resolve(target)
+
+  const failures = []
+  const checks = []
+  const fail = (check, detail) => {
+    failures.push(`${check}: ${detail}`)
+    checks.push({ check, ok: false, detail })
+  }
+  const pass = (check, detail) => checks.push({ check, ok: true, detail })
+
+  // --- 1. manifest -----------------------------------------------------------
+  const sumsText = await readFile(join(dir, 'SHA256SUMS'), 'utf8')
+  const declared = parseSums(sumsText)
+  const declaredPaths = new Set(declared.map((entry) => entry.path))
+  const present = (await collect(dir)).filter((path) => path !== 'SHA256SUMS')
+
+  for (const path of present) {
+    if (!declaredPaths.has(path)) fail('manifest.complete', `"${path}" is in the artifact but not in SHA256SUMS`)
+  }
+  let mismatched = 0
+  for (const entry of declared) {
+    let bytes
+    try {
+      bytes = await readFile(join(dir, entry.path))
+    } catch {
+      fail('manifest.complete', `"${entry.path}" is listed in SHA256SUMS but missing from the artifact`)
+      continue
+    }
+    if (sha256(bytes) !== entry.sha256) {
+      mismatched += 1
+      fail('manifest.digests', `"${entry.path}" does not match its recorded digest`)
+    }
+  }
+  if (mismatched === 0 && failures.length === 0) pass('manifest.digests', `${declared.length} files match SHA256SUMS`)
+
+  for (const required of REQUIRED) {
+    if (!(await exists(join(dir, required)))) fail('contents.required', `required entry "${required}" is missing`)
+  }
+  if (!failures.some((line) => line.startsWith('contents.required'))) pass('contents.required', `${REQUIRED.length} required entries present`)
+
+  // --- 2. provenance ---------------------------------------------------------
+  const provenance = JSON.parse(await readFile(join(dir, 'provenance.json'), 'utf8'))
+  const commit = provenance?.source?.commit
+  if (typeof commit !== 'string' || !/^[0-9a-f]{40}$/.test(commit)) {
+    fail('provenance.commit', `source commit is not a 40-character lowercase sha (${String(commit)})`)
+  } else if (commit === ALL_ZERO_COMMIT) {
+    fail('provenance.commit', 'source commit is the all-zero development constant; this artifact records no usable provenance')
+  } else {
+    pass('provenance.commit', commit)
+  }
+
+  // The stamp actually landed in the compiled output — read, not run.
+  const compiled = await readFile(join(dir, 'dist/mcp/tela-mcp.mjs'), 'utf8')
+  if (typeof commit === 'string' && /^[0-9a-f]{40}$/.test(commit)) {
+    if (!compiled.includes(commit)) {
+      fail('provenance.stamped', 'the compiled MCP server does not contain the recorded source commit; the release stamp did not take effect')
+    } else if (compiled.includes(ALL_ZERO_COMMIT) && !compiled.includes(`'${commit}'`) && !compiled.includes(`"${commit}"`)) {
+      fail('provenance.stamped', 'the compiled MCP server still carries the all-zero development commit')
+    } else {
+      pass('provenance.stamped', 'the compiled server carries the recorded commit')
+    }
+  }
+
+  if (provenance?.browser?.bundled !== false) fail('provenance.browser', 'provenance does not declare browser binaries as unbundled')
+  else pass('provenance.browser', `chromium revision recorded: ${provenance.browser.chromiumRevision ?? 'none'}`)
+
+  // --- 3. lockfile -----------------------------------------------------------
+  const packageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
+  const lock = JSON.parse(await readFile(join(dir, 'package-lock.json'), 'utf8'))
+  if (lock.lockfileVersion < 3) fail('lock.version', `lockfileVersion ${lock.lockfileVersion} is older than the npm 9+ format this pipeline pins`)
+  else pass('lock.version', `lockfileVersion ${lock.lockfileVersion}`)
+
+  if (provenance?.artifact?.version !== packageJson.version) {
+    fail('lock.version', `provenance version ${provenance?.artifact?.version} does not match package.json ${packageJson.version}`)
+  }
+
+  const declaredDeps = { ...packageJson.dependencies, ...packageJson.devDependencies }
+  const missing = Object.keys(declaredDeps).filter((name) => !lock.packages?.[`node_modules/${name}`])
+  if (missing.length > 0) fail('lock.complete', `not locked: ${missing.join(', ')}`)
+  else pass('lock.complete', `${Object.keys(declaredDeps).length} declared dependencies are locked`)
+
+  // --- 4. sbom ---------------------------------------------------------------
+  const sbomText = await readFile(join(dir, 'sbom.json'), 'utf8')
+  const expectedSbom = canonicalJson(buildSbom({ lock, name: packageJson.name, version: packageJson.version, sourceCommit: commit }))
+  if (sbomText !== expectedSbom) {
+    fail('sbom.matches_lock', 'the SBOM is not the one this lockfile produces; it describes a different dependency set')
+  } else {
+    pass('sbom.matches_lock', `${JSON.parse(sbomText).components.length} components, derived from the shipped lockfile`)
+  }
+
+  // --- 5. no bundled browser -------------------------------------------------
+  const binaries = present.filter((path) => BINARY_MARKERS.some((marker) => marker.test(path)))
+  if (binaries.length > 0) fail('browser.unbundled', `binary payloads present: ${binaries.slice(0, 5).join(', ')}`)
+  else pass('browser.unbundled', 'no browser or native binaries in the artifact')
+
+  const manifestDigest = sha256(Buffer.from(sumsText, 'utf8'))
+  const report = {
+    artifact: dir,
+    ok: failures.length === 0,
+    manifest_sha256: manifestDigest,
+    source_commit: commit,
+    files: declared.length + 1,
+    checks,
+    failures,
+  }
+
+  if (asJson) {
+    process.stdout.write(canonicalJson(report))
+  } else {
+    for (const check of checks) process.stdout.write(`${check.ok ? 'ok  ' : 'FAIL'} ${check.check} — ${check.detail}\n`)
+    process.stdout.write(`\nmanifest sha256: ${manifestDigest}\n`)
+    process.stdout.write(failures.length === 0 ? 'artifact verified without executing it\n' : `\n${failures.length} check(s) failed\n`)
+  }
+  if (failures.length > 0) process.exitCode = 1
+}
+
+async function collect(directory, prefix = '') {
+  const out = []
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) out.push(...(await collect(join(directory, entry.name), path)))
+    else if (entry.isFile()) out.push(path.split(sep).join('/'))
+  }
+  return out.sort()
+}
+
+async function exists(path) {
+  try {
+    await stat(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function sha256(bytes) {
+  return createHash('sha256').update(bytes).digest('hex')
+}
+
+main().catch((error) => {
+  process.stderr.write(`verification failed: ${error instanceof Error ? error.message : String(error)}\n`)
+  process.exitCode = 1
+})

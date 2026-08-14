@@ -31,7 +31,9 @@ import { basename, dirname, extname, join } from 'node:path'
 
 import { readBundleForEditing, writeBundle } from '../tela/bundle'
 import { computeContentRevision } from '../tela/contentRevision'
+import { recoverPendingWrites, type PendingWrite } from '../tela/journal'
 import { saveTelaFile } from '../tela/nodeIo'
+import { log } from './logging'
 import { makeAssetBlob, base64Encode } from '../tela/assets'
 import { telaDocumentSchema, type TelaDocument } from '../tela/schema'
 import { toolError } from './errors'
@@ -67,10 +69,62 @@ const sessions = new Map<string, SessionEntry>()
  */
 const locks = new Map<string, Promise<unknown>>()
 
+/**
+ * Interrupted writes found while opening designs this process's lifetime.
+ *
+ * Kept as a report rather than acted on: recovery never replays a pending write
+ * (see `journal.ts`). `tela_get_status` surfaces the count so a doctor run can
+ * say "this root has an unresolved interrupted write" instead of the operator
+ * discovering it as a mystery file.
+ */
+const recovered: PendingWrite[] = []
+
+export function pendingWriteReport(): PendingWrite[] {
+  return [...recovered]
+}
+
 /** Test seam: drop all in-memory sessions without touching disk. */
 export function resetSessions(): void {
   sessions.clear()
   locks.clear()
+  recovered.length = 0
+}
+
+/**
+ * Sweep a design's directory for interrupted writes before opening it.
+ *
+ * Quarantine routes the pending bytes into the managed trash: the contract
+ * forbids permanent deletion, and a complete-but-uncommitted save is exactly the
+ * kind of thing an operator may want back. Everything here is best-effort — a
+ * failed sweep must never make a readable design unopenable.
+ */
+async function sweepPendingWrites(directory: string): Promise<void> {
+  const findings = await recoverPendingWrites(directory, {
+    quarantine: async (temporaryPath, suggestedName) => {
+      const trash = trashDirectory()
+      await mkdir(trash, { recursive: true })
+      const destination = join(trash, suggestedName)
+      try {
+        await rename(temporaryPath, destination)
+      } catch {
+        await copyFile(temporaryPath, destination)
+        const { unlink } = await import('node:fs/promises')
+        await unlink(temporaryPath)
+      }
+      return toPosix(`.trash/${suggestedName}`)
+    },
+  }).catch(() => [] as PendingWrite[])
+
+  for (const finding of findings) {
+    if (finding.outcome === 'settled') continue
+    recovered.push(finding)
+    log({
+      level: 'warn',
+      traceId: 'journal',
+      event: 'journal.interrupted_write',
+      detail: `an interrupted write to "${finding.target}" was found (${finding.outcome}, ${finding.bytes} bytes) and moved to the managed trash; it was not applied`,
+    })
+  }
 }
 
 export function listOpenSessions(): Session[] {
@@ -153,6 +207,11 @@ export async function openDesign(designPath: string): Promise<OpenResult> {
   return withLock(resolved.relative, async () => {
     const existing = sessions.get(resolved.relative)
     if (existing) return { session: toPublic(existing), reused: true }
+
+    // Under the path lock and before the read: an interrupted write to this very
+    // design is the case that matters, and sweeping after the read would report
+    // it against a document already loaded from the committed file.
+    await sweepPendingWrites(dirname(resolved.absolute))
 
     const { document, migrationsApplied } = await readBundleFile(resolved)
     const entry: SessionEntry = {
