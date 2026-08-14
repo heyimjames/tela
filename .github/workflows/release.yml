@@ -1,0 +1,95 @@
+# Build, verify, and publish the immutable Tela runtime release artifact.
+#
+# The ordering here is the whole design. The artifact is built, then verified by
+# a script that never executes any of it, then *rebuilt from scratch* and
+# compared — so a build that silently depends on build-time state (a clock, a
+# host path, an output directory) fails here rather than in someone's
+# verification months later.
+#
+# Nothing is published unless all three pass.
+name: Release artifact
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Attach the artifact to a GitHub Release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  artifact:
+    # macOS: the primary supported production platform for this runtime, and the
+    # one the pinned Chromium is matched against. Windows parity is covered by
+    # its own workflow.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci`, never `npm install`: the release records the exact lockfile it
+      # was built from, and an install that could resolve a different tree makes
+      # that record false.
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+
+      # Build twice into different directories and compare the manifest digest.
+      # This is the reproducibility claim, executed rather than asserted; it also
+      # runs the non-executing verifier over both artifacts.
+      - name: Reproducibility check
+        run: npm run release:reproduce
+
+      - name: Build the release artifact
+        id: build
+        run: |
+          node scripts/build-release.mjs --out "$RUNNER_TEMP/tela-artifact" > "$RUNNER_TEMP/summary.json"
+          cat "$RUNNER_TEMP/summary.json"
+          echo "manifest_sha256=$(node -e 'process.stdout.write(require(process.env.RUNNER_TEMP + "/summary.json").manifest_sha256)')" >> "$GITHUB_OUTPUT"
+
+      # Verified in a separate step, from the artifact on disk, with no reference
+      # to how it was produced — which is the position a downstream consumer is
+      # in.
+      - name: Verify without executing the artifact
+        run: node scripts/verify-release.mjs "$RUNNER_TEMP/tela-artifact"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tela-runtime-artifact
+          path: |
+            ${{ runner.temp }}/tela-artifact
+            ${{ runner.temp }}/tela-artifact.zip
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Attach to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          notes="Immutable Tela runtime artifact.
+
+          Source commit: \`${GITHUB_SHA}\`
+          Manifest SHA-256: \`${{ steps.build.outputs.manifest_sha256 }}\`
+
+          Verify without executing it:
+
+              node scripts/verify-release.mjs <extracted-directory>
+
+          Browser binaries are not bundled. Setup downloads the exact
+          Playwright-matched Chromium after the operator approves the plan hash."
+          gh release create "$tag" "$RUNNER_TEMP/tela-artifact.zip" --title "$tag" --notes "$notes" || \
+            gh release upload "$tag" "$RUNNER_TEMP/tela-artifact.zip" --clobber

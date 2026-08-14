@@ -13,6 +13,12 @@
       "vite/client"
     ],
     "skipLibCheck": true,
+    // The release pipeline and the evaluation runner are plain ESM so any host
+    // can run them without a TypeScript toolchain. `allowJs` lets the TS tests
+    // that import them infer real types from the source instead of `any`;
+    // `checkJs` stays off so those files are typed by inference, not policed.
+    "allowJs": true,
+    "checkJs": false,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -37,6 +43,8 @@
     "src/tela/journal.ts",
     "src/tela/**/*.test.ts",
     "src/tela/**/*.child.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "scripts/**/*.mjs",
+    "evaluations/**/*.mjs"
   ]
 }

@@ -6,6 +6,11 @@
     "module": "ESNext",
     "types": ["node"],
     "skipLibCheck": true,
+    // The evaluation runner and the release scripts are plain ESM so any host can
+    // run them without a TypeScript toolchain; `allowJs` lets the TS tests that
+    // import them infer real types rather than fall back to `any`.
+    "allowJs": true,
+    "checkJs": false,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -20,5 +25,5 @@
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src/mcp/**/*.ts", "tests/mcp/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["src/mcp/**/*.ts", "tests/mcp/**/*.ts", "scripts/**/*.mjs", "evaluations/**/*.mjs"]
 }
