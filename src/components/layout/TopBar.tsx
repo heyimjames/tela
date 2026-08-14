@@ -6,7 +6,8 @@ import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useFileStore } from '@/store/useFileStore'
 import { Button } from '@/components/ui/button'
 import { FormatSelector } from '@/components/panels/FormatSelector'
-import { downloadSessionBundle, openBundleFile, describeTelaError } from '@/tela/browserIo'
+import { downloadSessionBundle, exportSessionBundle, openBundleFile, describeTelaError } from '@/tela/browserIo'
+import { getStorageAdapter } from '@/storage'
 import {
   Undo2,
   Redo2,
@@ -75,12 +76,29 @@ export function TopBar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [versionsOpen])
 
-  const handleSaveBundle = () => {
+  const handleSaveBundle = async () => {
+    // The download is the user's artifact and its behaviour is unchanged: it runs
+    // first, and nothing added after it can turn a completed save into a failure.
     try {
       downloadSessionBundle(documentName)
       setFileStatus({ tone: 'ok', text: 'Saved .tela' })
     } catch (error) {
       setFileStatus({ tone: 'error', text: describeTelaError(error) })
+      return
+    }
+
+    // Persist the same document through the storage seam. Serializing a second
+    // time is deliberate rather than wasteful-by-accident: the download path lives
+    // in `src/tela`, which this change must not modify, and the writer is
+    // deterministic — both calls produce identical bytes for one session.
+    try {
+      const { activeFileId } = useWorkspaceStore.getState()
+      const id = activeFileId ?? useDesignStore.getState().document.id
+      await getStorageAdapter().putDocument(id, exportSessionBundle(), null)
+    } catch (error) {
+      // Reported distinctly. Collapsing this into the generic error would tell the
+      // user their save failed when the file they asked for is already on disk.
+      setFileStatus({ tone: 'error', text: `Saved .tela, but not stored locally: ${describeTelaError(error)}` })
     }
   }
 
