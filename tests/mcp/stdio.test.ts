@@ -14,12 +14,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { mkdtemp, rm, stat } from 'node:fs/promises'
+import { copyFile, mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { Client } from '@modelcontextprotocol/client'
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
+import { StdioClientTransport, getDefaultEnvironment } from '@modelcontextprotocol/client/stdio'
 
 import { REPOSITORY_ROOT } from './harness'
 
@@ -41,12 +41,47 @@ afterAll(async () => {
   await rm(root, { recursive: true, force: true })
 })
 
+/**
+ * Environment for the spawned server.
+ *
+ * Built on the SDK's own `getDefaultEnvironment()`, which is platform-aware,
+ * rather than a hand-written list. A hand-written allowlist is the trap here: on
+ * POSIX, `PATH` plus `HOME` is enough and everything passes, so the omission is
+ * invisible until it reaches Windows — where `node.exe` will not start without
+ * `SYSTEMROOT` (its crypto/RNG and DLL loading need it) and `TEMP`. The child
+ * then dies before it can emit a single frame, which surfaces to the client as
+ * "Connection closed" a hundred milliseconds in, and to a raw `spawn` test as a
+ * read that never completes.
+ *
+ * Using the SDK's list also means these tests inherit exactly what a real MCP
+ * client gives a server, so the environment under test is the environment in
+ * production rather than an approximation of it.
+ */
 function childEnvironment(): Record<string, string> {
   return {
-    PATH: process.env.PATH ?? '',
-    HOME: process.env.HOME ?? '',
+    ...getDefaultEnvironment(),
     TELA_APPROVED_ROOT: root,
     TELA_LOG_LEVEL: 'debug',
+  }
+}
+
+/**
+ * Wait until `stream` has produced at least `count` non-blank lines, or the
+ * deadline passes.
+ *
+ * Replaces a fixed sleep. A sleep long enough for a cold Node start on a busy
+ * Windows runner is wastefully long on macOS, and a sleep short enough to feel
+ * quick on macOS is a flake on Windows. Waiting for the actual evidence is both
+ * faster and deterministic.
+ */
+async function collectLines(stream: NodeJS.ReadableStream, count: number, timeoutMs = 20_000): Promise<string[]> {
+  const chunks: Buffer[] = []
+  stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const lines = Buffer.concat(chunks).toString('utf8').split('\n').filter((line) => line.trim().length > 0)
+    if (lines.length >= count || Date.now() > deadline) return lines
+    await new Promise((resolve) => setTimeout(resolve, 50))
   }
 }
 
@@ -138,8 +173,7 @@ describe('modern discovery', () => {
 describe('stdout purity', () => {
   it('writes nothing but JSON-RPC frames to stdout across a full session', async () => {
     const child = spawn(process.execPath, [LAUNCHER], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
-    const stdout: Buffer[] = []
-    child.stdout.on('data', (chunk: Buffer) => stdout.push(chunk))
+    const collected = collectLines(child.stdout, 5)
 
     const send = (message: unknown) => child.stdin.write(JSON.stringify(message) + '\n')
     send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } } })
@@ -151,12 +185,10 @@ describe('stdout purity', () => {
     send({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'tela_open_design', arguments: { design: 'missing.tela' } } })
     send({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'tela_get_status', arguments: {} } })
 
-    await new Promise((resolve) => setTimeout(resolve, 2500))
-    child.kill('SIGTERM')
+    const lines = await collected
+    child.kill()
     await once(child, 'exit')
 
-    const text = Buffer.concat(stdout).toString('utf8')
-    const lines = text.split('\n').filter((line) => line.trim().length > 0)
     expect(lines.length).toBeGreaterThanOrEqual(5)
     for (const line of lines) {
       const parsed = JSON.parse(line) as { jsonrpc?: string }
@@ -166,20 +198,19 @@ describe('stdout purity', () => {
 
   it('keeps stderr diagnostics structured and free of absolute paths', async () => {
     const child = spawn(process.execPath, [LAUNCHER], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
-    const stderr: Buffer[] = []
-    child.stderr.on('data', (chunk: Buffer) => stderr.push(chunk))
+    // "serving", then the tool call's own warn record.
+    const collected = collectLines(child.stderr, 2)
 
     const send = (message: unknown) => child.stdin.write(JSON.stringify(message) + '\n')
     send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } } })
     send({ jsonrpc: '2.0', method: 'notifications/initialized' })
     send({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'tela_open_design', arguments: { design: 'deeply/nested/missing.tela' } } })
 
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    child.kill('SIGTERM')
+    const lines = await collected
+    child.kill()
     await once(child, 'exit')
 
-    const text = Buffer.concat(stderr).toString('utf8')
-    const lines = text.split('\n').filter((line) => line.trim().length > 0)
+    const text = lines.join('\n')
     expect(lines.length).toBeGreaterThan(0)
     for (const line of lines) {
       const record = JSON.parse(line) as { ts: string; level: string; traceId: string; event: string }
@@ -207,7 +238,7 @@ describe('shutdown', () => {
     expect(code).toBe(0)
   }, 30_000)
 
-  it('exits on SIGTERM', async () => {
+  it('terminates when signalled', async () => {
     const child = spawn(process.execPath, [LAUNCHER], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
     child.stderr.resume()
     child.stdin.write(
@@ -217,16 +248,41 @@ describe('shutdown', () => {
 
     child.kill('SIGTERM')
     const [code, signal] = (await once(child, 'exit')) as [number | null, string | null]
-    expect(code === 0 || signal === 'SIGTERM').toBe(true)
+
+    if (process.platform === 'win32') {
+      // Windows has no POSIX signals. `child.kill('SIGTERM')` calls
+      // TerminateProcess, so the server's SIGTERM handler never runs and the
+      // exit is abrupt by definition — asserting a graceful 0 here would be
+      // asserting something the platform cannot do. What must hold is that the
+      // process actually dies. Graceful shutdown on Windows is the stdin-EOF
+      // path, which the test above covers and which is what a real client uses.
+      expect(code !== null || signal !== null).toBe(true)
+    } else {
+      expect(code === 0 || signal === 'SIGTERM').toBe(true)
+    }
   }, 30_000)
 
   it('refuses to launch with a helpful message when the build is missing', async () => {
-    // The launcher's own guard, exercised by pointing it at a tree with no dist.
+    // The launcher resolves dist/ relative to its own location, so a *copy* in a
+    // directory with no dist/ exercises the real guard. Spawning a path that
+    // simply does not exist would only prove Node reports a missing module.
     const empty = await mkdtemp(join(tmpdir(), 'tela-nodist-'))
     try {
-      const child = spawn(process.execPath, [join(empty, 'tela-mcp.mjs')], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
+      const copied = join(empty, 'tela-mcp.mjs')
+      await copyFile(LAUNCHER, copied)
+
+      const child = spawn(process.execPath, [copied], { env: childEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
+      const stdout: Buffer[] = []
+      const stderr: Buffer[] = []
+      child.stdout.on('data', (chunk: Buffer) => stdout.push(chunk))
+      child.stderr.on('data', (chunk: Buffer) => stderr.push(chunk))
       const [code] = (await once(child, 'exit')) as [number | null]
-      expect(code).not.toBe(0)
+
+      expect(code).toBe(1)
+      expect(Buffer.concat(stderr).toString('utf8')).toMatch(/npm run build/)
+      // The complaint goes to stderr. On stdout it would corrupt the very first
+      // frame the client tries to parse.
+      expect(Buffer.concat(stdout).toString('utf8')).toBe('')
     } finally {
       await rm(empty, { recursive: true, force: true })
     }
