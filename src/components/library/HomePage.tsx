@@ -5,6 +5,7 @@ import { useRouterStore } from '@/store/useRouterStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useUIStore } from '@/store/useUIStore'
+import { getStorageAdapter } from '@/storage'
 import { nanoid } from 'nanoid'
 import { SettingsModal } from '@/components/panels/SettingsModal'
 import { TemplateBrowser } from '@/components/panels/TemplateBrowser'
@@ -55,7 +56,6 @@ export function HomePage() {
   const files = useFileStore((s) => s.files)
   const folders = useFileStore((s) => s.folders)
   const createFile = useFileStore((s) => s.createFile)
-  const deleteFile = useFileStore((s) => s.deleteFile)
   const renameFile = useFileStore((s) => s.renameFile)
   const duplicateFile = useFileStore((s) => s.duplicateFile)
   const createFolder = useFileStore((s) => s.createFolder)
@@ -106,9 +106,12 @@ export function HomePage() {
     })
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!pendingDelete) return
-    if (pendingDelete.kind === 'file') deleteFile(pendingDelete.id)
+    // Deleting a file retires the document, which is the index entry *and* its
+    // stored bundle. Going through the store action alone would drop the entry and
+    // orphan the body under a key nothing lists any more.
+    if (pendingDelete.kind === 'file') await getStorageAdapter().archiveDocument(pendingDelete.id)
     else deleteFolder(pendingDelete.id)
     setPendingDelete(null)
   }
