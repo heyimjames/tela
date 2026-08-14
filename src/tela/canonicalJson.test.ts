@@ -33,7 +33,10 @@ describe('RFC 8785 canonicalization', () => {
   })
 
   it('uses ECMAScript number formatting', () => {
-    expect(canonicalize([1, 1.5, 1e21, 1e-7, -0.0001, 123456789012345678901234567890])).toBe(
+    // The last value is written via Number() rather than as a literal: it exceeds
+    // double precision, which is exactly the case being pinned down — canonical
+    // output must be the *nearest double's* shortest round-tripping form.
+    expect(canonicalize([1, 1.5, 1e21, 1e-7, -0.0001, Number('123456789012345678901234567890')])).toBe(
       '[1,1.5,1e+21,1e-7,-0.0001,1.2345678901234568e+29]',
     )
   })

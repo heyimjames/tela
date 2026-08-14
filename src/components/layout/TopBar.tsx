@@ -6,6 +6,7 @@ import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useFileStore } from '@/store/useFileStore'
 import { Button } from '@/components/ui/button'
 import { FormatSelector } from '@/components/panels/FormatSelector'
+import { downloadSessionBundle, openBundleFile, describeTelaError } from '@/tela/browserIo'
 import {
   Undo2,
   Redo2,
@@ -15,6 +16,8 @@ import {
   Monitor,
   ArrowLeft,
   Save,
+  FolderOpen,
+  HardDriveDownload,
   Bookmark,
   Clock,
   Trash2,
@@ -43,6 +46,10 @@ export function TopBar() {
 
   const [formatOpen, setFormatOpen] = useState(false)
   const [versionsOpen, setVersionsOpen] = useState(false)
+  // Surfaced inline rather than through an alert: a rejected bundle is a normal
+  // outcome the user needs to read, not an exception to dismiss.
+  const [fileStatus, setFileStatus] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  const openInputRef = useRef<HTMLInputElement>(null)
   const formatRef = useRef<HTMLDivElement>(null)
   const versionsRef = useRef<HTMLDivElement>(null)
 
@@ -67,6 +74,36 @@ export function TopBar() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [versionsOpen])
+
+  const handleSaveBundle = () => {
+    try {
+      downloadSessionBundle(documentName)
+      setFileStatus({ tone: 'ok', text: 'Saved .tela' })
+    } catch (error) {
+      setFileStatus({ tone: 'error', text: describeTelaError(error) })
+    }
+  }
+
+  const handleOpenBundle = async (file: File) => {
+    try {
+      const opened = await openBundleFile(file)
+      setFileStatus({
+        tone: 'ok',
+        text: opened.migrationsApplied.length > 0
+          ? `Opened ${file.name} (migrated: ${opened.migrationsApplied.join(', ')})`
+          : `Opened ${file.name}`,
+      })
+    } catch (error) {
+      // The session is untouched — validation happens before anything is applied.
+      setFileStatus({ tone: 'error', text: describeTelaError(error) })
+    }
+  }
+
+  useEffect(() => {
+    if (!fileStatus) return
+    const timer = setTimeout(() => setFileStatus(null), 6000)
+    return () => clearTimeout(timer)
+  }, [fileStatus])
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center px-2.5 md:px-5 gap-1.5 md:gap-4 shrink-0">
@@ -127,6 +164,54 @@ export function TopBar() {
       </div>
 
       <div className="flex-1" />
+
+      {/* Portable source: the .tela bundle is the master; localStorage is a cache. */}
+      <div className="hidden md:flex items-center gap-0.5">
+        <input
+          ref={openInputRef}
+          type="file"
+          accept=".tela"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            // Reset first, so choosing the same file twice still fires a change.
+            e.target.value = ''
+            if (file) void handleOpenBundle(file)
+          }}
+        />
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="rounded-[5px]"
+          title="Open a .tela file"
+          aria-label="Open a .tela file"
+          onClick={() => openInputRef.current?.click()}
+        >
+          <FolderOpen className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="rounded-[5px]"
+          title="Save a .tela file"
+          aria-label="Save a .tela file"
+          onClick={handleSaveBundle}
+        >
+          <HardDriveDownload className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {fileStatus && (
+        <span
+          role="status"
+          className={`hidden lg:inline text-[12px] max-w-[280px] truncate ${
+            fileStatus.tone === 'error' ? 'text-destructive' : 'text-muted-foreground'
+          }`}
+          title={fileStatus.text}
+        >
+          {fileStatus.text}
+        </span>
+      )}
 
       {/* Undo / Redo */}
       <div className="flex items-center gap-0.5">

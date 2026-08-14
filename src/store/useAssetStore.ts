@@ -1,3 +1,10 @@
+/**
+ * NOTE: this store's persisted slice is a *cache*, not the master.
+ *
+ * The durable, portable copy of a design is the `.tela` bundle (`src/tela`).
+ * localStorage exists so a reload does not lose in-progress work; it is not a
+ * backup and not a source of truth. See docs/tela-format.md.
+ */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'

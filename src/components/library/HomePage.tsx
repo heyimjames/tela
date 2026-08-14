@@ -39,28 +39,15 @@ import {
 import { cardGradient } from '@/lib/cardGradient'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
-import type { DesignFile, DesignFrame, Folder } from '@/types/fileSystem'
+import type { DesignFile, Folder } from '@/types/fileSystem'
 
 // dataTransfer MIME for dragging a file card onto a folder (desktop).
 const FILE_DND = 'application/tela-file'
-import type { Frame } from '@/types/workspace'
-import type { Layer } from '@/types/design'
+import type { Frame, Page } from '@/types/workspace'
+import type { Layer, BackgroundFill } from '@/types/design'
 
 type FilterTab = 'all' | 'recents' | 'archived'
 type ViewMode = 'grid' | 'list'
-
-// A file's DesignFrame is a subset of a workspace Frame — it has no
-// backgroundColor / locked / visible. Fill those in (deriving the colour from
-// the frame's solid fill) so loaded file pages satisfy the workspace model.
-function frameFromDesignFrame(df: DesignFrame): Frame {
-  return {
-    ...df,
-    backgroundColor:
-      df.backgroundFill.type === 'solid' ? df.backgroundFill.color : getBrandColor('cloud'),
-    locked: false,
-    visible: true,
-  }
-}
 
 export function HomePage() {
   const files = useFileStore((s) => s.files)
@@ -146,13 +133,9 @@ export function HomePage() {
     const file = useFileStore.getState().getFile(fileId)
     if (!file) return
 
-    // Load file's pages into workspace store
-    const pages = file.pages.map((page) => ({
-      id: page.id,
-      name: page.name,
-      frames: page.frames.map(frameFromDesignFrame),
-      looseElements: [] as Layer[],
-    }))
+    // A file page *is* a workspace page — same type, no narrowing — so the whole
+    // page is carried across, loose elements and frame state included.
+    const pages: Page[] = structuredClone(file.pages)
 
     useWorkspaceStore.setState((s) => ({
       workspace: {
@@ -189,16 +172,29 @@ export function HomePage() {
   const createFromTemplate = (doc: DesignDocument) => {
     const id = createFile(generateFileName(files.map((f) => f.name)), activeFolderId)
     const bg = doc.layers.find((l) => l.type === 'background') as { fill?: unknown } | undefined
-    const frame = {
+    const backgroundFill = (bg?.fill as BackgroundFill | undefined) ?? {
+      type: 'solid' as const,
+      color: getBrandColor('cloud'),
+    }
+    const frame: Frame = {
       id: nanoid(),
       name: doc.name || 'Frame 1',
+      x: 0,
+      y: 0,
       width: doc.format.width,
       height: doc.format.height,
       format: doc.format,
-      backgroundFill: bg?.fill ?? { type: 'solid', color: getBrandColor('cloud') },
+      backgroundColor:
+        backgroundFill.type === 'solid' ? backgroundFill.color : getBrandColor('cloud'),
+      backgroundFill,
       layers: doc.layers,
+      autoLayouts: doc.autoLayouts,
+      locked: false,
+      visible: true,
     }
-    useFileStore.getState().updateFilePages(id, [{ id: nanoid(), name: 'Page 1', frames: [frame] }])
+    useFileStore
+      .getState()
+      .updateFilePages(id, [{ id: nanoid(), name: 'Page 1', frames: [frame], looseElements: [] }])
     setTemplatesOpen(false)
     handleOpenFile(id)
   }

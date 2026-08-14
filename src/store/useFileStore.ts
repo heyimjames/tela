@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid'
 import { DEFAULT_FORMAT } from '@/brand/formats'
 import { getBrandColor } from '@/brand/palette'
 import type { DesignFile, DesignPage, DesignFrame, Folder } from '@/types/fileSystem'
-import type { BackgroundLayer } from '@/types/design'
+import type { BackgroundLayer, BrandColor } from '@/types/design'
 
 // --- Factories ---
 
@@ -17,7 +17,10 @@ function createDefaultFrame(name?: string): DesignFrame {
     width: DEFAULT_FORMAT.width,
     height: DEFAULT_FORMAT.height,
     format: DEFAULT_FORMAT,
+    backgroundColor: getBrandColor('cloud'),
     backgroundFill: { type: 'solid', color: getBrandColor('cloud') },
+    locked: false,
+    visible: true,
     layers: [{
       id: nanoid(),
       type: 'background',
@@ -40,6 +43,7 @@ function createDefaultPage(name: string = 'Page 1', frameName?: string): DesignP
     id: nanoid(),
     name,
     frames: [createDefaultFrame(frameName)],
+    looseElements: [],
   }
 }
 
@@ -79,8 +83,15 @@ interface FileStore {
   removePage: (fileId: string, pageId: string) => void
   renamePage: (fileId: string, pageId: string, name: string) => void
 
-  // Sync workspace pages back into file
-  updateFilePages: (fileId: string, pages: Array<{ id: string; name: string; frames: Array<Record<string, any>> }>) => void
+  /**
+   * Sync workspace pages back into a file.
+   *
+   * Takes whole `DesignPage`s and stores them structurally. The previous
+   * signature took loosely-typed frames and rebuilt each one from a ten-field
+   * list, which is what made every save lossy; a structural copy cannot forget a
+   * field, and the shared type means the compiler catches a new one.
+   */
+  updateFilePages: (fileId: string, pages: DesignPage[]) => void
 
   // Helpers
   getFile: (id: string) => DesignFile | undefined
@@ -143,6 +154,7 @@ export const useFileStore = create<FileStore>()(
             ...p,
             id: nanoid(),
             frames: p.frames.map((fr) => ({ ...fr, id: nanoid(), layers: fr.layers.map((l) => ({ ...l, id: nanoid() })) })),
+            looseElements: (p.looseElements ?? []).map((l) => ({ ...l, id: nanoid() })),
           })),
         }
         set((s) => ({ files: [...s.files, duplicate] }))
@@ -200,26 +212,7 @@ export const useFileStore = create<FileStore>()(
         set((s) => ({
           files: s.files.map((f) =>
             f.id === fileId
-              ? {
-                  ...f,
-                  pages: pages.map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    frames: p.frames.map((fr) => ({
-                      id: fr.id,
-                      name: fr.name,
-                      x: fr.x,
-                      y: fr.y,
-                      width: fr.width,
-                      height: fr.height,
-                      format: fr.format,
-                      backgroundFill: fr.backgroundFill,
-                      layers: fr.layers,
-                      autoLayouts: fr.autoLayouts,
-                    })),
-                  })),
-                  updatedAt: new Date().toISOString(),
-                }
+              ? { ...f, pages: structuredClone(pages), updatedAt: new Date().toISOString() }
               : f
           ),
         }))
@@ -230,6 +223,32 @@ export const useFileStore = create<FileStore>()(
       getSubFolders: (parentId) => get().folders.filter((f) => f.parentId === parentId),
       getScratchpad: () => get().files.find((f) => f.isScratchpad) ?? createScratchpadFile(),
     }),
-    { name: 'tela-files' },
+    {
+      name: 'tela-files',
+      // localStorage is a *cache*, not the master. The durable artifact is the
+      // `.tela` bundle; see docs/tela-format.md.
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        if (version >= 2) return persisted
+        // v1 stored the narrower frame shape. Restore the three frame fields and
+        // the loose-element list it had no room for, so a cache written by the
+        // old code still loads into the single frame model.
+        const state = persisted as { files?: Array<{ pages?: Array<Record<string, unknown>> }> }
+        for (const file of state?.files ?? []) {
+          for (const page of file.pages ?? []) {
+            const frames = (page.frames ?? []) as Array<Record<string, unknown>>
+            for (const frame of frames) {
+              const fill = frame.backgroundFill as { type?: string; color?: BrandColor } | undefined
+              frame.backgroundColor ??=
+                fill?.type === 'solid' && fill.color ? fill.color : getBrandColor('cloud')
+              frame.locked ??= false
+              frame.visible ??= true
+            }
+            page.looseElements ??= []
+          }
+        }
+        return persisted
+      },
+    },
   ),
 )

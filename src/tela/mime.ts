@@ -57,7 +57,8 @@ function looksLikeSvg(bytes: Uint8Array): boolean {
   } catch {
     return false
   }
-  let rest = text.replace(/^﻿/, '').trimStart()
+  // Strip a UTF-8 BOM if present (written as an escape so the source stays ASCII).
+  let rest = text.replace(/^\uFEFF/, '').trimStart()
   // Skip any number of XML prologs, DOCTYPEs and comments before the root element.
   for (let guard = 0; guard < 16; guard++) {
     if (rest.startsWith('<?')) {
