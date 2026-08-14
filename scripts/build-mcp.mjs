@@ -40,6 +40,27 @@ if (sourceCommit !== undefined && !/^[0-9a-f]{40}$/.test(sourceCommit)) {
   throw new Error(`TELA_SOURCE_COMMIT must be a 40-character lowercase hex sha, got "${process.env.TELA_SOURCE_COMMIT}"`)
 }
 
+/**
+ * Whether the source map embeds the original TypeScript.
+ *
+ * A source map has two separable jobs. The mappings translate a stack frame in
+ * the compiled bundle back to a file, line, and column — that is what makes a
+ * production crash report readable. `sourcesContent` additionally inlines the
+ * full text of every source file, which is a convenience for a debugger that
+ * cannot reach the sources on disk.
+ *
+ * In a distributed artifact those are very different things. The mappings are
+ * operationally valuable and disclose only structure; `sourcesContent` ships the
+ * entire TypeScript codebase inside a file that looks like build metadata, to
+ * everyone who downloads the release, without anyone having decided to publish
+ * it. So the release build turns it off and keeps the mappings.
+ *
+ * Only the release build sets this, exactly like `TELA_SOURCE_COMMIT` above: an
+ * ordinary `npm run build` is byte-identical to what it was, and a developer's
+ * debugger keeps inline sources.
+ */
+const embedSources = process.env.TELA_SOURCEMAP_SOURCES_CONTENT !== 'false'
+
 const result = await build({
   entryPoints: [resolve(root, 'src/mcp/serve.ts')],
   outfile: resolve(root, 'dist/mcp/tela-mcp.mjs'),
@@ -48,6 +69,8 @@ const result = await build({
   format: 'esm',
   target: 'node22',
   sourcemap: true,
+  // Mappings always; embedded source text only outside the release build.
+  sourcesContent: embedSources,
   // Node's own builtins are external by default on this platform; the list above
   // covers the pinned third-party runtime dependencies.
   external: EXTERNAL,

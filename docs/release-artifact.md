@@ -10,6 +10,7 @@ check it, and why each rule is the way it is.
 | --- | --- |
 | `bin/tela-mcp.mjs` | The host-manifest entry point. Both Codex and Claude launch exactly this: `node ./bin/tela-mcp.mjs` |
 | `dist/mcp/tela-mcp.mjs` | The compiled MCP server. Plain ESM — no TypeScript, no loader, no `npx` at runtime |
+| `dist/mcp/tela-mcp.mjs.map` | Source map, **mappings only** — see below |
 | `dist-bridge/` | The production Tela application the private loopback server serves to the private browser |
 | `schemas/` | The portable `.tela` manifest and document JSON schemas |
 | `package.json`, `package-lock.json` | The exact lockfile setup installs from, with lifecycle scripts disabled |
@@ -46,6 +47,29 @@ trust this repository's own verifier:
 ```bash
 cd <artifact-directory> && sha256sum -c SHA256SUMS
 ```
+
+## Source maps ship mappings, not sources
+
+A source map does two separable things. The **mappings** translate a stack frame
+in the compiled bundle back to a file, line, and column — that is what makes a
+production crash report readable. **`sourcesContent`** additionally inlines the
+full text of every source file.
+
+In a distributed artifact those are very different. The mappings are
+operationally valuable and disclose structure. `sourcesContent` publishes the
+entire TypeScript codebase to everyone who downloads the release, inside a file
+that reads as build metadata — a distribution decision that gets made by a
+bundler default rather than by a person.
+
+So the release build sets `TELA_SOURCEMAP_SOURCES_CONTENT=false` and keeps the
+mappings. Ordinary `npm run build` is unaffected and still embeds sources for
+local debugging; in a checkout the map's relative `sources` paths resolve to the
+real files anyway.
+
+The verifier enforces this on the artifact (`sourcemaps.no_source_text`),
+structurally *and* by scanning the raw map text for source constructs — so
+source smuggled in under some other key is caught too, and the guarantee cannot
+regress silently if a bundler default changes.
 
 ## The source commit stamp
 

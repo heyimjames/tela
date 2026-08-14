@@ -83,8 +83,15 @@ async function main() {
   // Both builds receive the same define, so the compiled server and the
   // application build agree about which commit they came from. They must: the
   // browser-side writer stamps manifests too.
-  run('npm', ['run', 'build:bridge'], { TELA_SOURCE_COMMIT: commit })
-  run('npm', ['run', 'build:mcp'], { TELA_SOURCE_COMMIT: commit })
+  //
+  // `TELA_SOURCEMAP_SOURCES_CONTENT=false` keeps the source-map *mappings* — so a
+  // production stack frame still resolves to a file, line, and column — while
+  // dropping the inlined TypeScript. Embedded sources would publish the whole
+  // codebase to every downloader inside a file that reads as build metadata,
+  // which is a distribution decision, not a build detail.
+  const buildEnv = { TELA_SOURCE_COMMIT: commit, TELA_SOURCEMAP_SOURCES_CONTENT: 'false' }
+  run('npm', ['run', 'build:bridge'], buildEnv)
+  run('npm', ['run', 'build:mcp'], buildEnv)
 
   for (const entry of CONTENTS) {
     const source = join(root, entry.from)

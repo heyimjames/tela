@@ -25,7 +25,12 @@
  *     package at install time and the artifact stops being pinned.
  *  4. **The SBOM agrees with the lockfile.** An SBOM generated from anything
  *     other than the shipped lock describes a different artifact.
- *  5. **No browser binaries are bundled.** The contract says setup downloads the
+ *  5. **Shipped source maps carry mappings, not sources.** `sourcesContent`
+ *     inlines every source file into the map, so a bundler default is enough to
+ *     publish the whole TypeScript codebase to every downloader inside a file
+ *     that reads as build metadata. The mappings stay — they make a production
+ *     stack trace readable and disclose structure, not source.
+ *  6. **No browser binaries are bundled.** The contract says setup downloads the
  *     matched Chromium after approval; a browser that arrived inside the
  *     artifact would bypass that approval entirely.
  *
@@ -149,6 +154,47 @@ async function main() {
 
   if (provenance?.browser?.bundled !== false) fail('provenance.browser', 'provenance does not declare browser binaries as unbundled')
   else pass('provenance.browser', `chromium revision recorded: ${provenance.browser.chromiumRevision ?? 'none'}`)
+
+  // --- 2b. source maps carry mappings, not sources ---------------------------
+  //
+  // `sourcesContent` inlines the full text of every source file into the map. In
+  // a distributed artifact that publishes the entire TypeScript codebase to
+  // everyone who downloads the release, inside a file that reads as build
+  // metadata — a distribution decision that would be made by accident, by a
+  // bundler default, rather than by anyone.
+  //
+  // The mappings themselves stay: they turn a production stack frame into a
+  // file, line, and column, and they disclose structure rather than source.
+  //
+  // Checked structurally *and* textually. The structural check is authoritative;
+  // the text scan catches source smuggled in under some other key, which the
+  // structural check would walk straight past.
+  const maps = present.filter((path) => path.endsWith('.map'))
+  const leaking = []
+  for (const path of maps) {
+    const raw = await readFile(join(dir, path), 'utf8')
+    let parsed
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      leaking.push(`${path} (not parseable as a source map)`)
+      continue
+    }
+    const contents = parsed.sourcesContent
+    if (Array.isArray(contents) && contents.some((entry) => typeof entry === 'string' && entry.length > 0)) {
+      leaking.push(`${path} (sourcesContent holds ${contents.filter(Boolean).length} file(s))`)
+      continue
+    }
+    // Constructs that cannot appear in base64 VLQ mappings or in a path list.
+    for (const marker of ['export interface ', 'import type ', 'export const ', 'function ']) {
+      if (raw.includes(marker)) {
+        leaking.push(`${path} (contains source text: "${marker.trim()}")`)
+        break
+      }
+    }
+  }
+  if (leaking.length > 0) fail('sourcemaps.no_source_text', `source maps embed original sources: ${leaking.slice(0, 5).join(', ')}`)
+  else pass('sourcemaps.no_source_text', maps.length === 0 ? 'no source maps shipped' : `${maps.length} map(s), mappings only`)
 
   // --- 3. lockfile -----------------------------------------------------------
   const packageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
