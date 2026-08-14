@@ -233,7 +233,14 @@ export async function writeExports(images: RenderedImage[], destination: string,
       collides ? image.frameId : undefined,
     )
     const resolved = await resolveInRoot(`${destination}/${fileName}`, 'destination', { forWrite: true, createParents: true })
-    await writeFileAtomic(resolved.absolute, Buffer.from(image.base64, 'base64'), { createDirectory: true })
+    // No journal for exports. A record is only worth writing where something
+    // later reads it, and the only sweep in the server runs on the open path of
+    // a *design*, scoped to that design's own file — nothing ever inspects an
+    // export directory. Journalling here would leave a `.journal` beside the
+    // stray `.tmp` after a kill, which is one more unexplained file rather than
+    // one fewer. An interrupted export is also nothing to recover: re-running
+    // the render reproduces it exactly.
+    await writeFileAtomic(resolved.absolute, Buffer.from(image.base64, 'base64'), { createDirectory: true, journal: false })
     const { base64: _omitted, ...rest } = image
     written.push({ ...rest, path: resolved.relative })
   }

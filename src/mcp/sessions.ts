@@ -91,19 +91,28 @@ export function resetSessions(): void {
 }
 
 /**
- * Sweep a design's directory for interrupted writes before opening it.
+ * Sweep one design's records for interrupted writes before opening it.
+ *
+ * Scoped to `target` on purpose. The lock this runs under is keyed on the
+ * design, not on the directory, so an unscoped sweep would inspect — and
+ * quarantine — the in-flight temp file of a concurrent save of a *different*
+ * design in the same folder, turning a healthy write into a reported failure.
  *
  * Quarantine routes the pending bytes into the managed trash: the contract
  * forbids permanent deletion, and a complete-but-uncommitted save is exactly the
  * kind of thing an operator may want back. Everything here is best-effort — a
  * failed sweep must never make a readable design unopenable.
  */
-async function sweepPendingWrites(directory: string): Promise<void> {
+async function sweepPendingWrites(directory: string, target: string): Promise<void> {
   const findings = await recoverPendingWrites(directory, {
+    target,
     quarantine: async (temporaryPath, suggestedName) => {
       const trash = trashDirectory()
       await mkdir(trash, { recursive: true })
-      const destination = join(trash, suggestedName)
+      // `basename` again at the point of use: the destination is built from a
+      // name that started life inside a file on disk, and the managed trash is
+      // the only place quarantined bytes may land.
+      const destination = join(trash, basename(suggestedName))
       try {
         await rename(temporaryPath, destination)
       } catch {
@@ -111,7 +120,7 @@ async function sweepPendingWrites(directory: string): Promise<void> {
         const { unlink } = await import('node:fs/promises')
         await unlink(temporaryPath)
       }
-      return toPosix(`.trash/${suggestedName}`)
+      return toPosix(`.trash/${basename(suggestedName)}`)
     },
   }).catch(() => [] as PendingWrite[])
 
@@ -211,7 +220,7 @@ export async function openDesign(designPath: string): Promise<OpenResult> {
     // Under the path lock and before the read: an interrupted write to this very
     // design is the case that matters, and sweeping after the read would report
     // it against a document already loaded from the committed file.
-    await sweepPendingWrites(dirname(resolved.absolute))
+    await sweepPendingWrites(dirname(resolved.absolute), basename(resolved.absolute))
 
     const { document, migrationsApplied } = await readBundleFile(resolved)
     const entry: SessionEntry = {
@@ -567,7 +576,10 @@ export async function archiveFragment(design: string, kind: string, payload: unk
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
   const name = `${basename(design, TELA_EXTENSION).replace(/[^\w.-]/g, '_')}.${kind}.${stamp}.json`
   const { writeFileAtomic } = await import('../tela/nodeIo')
-  await writeFileAtomic(join(trash, name), new TextEncoder().encode(JSON.stringify(payload, null, 2)), { createDirectory: true })
+  // Unjournalled, like exports: nothing sweeps the trash directory, so a record
+  // written here would never be read, reported, or cleared — it would only add a
+  // second unexplained file beside the temp one after a kill.
+  await writeFileAtomic(join(trash, name), new TextEncoder().encode(JSON.stringify(payload, null, 2)), { createDirectory: true, journal: false })
   return toPosix(`.trash/${name}`)
 }
 

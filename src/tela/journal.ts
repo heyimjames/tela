@@ -53,8 +53,40 @@ function journalName(targetBasename: string, id: string): string {
 
 const JOURNAL_SUFFIX = '.journal'
 
+/** The target a journal file name claims, or undefined if the name is not one of ours. */
+function targetFromJournalName(name: string): string | undefined {
+  const inner = name.slice(1, -JOURNAL_SUFFIX.length)
+  const cut = inner.lastIndexOf('.')
+  return cut <= 0 ? undefined : inner.slice(0, cut)
+}
+
+/**
+ * Fsync a directory, best-effort.
+ *
+ * A file's own `fsync` makes its *contents* durable; it says nothing about the
+ * directory entry that names it. Both the journal's creation and the target's
+ * rename are directory-entry operations, so both need this to be ordered on
+ * disk the way the code orders them in memory.
+ *
+ * Best-effort on purpose: some platforms and filesystems refuse to open a
+ * directory for sync, and failing a save over that would be worse than the
+ * weaker guarantee.
+ */
+export async function syncDirectory(directory: string): Promise<void> {
+  let handle: Awaited<ReturnType<typeof open>> | undefined
+  try {
+    handle = await open(directory, 'r')
+    await handle.sync()
+  } catch {
+    // ignore
+  } finally {
+    await handle?.close().catch(() => {})
+  }
+}
+
 export async function writeJournal(targetPath: string, id: string, entry: Omit<JournalEntry, 'v'>): Promise<string> {
-  const path = join(dirname(targetPath), journalName(basename(targetPath), id))
+  const directory = dirname(targetPath)
+  const path = join(directory, journalName(basename(targetPath), id))
   const payload = new TextEncoder().encode(JSON.stringify({ v: JOURNAL_VERSION, ...entry }))
   // `wx`: a colliding id means something is very wrong, and silently overwriting
   // another write's journal would destroy the record we are here to keep.
@@ -68,6 +100,10 @@ export async function writeJournal(targetPath: string, id: string, entry: Omit<J
   } finally {
     await handle.close().catch(() => {})
   }
+  // The file's own fsync above makes its bytes durable but not the directory
+  // entry naming it. Without this, a power loss can leave the temp file's entry
+  // on disk and the record's entry lost — an anonymous temp file again.
+  await syncDirectory(directory)
   return path
 }
 
@@ -94,6 +130,18 @@ export interface PendingWrite {
 
 export interface RecoverOptions {
   /**
+   * Only consider records naming this target (a basename).
+   *
+   * Recovery quarantines the pending bytes of every record it inspects, and the
+   * process-wide lock that serializes writes is keyed per *design*, not per
+   * directory. Sweeping a whole directory would therefore let an open of `a.tela`
+   * steal the in-flight temp file of a concurrent, perfectly healthy save of
+   * `b.tela` sitting beside it — the save's `rename` then fails ENOENT and a
+   * write that was never interrupted is reported as one. Callers sweeping on the
+   * open path must scope the sweep to the design they hold the lock for.
+   */
+  target?: string
+  /**
    * Move a recovered temp file somewhere durable and return a caller-facing
    * label for it. Without one, recovery reports and leaves every byte in place —
    * this module never deletes data it cannot describe.
@@ -119,6 +167,9 @@ export async function recoverPendingWrites(directory: string, options: RecoverOp
   const found: PendingWrite[] = []
   for (const name of names) {
     if (!name.startsWith('.') || !name.endsWith(JOURNAL_SUFFIX)) continue
+    // Attribute by file name before opening anything: a scoped sweep must not
+    // even clear the unreadable record of a design it does not hold the lock for.
+    if (options.target !== undefined && targetFromJournalName(name) !== options.target) continue
     const journalPath = join(directory, name)
 
     let entry: JournalEntry
@@ -136,6 +187,17 @@ export async function recoverPendingWrites(directory: string, options: RecoverOp
       continue
     }
 
+    // The record is data read off disk, so every path in it is untrusted: a
+    // `target` of `../../../.ssh/authorized_keys` would otherwise be handed to
+    // the quarantine callback and used to build a destination outside the
+    // managed trash. A journal names basenames beside itself, nothing else.
+    const target = basename(entry.target)
+    if (target === '' || target === '.' || target === '..') {
+      await clearJournal(journalPath)
+      continue
+    }
+    if (options.target !== undefined && target !== options.target) continue
+
     const temporaryPath = join(directory, basename(entry.temp))
     let bytes: Buffer | undefined
     try {
@@ -145,14 +207,14 @@ export async function recoverPendingWrites(directory: string, options: RecoverOp
     }
 
     if (bytes === undefined) {
-      found.push({ target: entry.target, outcome: 'settled', bytes: entry.bytes, startedAt: entry.startedAt })
+      found.push({ target, outcome: 'settled', bytes: entry.bytes, startedAt: entry.startedAt })
       await clearJournal(journalPath)
       continue
     }
 
     const complete = bytes.length === entry.bytes && sha256Hex(new Uint8Array(bytes)) === entry.sha256
     const record: PendingWrite = {
-      target: entry.target,
+      target,
       outcome: complete ? 'pending_complete' : 'pending_partial',
       bytes: bytes.length,
       startedAt: entry.startedAt,
@@ -160,7 +222,7 @@ export async function recoverPendingWrites(directory: string, options: RecoverOp
 
     if (options.quarantine) {
       try {
-        record.quarantinedAs = await options.quarantine(temporaryPath, `${entry.target}.interrupted-${entry.startedAt.replace(/[:.]/g, '-')}`)
+        record.quarantinedAs = await options.quarantine(temporaryPath, `${target}.interrupted-${String(entry.startedAt).replace(/[:.]/g, '-')}`)
       } catch {
         // Quarantine failed: leave the temp file and the journal alone so the
         // next open reports it again rather than losing the only copy.

@@ -25,6 +25,7 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { connect, FIXTURE_DIR, makeSeededRoot } from './lib/session.mjs'
 import { QUESTIONS, READ_ONLY_TOOLS } from './questions.mjs'
@@ -119,7 +120,11 @@ export async function runEvaluations({ onProgress } = {}) {
   }
 }
 
-const invokedDirectly = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href
+// `pathToFileURL`, not a hand-built `file://` string: on Windows argv[1] is
+// `D:\a\tela\evaluations\run.mjs`, which `new URL()` parses with `D:` as the
+// authority — the href never equals `import.meta.url`, the guard is false, and
+// `npm run test:evals` would exit 0 having run no evaluations at all.
+const invokedDirectly = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href
 
 if (invokedDirectly) {
   const report = await runEvaluations({

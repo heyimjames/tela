@@ -16,8 +16,12 @@
  * manifest of every `.tela` bundle the runtime produces. Shipping a release
  * built from the development constant would mean every bundle it ever writes
  * claims to come from commit `000…0` — the provenance chain would be decorative.
- * So the release build rewrites that one literal, builds, and restores the file,
- * verifying the restore byte-for-byte in a `finally`.
+ * So the release build passes the commit to both compilers as a build-time
+ * define (`TELA_SOURCE_COMMIT`), which the bundlers substitute into the compiled
+ * output. Nothing tracked is edited: an earlier version rewrote the literal in
+ * the working tree and restored it in a `finally`, which meant a signal-killed
+ * or cancelled build left the checkout stamped — poisoning later builds' bundle
+ * bytes and any build running concurrently.
  *
  * **2. The output is reproducible.** Sorted entries, canonical JSON, no
  * timestamps, no builder identity, no host paths, and a store-only archive.
@@ -47,7 +51,6 @@ import {
 } from './lib/release.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const PRODUCER_FILE = join(root, 'src/tela/producer.ts')
 
 const args = parseArgs(process.argv.slice(2))
 
@@ -77,22 +80,11 @@ async function main() {
   await rm(outDir, { recursive: true, force: true })
   await mkdir(outDir, { recursive: true })
 
-  const original = await readFile(PRODUCER_FILE, 'utf8')
-  const originalDigest = sha256(Buffer.from(original, 'utf8'))
-  try {
-    await stampSourceCommit(original, commit)
-    // Both builds run against the stamped source, so the compiled server and the
-    // application build agree about which commit they came from. They must: the
-    // browser-side writer stamps manifests too.
-    run('npm', ['run', 'build:bridge'])
-    run('npm', ['run', 'build:mcp'])
-  } finally {
-    await writeFile(PRODUCER_FILE, original, 'utf8')
-    const restored = sha256(Buffer.from(await readFile(PRODUCER_FILE, 'utf8'), 'utf8'))
-    if (restored !== originalDigest) {
-      throw new Error(`FATAL: ${relative(root, PRODUCER_FILE)} was not restored to its original bytes after the release build`)
-    }
-  }
+  // Both builds receive the same define, so the compiled server and the
+  // application build agree about which commit they came from. They must: the
+  // browser-side writer stamps manifests too.
+  run('npm', ['run', 'build:bridge'], { TELA_SOURCE_COMMIT: commit })
+  run('npm', ['run', 'build:mcp'], { TELA_SOURCE_COMMIT: commit })
 
   for (const entry of CONTENTS) {
     const source = join(root, entry.from)
@@ -213,14 +205,6 @@ function assertCleanTree() {
   }
 }
 
-async function stampSourceCommit(original, commit) {
-  const marker = 'export const SOURCE_COMMIT: string = UNKNOWN_SOURCE_COMMIT'
-  if (!original.includes(marker)) {
-    throw new Error(`could not find the SOURCE_COMMIT declaration in ${relative(root, PRODUCER_FILE)}; the release stamp must be updated alongside it`)
-  }
-  await writeFile(PRODUCER_FILE, original.replace(marker, `export const SOURCE_COMMIT: string = '${commit}'`), 'utf8')
-}
-
 /**
  * Run a build step with its stdout redirected to *stderr*.
  *
@@ -229,8 +213,8 @@ async function stampSourceCommit(original, commit) {
  * either one lands in the middle of the JSON if the child is allowed to inherit
  * fd 1. Build chatter is diagnostics; it belongs on fd 2.
  */
-function run(command, commandArgs) {
-  execFileSync(command, commandArgs, { cwd: root, stdio: ['ignore', 2, 'inherit'] })
+function run(command, commandArgs, env = {}) {
+  execFileSync(command, commandArgs, { cwd: root, stdio: ['ignore', 2, 'inherit'], env: { ...process.env, ...env } })
 }
 
 function dependencyVersion(lock, name) {
@@ -256,12 +240,21 @@ async function readChromiumRevision() {
   }
 }
 
+/**
+ * Every regular file under `directory`, as forward-slash relative paths.
+ *
+ * A non-regular entry (a symlink, a socket, a device) is a hard error rather
+ * than something to skip: skipping it would leave a file in the artifact that
+ * SHA256SUMS does not cover, and a manifest that covers all but one file is a
+ * manifest an attacker can add that one file to.
+ */
 async function collect(directory, prefix = '') {
   const out = []
   for (const entry of (await readdir(directory, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const path = prefix ? `${prefix}/${entry.name}` : entry.name
     if (entry.isDirectory()) out.push(...(await collect(join(directory, entry.name), path)))
     else if (entry.isFile()) out.push(path.split(sep).join('/'))
+    else throw new Error(`release input is not a regular file and cannot be manifested: ${path.split(sep).join('/')}`)
   }
   return out.sort()
 }

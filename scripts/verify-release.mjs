@@ -75,7 +75,14 @@ async function main() {
   const sumsText = await readFile(join(dir, 'SHA256SUMS'), 'utf8')
   const declared = parseSums(sumsText)
   const declaredPaths = new Set(declared.map((entry) => entry.path))
-  const present = (await collect(dir)).filter((path) => path !== 'SHA256SUMS')
+  const collected = await collect(dir)
+  const irregular = collected.filter((entry) => typeof entry !== 'string').map((entry) => entry.path)
+  if (irregular.length > 0) {
+    fail('contents.regular_files', `the artifact contains entries that are not regular files (symlinks or worse): ${irregular.slice(0, 5).join(', ')}`)
+  } else {
+    pass('contents.regular_files', 'every entry is a regular file or a directory')
+  }
+  const present = collected.filter((entry) => typeof entry === 'string').filter((path) => path !== 'SHA256SUMS')
 
   for (const path of present) {
     if (!declaredPaths.has(path)) fail('manifest.complete', `"${path}" is in the artifact but not in SHA256SUMS`)
@@ -112,15 +119,31 @@ async function main() {
     pass('provenance.commit', commit)
   }
 
-  // The stamp actually landed in the compiled output — read, not run.
-  const compiled = await readFile(join(dir, 'dist/mcp/tela-mcp.mjs'), 'utf8')
+  // The stamp actually landed in *every* compiled output — read, not run.
+  //
+  // Scanning only `dist/mcp/tela-mcp.mjs` would miss the half that matters most
+  // in practice: the same producer constant is compiled into `dist-bridge`, and
+  // it is the browser-side bundle writer that stamps `.tela` manifests. A stale
+  // or swapped bridge build would otherwise pass every check while every design
+  // it saves records the all-zero commit.
   if (typeof commit === 'string' && /^[0-9a-f]{40}$/.test(commit)) {
-    if (!compiled.includes(commit)) {
+    const quoted = (value) => [`'${value}'`, `"${value}"`, `\`${value}\``]
+    const compiledScripts = present.filter((path) => /\.(mjs|cjs|js)$/.test(path) && /^(dist|dist-bridge|bin)\//.test(path))
+    const stamped = []
+    const unstamped = []
+    for (const path of compiledScripts) {
+      const text = await readFile(join(dir, path), 'utf8')
+      if (quoted(commit).some((needle) => text.includes(needle))) stamped.push(path)
+      else if (quoted(ALL_ZERO_COMMIT).some((needle) => text.includes(needle))) unstamped.push(path)
+    }
+    if (unstamped.length > 0) {
+      fail('provenance.stamped', `compiled output still carries the all-zero development commit: ${unstamped.slice(0, 5).join(', ')}`)
+    } else if (!stamped.includes('dist/mcp/tela-mcp.mjs')) {
       fail('provenance.stamped', 'the compiled MCP server does not contain the recorded source commit; the release stamp did not take effect')
-    } else if (compiled.includes(ALL_ZERO_COMMIT) && !compiled.includes(`'${commit}'`) && !compiled.includes(`"${commit}"`)) {
-      fail('provenance.stamped', 'the compiled MCP server still carries the all-zero development commit')
+    } else if (!stamped.some((path) => path.startsWith('dist-bridge/'))) {
+      fail('provenance.stamped', 'no dist-bridge script carries the recorded source commit; the browser-side bundle writer would stamp .tela manifests from a stale build')
     } else {
-      pass('provenance.stamped', 'the compiled server carries the recorded commit')
+      pass('provenance.stamped', `${stamped.length} compiled output(s) carry the recorded commit`)
     }
   }
 
@@ -177,14 +200,28 @@ async function main() {
   if (failures.length > 0) process.exitCode = 1
 }
 
+/**
+ * Every entry in the artifact, as forward-slash relative paths.
+ *
+ * Non-regular entries (symlinks, sockets, devices) are *reported*, not skipped.
+ * Skipping them was a hole in the "no extras and no omissions" guarantee: a
+ * symlink into `/tmp` is neither a file nor a directory, so it would be hashed
+ * by nobody, listed by nobody, and matched by no binary marker, while the
+ * verifier still printed "verified".
+ */
 async function collect(directory, prefix = '') {
   const out = []
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = prefix ? `${prefix}/${entry.name}` : entry.name
     if (entry.isDirectory()) out.push(...(await collect(join(directory, entry.name), path)))
     else if (entry.isFile()) out.push(path.split(sep).join('/'))
+    else out.push({ path: path.split(sep).join('/'), irregular: true })
   }
-  return out.sort()
+  return out.sort((a, b) => (pathOf(a) < pathOf(b) ? -1 : 1))
+}
+
+function pathOf(entry) {
+  return typeof entry === 'string' ? entry : entry.path
 }
 
 async function exists(path) {

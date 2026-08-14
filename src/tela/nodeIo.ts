@@ -20,7 +20,7 @@
  * byte-identical. A failed save can never destroy the last good version.
  *
  * Wrapped around all of it is the write-ahead journal (`journal.ts`): a record
- * written and fsynced *before* step 1 and cleared after step 3, so that a
+ * written and fsynced *before* step 1 and cleared after step 4, so that a
  * process killed outright — where none of the cleanup above runs — leaves an
  * explicable, recoverable trace rather than an anonymous temp file.
  */
@@ -30,7 +30,7 @@ import { dirname, join, basename } from 'node:path'
 import { randomBytes } from 'node:crypto'
 
 import { telaError } from './errors'
-import { clearJournal, writeJournal } from './journal'
+import { clearJournal, syncDirectory, writeJournal } from './journal'
 import { sha256Hex } from './sha256'
 import { readBundle, readBundleForEditing, writeBundle, type ReadBundleResult } from './bundle'
 import type { TelaDocument, TelaManifest } from './schema'
@@ -50,6 +50,9 @@ export interface AtomicWriteOptions {
    * Write a journal entry before the data and clear it after the rename, so a
    * process killed mid-write leaves an explicable record instead of an
    * anonymous temp file. On by default; see `journal.ts` for why.
+   *
+   * Turn it off for writes nothing sweeps — exports, trash records — where the
+   * record would never be read and would only add a second unexplained file.
    */
   journal?: boolean
 }
@@ -117,21 +120,15 @@ export async function writeFileAtomic(
     throw cause
   }
 
-  // Committed. The record has done its job.
-  if (journalPath) await clearJournal(journalPath)
+  // Durability of the rename itself, *before* the record is cleared. Both are
+  // directory-entry operations with no ordering guarantee between them, so
+  // clearing first opens exactly the window the journal exists to close: a power
+  // loss could leave the old contents, no temp file, and no record — a save the
+  // caller was told succeeded, silently reverted and unexplained.
+  await syncDirectory(directory)
 
-  // Durability of the rename itself. Best-effort: some platforms and filesystems
-  // refuse to open a directory for sync, and failing the whole save over that
-  // would be worse than the weaker guarantee.
-  let directoryHandle: Awaited<ReturnType<typeof open>> | undefined
-  try {
-    directoryHandle = await open(directory, 'r')
-    await directoryHandle.sync()
-  } catch {
-    // ignore
-  } finally {
-    await directoryHandle?.close().catch(() => {})
-  }
+  // Committed and durable. The record has done its job.
+  if (journalPath) await clearJournal(journalPath)
 }
 
 /** Serialize an editing state and durably replace the file at `path`. */

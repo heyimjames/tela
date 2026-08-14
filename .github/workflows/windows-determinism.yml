@@ -17,7 +17,11 @@ jobs:
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
-          path: ${{ env.LOCALAPPDATA }}\ms-playwright
+          # Literal path, not ${{ env.LOCALAPPDATA }}: the Actions `env` context
+          # exposes only workflow/job/step-declared variables, so the runner's
+          # own LOCALAPPDATA renders empty and the path collapses to the drive
+          # root — a cache that silently stores and restores nothing.
+          path: ~\AppData\Local\ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
       - run: npx playwright install chromium
       - run: npm run build
