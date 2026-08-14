@@ -1,0 +1,186 @@
+{
+  "$id": "https://schemas.clickt.ca/tela/bundle/v1",
+  "title": "Tela bundle manifest, v1",
+  "description": "The manifest.json entry of a .tela bundle. It carries format identity, producer and source commit, the document hash, the sorted asset inventory, the reader limits, migration metadata, and the semantic content revision. It deliberately carries no save-time timestamp.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "tela-bundle"
+    },
+    "schema": {
+      "type": "string",
+      "const": "https://schemas.clickt.ca/tela/bundle/v1"
+    },
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "documentSchema": {
+      "type": "string",
+      "const": "https://schemas.clickt.ca/tela/document/v1"
+    },
+    "documentSchemaVersion": {
+      "exclusiveMinimum": 0,
+      "$ref": "#/$defs/__schema0"
+    },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "sourceCommit"
+      ],
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "minimum": 0,
+          "$ref": "#/$defs/__schema0"
+        }
+      },
+      "required": [
+        "sha256",
+        "size"
+      ],
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size": {
+            "minimum": 0,
+            "$ref": "#/$defs/__schema0"
+          },
+          "mime": {
+            "type": "string",
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/gif",
+              "image/webp",
+              "image/svg+xml",
+              "font/woff2"
+            ]
+          },
+          "ext": {
+            "type": "string",
+            "pattern": "^[a-z0-9]{1,8}$"
+          }
+        },
+        "required": [
+          "sha256",
+          "size",
+          "mime",
+          "ext"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "maxArchiveBytes": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        },
+        "maxEntryBytes": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        },
+        "maxTotalEntryBytes": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        },
+        "maxEntries": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        },
+        "maxNameBytes": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        }
+      },
+      "required": [
+        "maxArchiveBytes",
+        "maxEntryBytes",
+        "maxTotalEntryBytes",
+        "maxEntries",
+        "maxNameBytes"
+      ],
+      "additionalProperties": false
+    },
+    "migration": {
+      "type": "object",
+      "properties": {
+        "originalDocumentSchemaVersion": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema0"
+        },
+        "applied": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "originalDocumentSchemaVersion",
+        "applied"
+      ],
+      "additionalProperties": false
+    },
+    "contentRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "format",
+    "schema",
+    "schemaVersion",
+    "documentSchema",
+    "documentSchemaVersion",
+    "producer",
+    "document",
+    "assets",
+    "limits",
+    "migration",
+    "contentRevision"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  }
+}

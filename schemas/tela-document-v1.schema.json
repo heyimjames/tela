@@ -1,0 +1,1813 @@
+{
+  "$id": "https://schemas.clickt.ca/tela/document/v1",
+  "title": "Tela portable document, v1",
+  "description": "The complete editable Tela state stored as document.json inside a .tela bundle. Every object is closed: unknown properties are invalid, so a reader can never silently discard a field it does not recognise.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "name": {
+      "type": "string"
+    },
+    "createdAt": {
+      "$ref": "#/$defs/__schema1"
+    },
+    "updatedAt": {
+      "$ref": "#/$defs/__schema1"
+    },
+    "pages": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/__schema2"
+      }
+    },
+    "activePageId": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "activeFrameId": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/__schema0"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "showFrameLabels": {
+          "type": "boolean"
+        },
+        "snapFrames": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "showFrameLabels",
+        "snapFrames"
+      ],
+      "additionalProperties": false
+    },
+    "versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "name": {
+            "type": "string"
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "name": {
+                "type": "string"
+              },
+              "format": {
+                "$ref": "#/$defs/__schema4"
+              },
+              "layers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema8"
+                }
+              },
+              "createdAt": {
+                "$ref": "#/$defs/__schema1"
+              },
+              "updatedAt": {
+                "$ref": "#/$defs/__schema1"
+              },
+              "autoLayouts": {
+                "$ref": "#/$defs/__schema21"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "format",
+              "layers",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          },
+          "createdAt": {
+            "$ref": "#/$defs/__schema1"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "document",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "brand": {
+      "type": "object",
+      "properties": {
+        "productName": {
+          "type": "string"
+        },
+        "socialHandle": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "ai": {
+          "type": "object",
+          "properties": {
+            "productDescription": {
+              "type": "string"
+            },
+            "targetAudience": {
+              "type": "string"
+            },
+            "brandVoice": {
+              "type": "string"
+            },
+            "callToAction": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "productDescription",
+            "targetAudience",
+            "brandVoice",
+            "callToAction"
+          ],
+          "additionalProperties": false
+        },
+        "palette": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "productName",
+        "socialHandle",
+        "displayName",
+        "website",
+        "ai",
+        "palette"
+      ],
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "svg",
+              "icon"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "ref": {
+            "$ref": "#/$defs/__schema7"
+          },
+          "width": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "height": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "createdAt": {
+            "$ref": "#/$defs/__schema1"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "category",
+          "ref",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "fonts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "family": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "$ref": "#/$defs/__schema12"
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "italic"
+            ]
+          },
+          "license": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ref": {
+            "type": "string"
+          },
+          "createdAt": {
+            "$ref": "#/$defs/__schema1"
+          }
+        },
+        "required": [
+          "id",
+          "family",
+          "weight",
+          "style",
+          "license",
+          "ref",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "createdAt",
+    "updatedAt",
+    "pages",
+    "activePageId",
+    "activeFrameId",
+    "settings",
+    "versions",
+    "brand",
+    "assets",
+    "fonts"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "__schema1": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+    },
+    "__schema2": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "name": {
+          "type": "string"
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "y": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "width": {
+                "exclusiveMinimum": 0,
+                "$ref": "#/$defs/__schema3"
+              },
+              "height": {
+                "exclusiveMinimum": 0,
+                "$ref": "#/$defs/__schema3"
+              },
+              "format": {
+                "$ref": "#/$defs/__schema4"
+              },
+              "backgroundColor": {
+                "$ref": "#/$defs/__schema5"
+              },
+              "backgroundFill": {
+                "$ref": "#/$defs/__schema6"
+              },
+              "layers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema8"
+                }
+              },
+              "autoLayouts": {
+                "$ref": "#/$defs/__schema21"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "visible": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "x",
+              "y",
+              "width",
+              "height",
+              "format",
+              "backgroundColor",
+              "backgroundFill",
+              "layers",
+              "locked",
+              "visible"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "looseElements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema8"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "frames",
+        "looseElements"
+      ],
+      "additionalProperties": false
+    },
+    "__schema3": {
+      "type": "number"
+    },
+    "__schema4": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "linkedin",
+            "instagram",
+            "facebook",
+            "generic"
+          ]
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema3"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "$ref": "#/$defs/__schema3"
+        },
+        "aspectRatio": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "platform",
+        "width",
+        "height",
+        "aspectRatio"
+      ],
+      "additionalProperties": false
+    },
+    "__schema5": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "hex": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "token",
+        "hex"
+      ],
+      "additionalProperties": false
+    },
+    "__schema6": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "solid"
+            },
+            "color": {
+              "$ref": "#/$defs/__schema5"
+            }
+          },
+          "required": [
+            "type",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "gradient"
+            },
+            "gradientType": {
+              "type": "string",
+              "enum": [
+                "linear",
+                "radial"
+              ]
+            },
+            "angle": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "stops": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "position": {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  "color": {
+                    "$ref": "#/$defs/__schema5"
+                  }
+                },
+                "required": [
+                  "position",
+                  "color"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "type",
+            "gradientType",
+            "angle",
+            "stops"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "image"
+            },
+            "imageUrl": {
+              "$ref": "#/$defs/__schema7"
+            },
+            "fit": {
+              "type": "string",
+              "enum": [
+                "cover",
+                "contain",
+                "fill"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "imageUrl",
+            "fit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "shader"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "meshGradient",
+                "warp",
+                "grainGradient",
+                "swirl",
+                "dithering",
+                "waves"
+              ]
+            },
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "speed": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "frame": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "intensity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "scale": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "grain": {
+              "$ref": "#/$defs/__schema3"
+            }
+          },
+          "required": [
+            "type",
+            "kind",
+            "colors",
+            "speed",
+            "frame",
+            "intensity",
+            "scale",
+            "rotation",
+            "grain"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema7": {
+      "type": "string"
+    },
+    "__schema8": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "background"
+            },
+            "fill": {
+              "$ref": "#/$defs/__schema6"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "fill"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "text"
+            },
+            "content": {
+              "type": "string"
+            },
+            "fontSize": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "fontWeight": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "const": 100
+                },
+                {
+                  "type": "number",
+                  "const": 200
+                },
+                {
+                  "type": "number",
+                  "const": 300
+                },
+                {
+                  "type": "number",
+                  "const": 400
+                },
+                {
+                  "type": "number",
+                  "const": 500
+                },
+                {
+                  "type": "number",
+                  "const": 600
+                },
+                {
+                  "type": "number",
+                  "const": 700
+                },
+                {
+                  "type": "number",
+                  "const": 800
+                },
+                {
+                  "type": "number",
+                  "const": 900
+                }
+              ]
+            },
+            "textAlign": {
+              "type": "string",
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ]
+            },
+            "color": {
+              "$ref": "#/$defs/__schema5"
+            },
+            "letterSpacing": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "lineHeight": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "textTransform": {
+              "type": "string",
+              "enum": [
+                "none",
+                "uppercase",
+                "lowercase"
+              ]
+            },
+            "textWrap": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "balance",
+                "pretty"
+              ]
+            },
+            "textSizing": {
+              "type": "string",
+              "enum": [
+                "fixed",
+                "auto-width",
+                "auto-height"
+              ]
+            },
+            "textRole": {
+              "type": "string",
+              "enum": [
+                "none",
+                "headline",
+                "subheadline",
+                "body",
+                "cta",
+                "tagline",
+                "job-title",
+                "company"
+              ]
+            },
+            "underline": {
+              "type": "boolean"
+            },
+            "strikethrough": {
+              "type": "boolean"
+            },
+            "verticalAlign": {
+              "type": "string",
+              "enum": [
+                "top",
+                "middle",
+                "bottom"
+              ]
+            },
+            "verticalTrim": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "cap"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "content",
+            "fontSize",
+            "fontWeight",
+            "textAlign",
+            "color",
+            "letterSpacing",
+            "lineHeight",
+            "textTransform"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "image"
+            },
+            "imageUrl": {
+              "$ref": "#/$defs/__schema7"
+            },
+            "fit": {
+              "type": "string",
+              "enum": [
+                "cover",
+                "contain",
+                "fill"
+              ]
+            },
+            "cropX": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "cropY": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "cropW": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "cropH": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "borderRadius": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "avatarSet": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "imageUrl",
+            "fit",
+            "cropX",
+            "cropY",
+            "cropW",
+            "cropH",
+            "borderRadius"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "svg"
+            },
+            "svgContent": {
+              "type": "string"
+            },
+            "tintColor": {
+              "$ref": "#/$defs/__schema5"
+            },
+            "colorOverrides": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/__schema5"
+              }
+            },
+            "strokeWidth": {
+              "$ref": "#/$defs/__schema3"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "svgContent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "shape"
+            },
+            "shape": {
+              "type": "string",
+              "enum": [
+                "rectangle",
+                "ellipse",
+                "line",
+                "pill",
+                "triangle",
+                "star"
+              ]
+            },
+            "fill": {
+              "$ref": "#/$defs/__schema5"
+            },
+            "stroke": {
+              "type": "object",
+              "properties": {
+                "color": {
+                  "$ref": "#/$defs/__schema5"
+                },
+                "width": {
+                  "$ref": "#/$defs/__schema3"
+                }
+              },
+              "required": [
+                "color",
+                "width"
+              ],
+              "additionalProperties": false
+            },
+            "borderRadius": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "lineCap": {
+              "type": "string",
+              "enum": [
+                "butt",
+                "round",
+                "square"
+              ]
+            },
+            "arrowStart": {
+              "type": "boolean"
+            },
+            "arrowEnd": {
+              "type": "boolean"
+            },
+            "controlPointX": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "controlPointY": {
+              "$ref": "#/$defs/__schema3"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "shape",
+            "fill",
+            "borderRadius"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "gradient"
+            },
+            "gradientType": {
+              "type": "string",
+              "enum": [
+                "linear",
+                "radial",
+                "conic",
+                "mesh"
+              ]
+            },
+            "angle": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "stops": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "position": {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  "oklchL": {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  "oklchC": {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  "oklchH": {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  "alpha": {
+                    "$ref": "#/$defs/__schema3"
+                  }
+                },
+                "required": [
+                  "position",
+                  "oklchL",
+                  "oklchC",
+                  "oklchH",
+                  "alpha"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "grain": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "borderRadius": {
+              "$ref": "#/$defs/__schema3"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "gradientType",
+            "angle",
+            "stops",
+            "grain",
+            "borderRadius"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "group"
+            },
+            "childIds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "childIds"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "name": {
+              "$ref": "#/$defs/__schema9"
+            },
+            "visible": {
+              "$ref": "#/$defs/__schema10"
+            },
+            "locked": {
+              "$ref": "#/$defs/__schema11"
+            },
+            "opacity": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "x": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "y": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "width": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "height": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "rotation": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "zIndex": {
+              "$ref": "#/$defs/__schema12"
+            },
+            "aspectRatioLocked": {
+              "$ref": "#/$defs/__schema13"
+            },
+            "flipH": {
+              "$ref": "#/$defs/__schema14"
+            },
+            "flipV": {
+              "$ref": "#/$defs/__schema15"
+            },
+            "constraints": {
+              "$ref": "#/$defs/__schema16"
+            },
+            "groupId": {
+              "$ref": "#/$defs/__schema17"
+            },
+            "layoutGrow": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "shadow": {
+              "$ref": "#/$defs/__schema19"
+            },
+            "blur": {
+              "$ref": "#/$defs/__schema20"
+            },
+            "type": {
+              "type": "string",
+              "const": "draw"
+            },
+            "points": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "$ref": "#/$defs/__schema3"
+                  },
+                  {
+                    "$ref": "#/$defs/__schema3"
+                  }
+                ]
+              }
+            },
+            "color": {
+              "$ref": "#/$defs/__schema5"
+            },
+            "strokeWidth": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "natWidth": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "natHeight": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "pen",
+                "highlighter"
+              ]
+            },
+            "pressures": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema3"
+              }
+            },
+            "thinning": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "taper": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "streamline": {
+              "$ref": "#/$defs/__schema3"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "visible",
+            "locked",
+            "opacity",
+            "x",
+            "y",
+            "width",
+            "height",
+            "rotation",
+            "zIndex",
+            "type",
+            "points",
+            "color",
+            "strokeWidth",
+            "natWidth",
+            "natHeight"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema9": {
+      "type": "string"
+    },
+    "__schema10": {
+      "type": "boolean"
+    },
+    "__schema11": {
+      "type": "boolean"
+    },
+    "__schema12": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "__schema13": {
+      "type": "boolean"
+    },
+    "__schema14": {
+      "type": "boolean"
+    },
+    "__schema15": {
+      "type": "boolean"
+    },
+    "__schema16": {
+      "type": "object",
+      "properties": {
+        "horizontal": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "stretch"
+          ]
+        },
+        "vertical": {
+          "type": "string",
+          "enum": [
+            "top",
+            "center",
+            "bottom",
+            "stretch"
+          ]
+        },
+        "scale": {
+          "type": "string",
+          "enum": [
+            "proportional",
+            "fixed",
+            "stretch"
+          ]
+        }
+      },
+      "required": [
+        "horizontal",
+        "vertical",
+        "scale"
+      ],
+      "additionalProperties": false
+    },
+    "__schema17": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "__schema18": {
+      "type": "boolean"
+    },
+    "__schema19": {
+      "type": "object",
+      "properties": {
+        "offsetX": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "offsetY": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "blur": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "offsetX",
+        "offsetY",
+        "blur",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "__schema20": {
+      "$ref": "#/$defs/__schema3"
+    },
+    "__schema21": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/__schema0"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "horizontal",
+              "vertical"
+            ]
+          },
+          "gap": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "padding": {
+            "type": "object",
+            "properties": {
+              "top": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "right": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "bottom": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "left": {
+                "$ref": "#/$defs/__schema3"
+              }
+            },
+            "required": [
+              "top",
+              "right",
+              "bottom",
+              "left"
+            ],
+            "additionalProperties": false
+          },
+          "primaryAlign": {
+            "type": "string",
+            "enum": [
+              "start",
+              "center",
+              "end",
+              "space-between"
+            ]
+          },
+          "counterAlign": {
+            "type": "string",
+            "enum": [
+              "start",
+              "center",
+              "end",
+              "stretch"
+            ]
+          },
+          "widthMode": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "hug"
+            ]
+          },
+          "heightMode": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "hug"
+            ]
+          },
+          "x": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "y": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "width": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "height": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "parentGroupId": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        "required": [
+          "direction",
+          "gap",
+          "padding",
+          "primaryAlign",
+          "counterAlign",
+          "widthMode",
+          "heightMode",
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
