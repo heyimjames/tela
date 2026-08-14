@@ -193,8 +193,8 @@ function AppearanceSettings() {
       <div className="space-y-3">
         <h3 className="text-[16px] font-medium">Theme</h3>
         <div className="flex gap-3">
-          <div className="px-4 py-2 bg-foreground text-background rounded-[5px] text-[13px] font-medium">Light</div>
-          <div className="px-4 py-2 bg-muted text-muted-foreground rounded-[5px] text-[13px] opacity-50 cursor-not-allowed">Dark (soon)</div>
+          <div className="px-4 py-2 bg-foreground text-background rounded-[5px] text-[13px] font-medium">Dark</div>
+          <div className="px-4 py-2 bg-muted text-muted-foreground rounded-[5px] text-[13px] opacity-50 cursor-not-allowed">Light (soon)</div>
         </div>
       </div>
     </div>

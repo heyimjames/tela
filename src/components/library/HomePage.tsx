@@ -909,9 +909,14 @@ function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; on
 
   return (
     <div className="relative mb-6 overflow-hidden rounded-[14px] border border-border bg-card">
-      {/* Brand wash */}
-      <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: cardGradient('tela-welcome') }} />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card via-card/85 to-transparent" />
+      {/* Brand wash. cardGradient is a light-document palette — it is the
+          stand-in artwork for file thumbnails, and at the 0.7/transparent
+          strength this banner used on light chrome it now punches a lit slab
+          out of a dark card. Dialled back to a tint, and the scrim keeps a
+          floor of --card all the way to the right edge so the wash reads as
+          depth in the panel rather than a hole through it. */}
+      <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: cardGradient('tela-welcome') }} />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card via-card/90 to-card/55" />
       <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-[520px]">
           <div className="mb-1 flex items-center gap-2">
