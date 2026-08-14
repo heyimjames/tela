@@ -358,25 +358,38 @@ function AppearanceSettings() {
 
       <div className="border-t border-border pt-6 space-y-3">
         <h3 className="text-[14px] font-medium text-foreground">Canvas Background</h3>
-        <p className="text-[12px] text-muted-foreground">The area around your design.</p>
-        {/* Swatches read from the chrome ramp rather than restating hexes — the
-            desk is no longer grey, and labels describe relative lift, lightest
-            first. (This control has never been wired to state; unchanged here.) */}
-        <div className="flex gap-2">
+        <p className="text-[12px] text-muted-foreground">
+          The area around your design. Fixed to the darkest step for now — choosing
+          a lift is coming soon.
+        </p>
+        {/* Disclosed the same way the Theme block above is: this control has never
+            been wired to state, and now that the desk really IS dark, unlabelled
+            chips that do nothing would be a lie rather than a stub. The swatches
+            read from the chrome ramp rather than restating hexes; labels describe
+            relative lift, lightest first, and the live value is marked. */}
+        <div className="flex gap-2 opacity-50">
           {[
             { label: 'Light', color: 'var(--surface-hover)' },
             { label: 'Medium', color: 'var(--surface)' },
             { label: 'Dark', color: 'var(--ground)' },
-          ].map((bg) => (
-            <button
-              key={bg.label}
-              className="flex flex-col items-center gap-1 cursor-pointer"
-              title={bg.label}
-            >
-              <div className="w-12 h-8 rounded-[5px] border border-border" style={{ backgroundColor: bg.color }} />
-              <span className="text-[10px] text-muted-foreground">{bg.label}</span>
-            </button>
-          ))}
+          ].map((bg) => {
+            const isCurrent = bg.label === 'Dark'
+            return (
+              <div
+                key={bg.label}
+                className="flex flex-col items-center gap-1 cursor-not-allowed"
+                title={isCurrent ? `${bg.label} — current` : `${bg.label} (soon)`}
+              >
+                <div
+                  className={`w-12 h-8 rounded-[5px] border border-border ${isCurrent ? 'ring-2 ring-primary ring-offset-2 ring-offset-popover' : ''}`}
+                  style={{ backgroundColor: bg.color }}
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  {isCurrent ? bg.label : `${bg.label} (soon)`}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -434,16 +447,22 @@ function SettingsToggle({ label, description, value, onChange }: { label: string
         <p className="text-[12px] text-muted-foreground mt-0.5">{description}</p>
       </div>
       <button
+        aria-label={label}
+        aria-pressed={value}
         className={`
           w-10 h-5 rounded-full transition-colors duration-150 cursor-pointer relative shrink-0 mt-0.5
           ${value ? 'bg-primary' : 'bg-muted'}
         `}
         onClick={onChange}
       >
+        {/* The knob takes the ink of whatever track it is on. A --foreground knob
+            on the ON track (--hive-300) is 2.46:1 — under the 3:1 floor for a
+            control whose only state cue is knob position — so ON uses the
+            primary's own ink and OFF stays paper on --muted. */}
         <div
           className={`
-            absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow-sm transition-transform duration-150
-            ${value ? 'translate-x-5' : 'translate-x-0.5'}
+            absolute top-0.5 w-4 h-4 rounded-full shadow-sm transition-transform duration-150
+            ${value ? 'translate-x-5 bg-primary-foreground' : 'translate-x-0.5 bg-foreground'}
           `}
         />
       </button>

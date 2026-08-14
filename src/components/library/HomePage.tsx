@@ -324,13 +324,16 @@ export function HomePage() {
                 ))}
               </div>
 
-              {/* View toggle (desktop) */}
+              {/* View toggle (desktop). The armed state has to survive on a dark
+                  rail: bg-accent over bg-muted/30 is ~1.2:1 and shadow-sm is
+                  invisible on near-black, so the ICON colour carries it (mist →
+                  paper) and aria-pressed carries it for assistive tech. */}
               <div className="hidden md:flex gap-0.5 bg-muted/30 rounded-[5px] p-0.5">
-                <button aria-label="Grid view" className={`p-1.5 rounded-[4px] ${viewMode === 'grid' ? 'bg-accent shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('grid')}>
-                  <LayoutGrid className="w-4 h-4 text-muted-foreground" />
+                <button aria-label="Grid view" aria-pressed={viewMode === 'grid'} className={`p-1.5 rounded-[4px] ${viewMode === 'grid' ? 'bg-accent' : ''} cursor-pointer`} onClick={() => setViewMode('grid')}>
+                  <LayoutGrid className={`w-4 h-4 ${viewMode === 'grid' ? 'text-foreground' : 'text-muted-foreground'}`} />
                 </button>
-                <button aria-label="List view" className={`p-1.5 rounded-[4px] ${viewMode === 'list' ? 'bg-accent shadow-sm' : ''} cursor-pointer`} onClick={() => setViewMode('list')}>
-                  <List className="w-4 h-4 text-muted-foreground" />
+                <button aria-label="List view" aria-pressed={viewMode === 'list'} className={`p-1.5 rounded-[4px] ${viewMode === 'list' ? 'bg-accent' : ''} cursor-pointer`} onClick={() => setViewMode('list')}>
+                  <List className={`w-4 h-4 ${viewMode === 'list' ? 'text-foreground' : 'text-muted-foreground'}`} />
                 </button>
               </div>
 
@@ -728,7 +731,10 @@ function FileCard({
 
   return (
     <div
-      className="group bg-card border border-border rounded-[12px] overflow-hidden cursor-pointer hover:shadow-[0_2px_8px_-2px_rgba(17,17,17,0.08)] transition-[box-shadow] duration-200"
+      // Hover cannot be a light-tuned shadow: #111 at 8% over --ground moves the
+      // rendered pixels by ~1 RGB unit. The border does the work; the shadow is
+      // re-cut to the dark depth value and only reinforces it.
+      className="group bg-card border border-border hover:border-primary/40 rounded-[12px] overflow-hidden cursor-pointer hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.5)] transition-[box-shadow,border-color] duration-200"
       onClick={onOpen}
       onContextMenu={onContextMenu}
       draggable={!file.isScratchpad && !isEditing}
@@ -738,7 +744,10 @@ function FileCard({
           the whole design reads, edge-to-edge and clipped to the rounded card. */}
       <div className="aspect-[4/3] relative overflow-hidden" style={{ background: bg }}>
         {thumb ? (
-          <img src={thumb} alt="" className="w-full h-full object-contain" />
+          // data-no-outline: this is the user's artwork on the frame's own
+          // background, not chrome — the global hairline outline would draw a
+          // teal box across the whole preview.
+          <img src={thumb} alt="" data-no-outline className="w-full h-full object-contain" />
         ) : (
           // No preview yet → a seeded, on-brand OKLCH mesh gradient, locked to
           // this file's id (stable across loads). No icon — the gradient is it.

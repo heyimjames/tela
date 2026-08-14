@@ -35,7 +35,7 @@ export function LayoutPicker({ onClose }: Props) {
       {DESIGN_LAYOUTS.map((layout) => (
         <button
           key={layout.id}
-          className="group text-left bg-card border border-border rounded-[9px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(17,17,17,0.12)] transition-shadow cursor-pointer active:scale-[0.98]"
+          className="group text-left bg-card border border-border hover:border-primary/40 rounded-[9px] overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] transition-[box-shadow,border-color] cursor-pointer active:scale-[0.98]"
           onClick={() => apply(layout)}
         >
           <div className="bg-muted/40 p-3 flex items-center justify-center aspect-[1.6/1]">

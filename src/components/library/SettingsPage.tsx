@@ -226,7 +226,9 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
     <div className="flex items-start justify-between gap-4">
       <div><span className="text-[14px] font-medium text-foreground">{label}</span><p className="text-[13px] text-muted-foreground mt-0.5">{desc}</p></div>
       <button aria-label={label} aria-pressed={value} className={`w-10 h-5 rounded-full transition-colors cursor-pointer relative shrink-0 mt-0.5 ${value ? 'bg-primary' : 'bg-muted'}`} onClick={onChange}>
-        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow-sm transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        {/* Knob ink follows the track — see SettingsModal's Toggle: --foreground
+            on the ON track (--hive-300) is 2.46:1, under the 3:1 floor. */}
+        <div className={`absolute top-0.5 w-4 h-4 rounded-full shadow-sm transition-transform ${value ? 'translate-x-5 bg-primary-foreground' : 'translate-x-0.5 bg-foreground'}`} />
       </button>
     </div>
   )

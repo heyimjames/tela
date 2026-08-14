@@ -845,12 +845,27 @@ export function PreviewPanel() {
             className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center select-none"
             style={{ gap: Math.max(4, 8 * zoom), padding: `0 ${Math.max(16, 56 * zoom)}px` }}
           >
-            <p className="font-medium text-foreground/70" style={{ fontSize: Math.max(11, Math.round(30 * zoom)), lineHeight: 1.2 }}>
+            {/* Document ink, not chrome ink. This overlay paints INSIDE the
+                frame body, which is the one deliberately-white surface the dark
+                re-skin leaves alone — so --foreground (--paper) and
+                --muted-foreground (--mist) would land at ~1.05:1 and ~2.4:1 on
+                it. Derived from --charcoal so it still comes from the palette. */}
+            <p
+              className="font-medium"
+              style={{
+                fontSize: Math.max(11, Math.round(30 * zoom)),
+                lineHeight: 1.2,
+                color: 'color-mix(in srgb, var(--charcoal) 78%, transparent)',
+              }}
+            >
               <RevealWords text="A frame full of potential." />
             </p>
             <motion.p
-              className="text-muted-foreground"
-              style={{ fontSize: Math.max(9, Math.round(19 * zoom)), lineHeight: 1.3 }}
+              style={{
+                fontSize: Math.max(9, Math.round(19 * zoom)),
+                lineHeight: 1.3,
+                color: 'color-mix(in srgb, var(--charcoal) 62%, transparent)',
+              }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.34, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}

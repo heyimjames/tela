@@ -73,7 +73,7 @@ export function PositionSizePanel({ layer }: Props) {
         <button
           className={`
             p-1.5 rounded-[5px] transition-colors cursor-pointer mb-0.5
-            ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-muted-foreground hover:bg-muted'}
+            ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}
           `}
           onClick={() => {
             pushSnapshot()

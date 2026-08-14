@@ -7,7 +7,11 @@
 /* Inter Variable is the bundled default. To use your own brand font, add an
    @font-face here and set FONT_FAMILY in src/engine/textMeasure.ts. */
 
-@custom-variant dark (&:is(.dark *));
+/* No `dark:` variant is defined on purpose. Dark is not a mode here — it is the
+   base :root ramp below, and nothing ever sets a `.dark` class. Declaring the
+   variant only invited vendored shadcn classes to carry a second, permanently
+   inert dark theme alongside the live one. When a light toggle lands it should
+   flip the tokens in this block, not resurrect `dark:` utilities. */
 
 :root {
   /* Brand tokens — Neutrals (see src/brand/palette.ts) */
@@ -88,6 +92,11 @@
      link. */
   --link: var(--hive-100);
   --border: var(--hairline);
+  /* The input RULE, not an input fill. shadcn ships `--input` doing both jobs
+     (`border-input` and `bg-input/30`); on this ramp the rule colour is lighter
+     than the well, so painting it as a fill inverts depth — a disabled field
+     came out brighter than an enabled one. Every `bg-input` consumer is gone;
+     this token is a border colour only. */
   --input: var(--hairline);
   --ring: var(--hive-300);
 
@@ -254,7 +263,13 @@
 /* Subtle 1px outline on DOM images for consistent edge depth (make-interfaces #11).
    On dark chrome a black scrim is the wrong direction — it disappears into the
    ground and eats the image edge instead of defining it. The hairline token is
-   the same rule the rest of the chrome draws with. */
+   the same rule the rest of the chrome draws with.
+
+   This is a CHROME rule. Any <img> that shows the user's own artwork — asset
+   tiles, file thumbnails, component previews — must carry `data-no-outline`:
+   those sit on document-facing (light) surfaces, where a full-opacity teal box
+   drawn tight around the artwork reads as a stroke the design does not have and
+   the export does not contain. */
 img:not([data-no-outline]) {
   outline: 1px solid var(--hairline);
   outline-offset: -1px;
@@ -282,17 +297,6 @@ img:not([data-no-outline]) {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chromium/Safari */
-}
-
-/* Canvas checkerboard (transparency indicator) */
-.canvas-checkerboard {
-  background-image:
-    linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
-    linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
-    linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
 }
 
 /* Mobile property sheet: the desktop inspector packs many small controls, so

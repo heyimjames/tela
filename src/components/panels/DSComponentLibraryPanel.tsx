@@ -80,7 +80,7 @@ export function DSComponentLibraryPanel() {
         {filtered.map((def) => (
           <button
             key={def.id}
-            className="group flex flex-col items-stretch gap-1.5 rounded-[7px] border border-border bg-card p-2 text-left transition-[border-color,box-shadow,transform] hover:border-primary/30 hover:shadow-[0_4px_16px_-6px_rgba(17,17,17,0.18)] active:scale-[0.98] cursor-pointer"
+            className="group flex flex-col items-stretch gap-1.5 rounded-[7px] border border-border bg-card p-2 text-left transition-[border-color,box-shadow,transform] hover:border-primary/30 hover:shadow-[0_4px_16px_-6px_rgba(0,0,0,0.55)] active:scale-[0.98] cursor-pointer"
             onClick={() => void insert(def)}
             title={`${def.name} — click to add to canvas`}
             aria-label={`Add ${def.name} to canvas`}
@@ -115,6 +115,14 @@ function ComponentPreview({ def }: { def: DSComponentDef }) {
   const offY = (PREVIEW_BOX.h - def.height * scale) / 2
 
   return (
+    /* The preview slab stays light while the chrome around it went dark: it is a
+       picture of the paper the component will be dropped onto, and the component
+       primitives paint their own document colours on top of it. Document-facing
+       surface — deliberately not chrome, and deliberately not a chrome token, so
+       a future light theme must not flip it with the panel. The dark-hex
+       invariant in index.css is unaffected: this is a light literal, one of the
+       four document-facing exceptions (AssetLibraryPanel tile, LayoutPicker
+       thumb, PreviewPanel frame body, this). */
     <div
       className="relative overflow-hidden rounded-[5px] bg-[#f4f4ef]"
       style={{ width: '100%', height: PREVIEW_BOX.h }}
@@ -173,10 +181,14 @@ function PreviewLayer({
   if (layer.type === 'image') {
     const il = layer as ImageLayer
     return (
+      // data-no-outline: this is a document layer rendered as a preview, not
+      // chrome — the global hairline outline would add a stroke the layer does
+      // not have and the export does not contain.
       <img
         src={il.imageUrl}
         alt=""
         draggable={false}
+        data-no-outline
         style={{
           ...base,
           objectFit: 'cover',

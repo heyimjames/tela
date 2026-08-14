@@ -155,9 +155,14 @@ export function AssetLibraryPanel() {
               }}
               title={`${asset.name} — Click or drag to canvas`}
             >
+              {/* data-no-outline: the tile already draws a border-border rule,
+                  and the global chrome outline would print a second, tighter
+                  teal box around the asset itself — a double rule the user
+                  reads as part of their artwork. */}
               <img
                 src={asset.dataUrl}
                 alt={asset.name}
+                data-no-outline
                 className="w-full h-full object-contain p-1"
               />
 

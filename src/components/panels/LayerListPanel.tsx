@@ -337,7 +337,7 @@ export function LayerListPanel() {
                         }}
                       >
                         <button
-                          className="p-0.5 text-muted-foreground hover:text-muted-foreground cursor-pointer"
+                          className="p-0.5 rounded-[3px] text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                           onClick={(e) => { e.stopPropagation(); setCollapsedFrames((p) => { const n = new Set(p); n.has(frame.id) ? n.delete(frame.id) : n.add(frame.id); return n }) }}
                           aria-label={isCollapsed ? 'Expand frame' : 'Collapse frame'}
                         >
@@ -367,7 +367,7 @@ export function LayerListPanel() {
                         <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{frame.width}x{frame.height}</span>
 
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+                          <button className="p-1 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
                             onClick={(e) => { e.stopPropagation(); duplicateFrame(frame.id) }} title="Duplicate" aria-label="Duplicate frame">
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -507,16 +507,16 @@ function LayerRow({
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ opacity: isActive ? 1 : undefined }}>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onVisibility() }} aria-label={layer.visible ? 'Hide layer' : 'Show layer'}>
           {layer.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onLock() }} aria-label={layer.locked ? 'Unlock layer' : 'Lock layer'}>
           {layer.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
         </button>
         {onDuplicate && (
-          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+          <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
             onClick={(e) => { e.stopPropagation(); onDuplicate() }} aria-label="Duplicate layer">
             <Copy className="w-3.5 h-3.5" />
           </button>
@@ -569,7 +569,7 @@ function GroupHeaderRow({
       onClick={onSelect}
     >
       <button
-        className="p-0.5 -ml-1 text-muted-foreground hover:text-muted-foreground cursor-pointer shrink-0"
+        className="p-0.5 -ml-1 rounded-[3px] text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer shrink-0"
         onClick={(e) => { e.stopPropagation(); onToggle() }}
         aria-label={expanded ? 'Collapse group' : 'Expand group'}
       >
@@ -580,11 +580,11 @@ function GroupHeaderRow({
       <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{count}</span>
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onVisibility() }} aria-label={anyVisible ? 'Hide group' : 'Show group'}>
           {anyVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>
-        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-muted-foreground cursor-pointer"
+        <button className="p-0.5 hover:bg-muted rounded-[3px] text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={(e) => { e.stopPropagation(); onLock() }} aria-label={allLocked ? 'Unlock group' : 'Lock group'}>
           {allLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
         </button>

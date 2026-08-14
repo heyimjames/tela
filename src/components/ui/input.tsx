@@ -41,7 +41,13 @@ function Input({ className, type, onKeyDown, ...props }: React.ComponentProps<"i
       data-slot="input"
       onKeyDown={handleKeyDown}
       className={cn(
-        "h-8 max-md:h-10 w-full min-w-0 rounded-[5px] border border-input bg-background px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        // Disabled = no well. `--input` is the field RULE colour and on this ramp
+        // it is LIGHTER than the ground, so the shadcn default (`bg-input/50`)
+        // painted a disabled field brighter than an enabled one — the affordance
+        // read backwards. On a near-black ground nothing is meaningfully darker
+        // than the enabled well, so the honest signal is to drop the recess
+        // entirely and let the field flatten into whatever surface it sits on.
+        "h-8 max-md:h-10 w-full min-w-0 rounded-[5px] border border-input bg-background px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-transparent disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/40 md:text-sm",
         className
       )}
       {...props}
