@@ -30,3 +30,6 @@ dist-ssr
 *.sw?
 .vercel
 .claude/worktrees/
+
+# Release artifacts are build output, reproducible from the recorded commit.
+release/
