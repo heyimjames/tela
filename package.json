@@ -26,17 +26,21 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:app && npm run build:bridge && npm run build:mcp",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:app": "vite build",
+    "build:bridge": "vite build --base=./ --outDir dist-bridge",
+    "build:mcp": "node scripts/build-mcp.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@fontsource-variable/inter": "^5.2.8",
+    "@modelcontextprotocol/server": "2.0.0",
     "@paper-design/shaders-react": "^0.0.76",
     "@tailwindcss/vite": "^4.3.2",
     "class-variance-authority": "^0.7.1",
@@ -45,6 +49,7 @@
     "lucide-react": "^1.22.0",
     "motion": "^12.42.1",
     "nanoid": "^5.1.16",
+    "playwright": "1.61.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "shadcn": "^4.12.0",
@@ -57,11 +62,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@playwright/test": "1.61.1",
     "@types/culori": "^4.0.1",
     "@types/node": "^25.9.4",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "esbuild": "0.28.2",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
@@ -70,5 +78,8 @@
     "typescript-eslint": "^8.62.1",
     "vite": "^8.1.1",
     "vitest": "3.2.4"
+  },
+  "bin": {
+    "tela-mcp": "./bin/tela-mcp.mjs"
   }
 }

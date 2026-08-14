@@ -191,6 +191,23 @@ in an **iOS-style bottom sheet with detents**, fullscreen text editing, and
 sheet-based Settings / Templates are all in place. The design notes and remaining
 polish are tracked in [`docs/mobile.md`](docs/mobile.md).
 
+## Agent access (MCP)
+
+Tela ships a local **stdio MCP server** so an agent can author designs directly:
+create and edit `.tela` files, compose frames and layers, manage assets, fonts,
+brand context and versions, and render or export finished artwork. It makes no
+network requests, confines every path to an approved root, and never exposes a
+generic command or eval tool.
+
+```bash
+npm run build
+node ./bin/tela-mcp.mjs
+```
+
+The tool surface, revision model, security policy, and host configuration are
+documented in [`docs/mcp-server.md`](docs/mcp-server.md). The portable `.tela`
+format it reads and writes is documented in [`docs/tela-format.md`](docs/tela-format.md).
+
 ## License
 
 [MIT](LICENSE). The bundled Inter font is licensed under the [SIL Open Font License](https://github.com/rsms/inter/blob/master/LICENSE.txt).

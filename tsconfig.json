@@ -9,6 +9,9 @@
     },
     {
       "path": "./tsconfig.tela-node.json"
+    },
+    {
+      "path": "./tsconfig.mcp.json"
     }
   ],
   "compilerOptions": {

@@ -5,6 +5,7 @@ import { getTextBounds, createMeasureContext } from '@/engine/textMeasure'
 import { AD_FORMATS } from '@/brand/formats'
 import { getBrandColor } from '@/brand/palette'
 import type { FontWeight, LayerConstraints, TextLayer } from '@/types/design'
+import { RENDER_COMMANDS } from './renderOps'
 
 /**
  * The canvas command bus — one typed, introspectable surface for driving the
@@ -23,7 +24,7 @@ export interface CommandResult {
   error?: string
 }
 
-interface CommandDef {
+export interface CommandDef {
   description: string
   /** param name → short description (type + meaning). Drives getSchema. */
   params: Record<string, string>
@@ -251,6 +252,11 @@ const COMMANDS: Record<string, CommandDef> = {
       return { ok: await relayoutActiveFrame() }
     },
   },
+
+  // ── Bridge (internal) ─────────────────────────────────────────────────
+  // Used by the MCP server's browser bridge for render/export/open-editor.
+  // See renderOps.ts: these are not, and must not become, MCP tools.
+  ...RENDER_COMMANDS,
 }
 
 /** Run one command. Never throws — failures come back as { ok:false, error }.
