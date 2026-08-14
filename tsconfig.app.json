@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "src/tela/nodeIo.ts",
+    "src/mcp",
     "src/**/*.test.ts",
     "src/**/*.child.ts"
   ]
