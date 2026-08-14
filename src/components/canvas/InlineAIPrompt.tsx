@@ -2,8 +2,25 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useAIStore, generateCopy, generateAdDesign } from '@/store/useAIStore'
 import { getBrandColor } from '@/brand/palette'
+import { useAiUiEnabled } from '@/ai'
 import { Sparkles, Loader2, X, Wand2 } from 'lucide-react'
 import type { TextLayer, ShapeLayer, BackgroundLayer } from '@/types/design'
+
+/**
+ * Whether a keydown should open the inline AI prompt.
+ *
+ * Extracted from the listener below so the AI gate on this shortcut is assertable.
+ * The listener is registered from a `useEffect`, which static rendering never runs,
+ * so a test asserting the prompt is absent from rendered markup would pass whether or
+ * not the gate existed — the shortcut is a route into AI that no button controls.
+ */
+export function isInlineAiPromptShortcut(
+  event: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey'>,
+  aiUiEnabled: boolean,
+): boolean {
+  if (!aiUiEnabled) return false
+  return (event.metaKey || event.ctrlKey) && event.key === 'i'
+}
 
 export function InlineAIPrompt() {
   const [open, setOpen] = useState(false)
@@ -15,11 +32,16 @@ export function InlineAIPrompt() {
 
   const activeLayerId = useDesignStore((s) => s.activeLayerId)
   const format = useDesignStore((s) => s.document.format)
+  const aiUiEnabled = useAiUiEnabled()
 
   // Cmd+I to open
   useEffect(() => {
+    // Not registered at all while AI is off, so the shortcut is inert rather than
+    // opening a prompt whose only action would fail.
+    if (!aiUiEnabled) return
+
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+      if (isInlineAiPromptShortcut(e, aiUiEnabled)) {
         e.preventDefault()
 
         // If a text layer is selected, default to edit mode
@@ -43,7 +65,7 @@ export function InlineAIPrompt() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open])
+  }, [open, aiUiEnabled])
 
   const handleSubmit = useCallback(async () => {
     if (!prompt.trim()) return
@@ -159,7 +181,9 @@ export function InlineAIPrompt() {
     }
   }, [prompt, mode, activeLayerId, format])
 
-  if (!open) return null
+  // Gated at the render site too: a capability revoked while the prompt is open must
+  // take it off screen, not leave an AI form whose submit would fail.
+  if (!open || !aiUiEnabled) return null
 
   const activeLayer = activeLayerId ? useDesignStore.getState().getLayer(activeLayerId) : null
   const isEditMode = mode === 'edit' && activeLayer?.type === 'text'

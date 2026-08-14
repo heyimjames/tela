@@ -76,10 +76,20 @@ const ENTRY_POINTS = [
     coveredBy:
       "shouldOfferAiRelayout — the component's own decision function, extracted so it is mutation-checkable; its visibility is set from a useEffect, which static rendering does not run, so a render assertion would pass vacuously",
   },
+  {
+    id: 8,
+    name: 'InlineAIPrompt → Cmd/Ctrl+I shortcut',
+    marker: null,
+    renderAsserted: false,
+    coveredBy:
+      'isInlineAiPromptShortcut — the handler predicate, extracted so it is mutation-checkable; the listener is registered from a useEffect that static rendering does not run',
+  },
 ] as const
 
-it('covers exactly the seven entry points enumerated in the plan comment', () => {
-  expect(ENTRY_POINTS).toHaveLength(7)
+it('covers every entry point enumerated for this issue', () => {
+  // Seven were enumerated in the plan comment; the eighth (the Cmd/Ctrl+I shortcut in
+  // InlineAIPrompt) was found by the reflect pass and is disclosed in the wrap-up.
+  expect(ENTRY_POINTS).toHaveLength(8)
   // Five of the seven markers are distinct strings; 5 and 6 legitimately share one.
   const asserted = ENTRY_POINTS.filter((e) => e.renderAsserted)
   expect(asserted).toHaveLength(5)
@@ -310,6 +320,23 @@ describe('AI entry points render when the workspace grants the capability', () =
     }
 
     app.ai.resetWorkspaceCapabilitiesForTests()
+  })
+})
+
+describe('entry point 8 — the inline AI prompt shortcut', () => {
+  it('does not fire while AI is disabled, and does fire when enabled', async () => {
+    const { isInlineAiPromptShortcut } = await import('@/components/canvas/InlineAIPrompt')
+    const cmdI = { key: 'i', metaKey: true, ctrlKey: false }
+    const ctrlI = { key: 'i', metaKey: false, ctrlKey: true }
+
+    expect(isInlineAiPromptShortcut(cmdI, false)).toBe(false)
+    expect(isInlineAiPromptShortcut(ctrlI, false)).toBe(false)
+    // Everything else held constant, the AI term is what decides.
+    expect(isInlineAiPromptShortcut(cmdI, true)).toBe(true)
+    expect(isInlineAiPromptShortcut(ctrlI, true)).toBe(true)
+    // And the original key condition still holds on its own.
+    expect(isInlineAiPromptShortcut({ key: 'i', metaKey: false, ctrlKey: false }, true)).toBe(false)
+    expect(isInlineAiPromptShortcut({ key: 'k', metaKey: true, ctrlKey: false }, true)).toBe(false)
   })
 })
 
