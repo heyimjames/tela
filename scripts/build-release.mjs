@@ -221,8 +221,16 @@ async function stampSourceCommit(original, commit) {
   await writeFile(PRODUCER_FILE, original.replace(marker, `export const SOURCE_COMMIT: string = '${commit}'`), 'utf8')
 }
 
+/**
+ * Run a build step with its stdout redirected to *stderr*.
+ *
+ * This script's stdout is a machine-readable summary that callers parse. npm
+ * prints its own banner and vite prints its bundle table, both to stdout, and
+ * either one lands in the middle of the JSON if the child is allowed to inherit
+ * fd 1. Build chatter is diagnostics; it belongs on fd 2.
+ */
 function run(command, commandArgs) {
-  execFileSync(command, commandArgs, { cwd: root, stdio: ['ignore', 'inherit', 'inherit'] })
+  execFileSync(command, commandArgs, { cwd: root, stdio: ['ignore', 2, 'inherit'] })
 }
 
 function dependencyVersion(lock, name) {
