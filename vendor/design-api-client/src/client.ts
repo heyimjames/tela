@@ -29,8 +29,11 @@ export interface DesignApiClientOptions {
    */
   readonly baseUrl: string;
   /**
-   * The `fetch` to use. Defaults to `globalThis.fetch`, which exists in Node 22
-   * and in browsers; pass one explicitly to inject a proxy, a mock, or an agent.
+   * The `fetch` to use. Defaults to `globalThis.fetch` bound to its global,
+   * which exists in Node 22 and in browsers; pass one explicitly to inject a
+   * proxy, a mock, or an agent. An injected `fetch` is used as given — it is
+   * never re-bound — and is called with no receiver, so an unbound
+   * `window.fetch` is safe to pass.
    */
   readonly fetch?: FetchLike;
   /**
@@ -75,7 +78,28 @@ export class DesignApiClient {
   private readonly options: DesignApiClientOptions;
 
   public constructor(options: DesignApiClientOptions) {
-    const fetchImpl = options.fetch ?? (globalThis.fetch as FetchLike | undefined);
+    // The default is bound to its global, so this client never calls a global's
+    // function with a receiver that global did not hand out.
+    //
+    // Previously the default was `globalThis.fetch` lifted onto an instance
+    // field and invoked as `this.fetchImpl(url, init)` — i.e. with *this client*
+    // as the receiver. CLI-538 reported that shape failing in a real browser
+    // with `TypeError: Failed to execute 'fetch' on 'Window': Illegal
+    // invocation`, which would break every request before it reached the
+    // network. A direct probe of that same pinned Chromium (149), plus Firefox
+    // 151 and WebKit 26.5, shows those engines currently accept any receiver for
+    // `fetch`, so the failure is environment-dependent rather than universal —
+    // see CLI-553 for the probe and its output. Either way a client should not
+    // depend on an engine's tolerance for a receiver it was never given, which
+    // is what both this bind and the detached call in `request()` remove.
+    //
+    // An injected `fetch` is used exactly as given and never re-bound: the
+    // caller may have bound it to something on purpose, and re-binding would
+    // silently take that away.
+    const ambient = globalThis.fetch as FetchLike | undefined;
+    const fetchImpl =
+      options.fetch ??
+      (ambient === undefined ? undefined : (ambient.bind(globalThis) as FetchLike));
     if (fetchImpl === undefined) {
       throw new TypeError('No fetch available: pass one as options.fetch.');
     }
@@ -142,7 +166,14 @@ export class DesignApiClient {
       init.credentials = this.options.credentials;
     }
 
-    const response = await this.fetchImpl(url, init);
+    // Detached deliberately. `this.fetchImpl(url, init)` would call it as a
+    // method of this client; read into a local first and the receiver is
+    // `undefined`, which WebIDL resolves to the relevant global. Verified in
+    // Chromium 149, Firefox 151 and WebKit 26.5: a detached call succeeds in all
+    // three. This covers the case the bind above cannot — a caller who injects
+    // an unbound `window.fetch` — so no consumer has to know to bind. (CLI-553.)
+    const fetchImpl = this.fetchImpl;
+    const response = await fetchImpl(url, init);
     this.options.onResponse?.(response);
 
     if (response.status !== spec.expect) {

@@ -8,9 +8,9 @@ It is vendored rather than installed, and it is not edited here.
 | Package | `@performance-clickt/design-api-client` |
 | Version | `1.0.0` |
 | Source repo | `performance-clickt/hivemind-design-server` |
-| Source commit | `cbad2b00db66ce675e7f12a34df8665211afc5e9` (short `cbad2b0`) |
+| Source commit | `6f4d56dced93c94414f7e73466343ea2fe03f2e3` (short `6f4d56d`) |
 | Source path | `packages/api-client/` |
-| Vendored on | 2026-08-15 (CLI-517) |
+| Vendored on | 2026-08-15 (CLI-517); re-vendored 2026-08-15 (CLI-555) |
 
 ## Why vendored, and why the source rather than `dist/`
 
@@ -51,7 +51,7 @@ lint-driven edits here would break the byte-for-byte provenance claim below.
 
 sha256 of every vendored file. Each hash equals the corresponding blob at the
 source commit — verified at vendoring time with
-`git show cbad2b0:packages/api-client/<path> | shasum -a 256`.
+`git show 6f4d56d:packages/api-client/<path> | shasum -a 256`.
 
 `src/workspace/__tests__/vendoredClient.test.ts` re-checks this table on every test run, so
 an edit to a vendored file, or a version bump away from `1.0.0`, fails a test
@@ -62,7 +62,7 @@ instead of silently invalidating the provenance recorded here.
 | `b4b2b8262a24bc0a0dafcd4ca6a8ac8c3a849bbeee3f12f134292c3234d18f42` | `package.json` |
 | `89ca7bd7c51ba7b9246e3d400f4cfafce448f7d3dccbd2d34215b5a4c0977f86` | `tsconfig.json` |
 | `ec5ef6582ab3ff2d0566c7896fc678714dd584df9daea63cde851a42ffab67ee` | `README.md` |
-| `87a1ff3f2973d76a98f4e7db2872b94f0a5ee2b345cdf1186a87d8e000880fc5` | `src/client.ts` |
+| `4ba508cc203d715633cb928694b77a53e81b8184afa708aa3020a92f90fba073` | `src/client.ts` |
 | `3b87d6ad74ff7cc767cc0d7857ce1b63cd23b7fa23a076730de701a9973862ae` | `src/errors.ts` |
 | `55e9ab277b19225cf5ccf1a9086aad43230c66ecf2530632f5ecb06adc4b1cec` | `src/index.ts` |
 | `db1544c2cedd93701cb95fa93bd676222018831dbc0c9115a56d15f40778abcb` | `src/types.ts` |
