@@ -314,11 +314,27 @@ describe('the v0 → v1 re-skin migration', () => {
     expect(app.useAIStore.getState().productDescription).toBe('My own description.')
   })
 
-  it('does not re-run on state already at version 1', async () => {
+  it('is not invoked at all for state already at version 1', async () => {
     const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 1 })
 
     // Someone who deliberately typed the old strings back in after the re-skin keeps
-    // them; the migration is a one-time repair, not a standing policy.
+    // them; the migration is a one-time repair, not a standing policy. Note what this
+    // pins and what it does not: at a matching version `persist` never calls `migrate`,
+    // so this holds no matter what the `fromVersion` guard says. The test below is the
+    // one that reaches the guard.
+    expect(app.useAIStore.getState().productName).toBe(PRE_RESKIN.productName)
+    expect(app.useAIStore.getState().productDescription).toBe(PRE_RESKIN.productDescription)
+  })
+
+  it('leaves state written by a newer build alone — the guard, actually invoked', async () => {
+    const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 2 })
+
+    // A downgrade (a user rolled back to this build) is the one case that hands
+    // `migrate` a `fromVersion` above its own, and it is the only way to exercise the
+    // `fromVersion < 1` guard at all: with a matching version `persist` skips the
+    // migration entirely, so widening that comparison is invisible to every other test
+    // here. Re-branding a context on a downgrade would silently retype the user's
+    // product brief.
     expect(app.useAIStore.getState().productName).toBe(PRE_RESKIN.productName)
     expect(app.useAIStore.getState().productDescription).toBe(PRE_RESKIN.productDescription)
   })
