@@ -12,6 +12,9 @@
     },
     {
       "path": "./tsconfig.mcp.json"
+    },
+    {
+      "path": "./tsconfig.playwright.json"
     }
   ],
   "compilerOptions": {

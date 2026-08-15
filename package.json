@@ -32,6 +32,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:network": "playwright test",
     "build:app": "vite build",
     "build:bridge": "vite build --base=./ --outDir dist-bridge",
     "build:mcp": "node scripts/build-mcp.mjs",
