@@ -62,8 +62,15 @@ jobs:
       # Verified in a separate step, from the artifact on disk, with no reference
       # to how it was produced — which is the position a downstream consumer is
       # in.
+      #
+      # Invoked through the `release:verify` npm alias rather than `node
+      # scripts/verify-release.mjs` directly. Same script, same cost, but the
+      # alias is a shipped entry point that nothing else exercises: a typo or a
+      # stale path in that package.json entry would break the documented command
+      # while every job stayed green (CLI-509's lesson). Routing the release's
+      # own verification through it means the alias cannot rot unnoticed.
       - name: Verify without executing the artifact
-        run: node scripts/verify-release.mjs "$RUNNER_TEMP/tela-artifact"
+        run: npm run release:verify -- "$RUNNER_TEMP/tela-artifact"
 
       - uses: actions/upload-artifact@v4
         with:
