@@ -210,33 +210,37 @@ while all local runs stayed green.
 
 ## CI evidence
 
-First run on the CLI-520 pull request (#11), commit `e6a87d6`:
+Final run on the CLI-520 pull request (#11), commit `68448fb` — the last commit that changes
+harness behaviour (anything after it is documentation only). These URLs replace the earlier
+run's rather than sitting alongside them:
 
 | Job | Result | Run |
 |---|---|---|
-| `payload non-interference (ubuntu-latest)` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876427635/job/94992747526 |
-| `payload non-interference (macos-latest)` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876427635/job/94992747503 |
+| `payload non-interference (ubuntu-latest)` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876897178/job/94993870539 |
+| `payload non-interference (macos-latest)` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876897178/job/94993870566 |
+| `build`, `zero-network probe` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876897184 |
+| `test-windows`, `test-macos` | pass | https://github.com/performance-clickt/tela-design/actions/runs/31876897234 |
 
-Both jobs printed their own evidence rather than merely going green — the numbers below are
-from the logs, not restated from a local run:
+Both payload jobs printed their own evidence rather than merely going green — the numbers
+below are read from the logs, not restated from a local run:
 
 ```
+ubuntu-latest  payload-noninterference: baseline record self-consistent: 136 file hashes reconstruct manifest digest d75854c7…
 ubuntu-latest  payload-noninterference: RESULT identical=128/136 byte-for-byte  stamped=4  app-chrome=3  metadata=1
 ubuntu-latest  payload-launch: tools/list ok: 48 tools          (node v22.23.2 on linux, /home/runner/work/_temp/installed)
-ubuntu-latest  network-denied: ok: 1.1.1.1:443 unreachable — refused at the OS level (ENETUNREACH)
 ubuntu-latest  network-denied: ok: DNS resolution fails — EAI_AGAIN
+macos-latest   payload-noninterference: baseline record self-consistent: 136 file hashes reconstruct manifest digest d75854c7…
 macos-latest   payload-noninterference: RESULT identical=128/136 byte-for-byte  stamped=4  app-chrome=3  metadata=1
 macos-latest   payload-launch: tools/list ok: 48 tools          (node v22.23.1 on darwin, /Users/runner/work/_temp/installed)
-macos-latest   network-denied: ok: 1.1.1.1:443 unreachable — refused at the OS level (EPERM)
 macos-latest   network-denied: ok: DNS resolution fails — ENOTFOUND
 ```
 
 Note the two platforms deny the network by different mechanisms and report different errno
-values (`ENETUNREACH` from an empty namespace routing table, `EPERM` from the macOS sandbox).
-That difference is the evidence that each platform's denial is real and locally enforced,
-rather than one shared wrapper being trusted twice.
+values (`EAI_AGAIN`/`ENETUNREACH` from an empty namespace routing table, `ENOTFOUND`/`EPERM`
+from the macOS sandbox). That difference is the evidence that each platform's denial is real
+and locally enforced, rather than one shared wrapper being trusted twice.
 
-### Unrelated failure seen on the first run
+### Unrelated failure seen on an earlier run
 
 `test-macos` in the **Windows/macOS Determinism** workflow failed once on this PR:
 `src/ai/__tests__/entryPoints.test.ts > … > local mode` timed out at vitest's 5000 ms default
