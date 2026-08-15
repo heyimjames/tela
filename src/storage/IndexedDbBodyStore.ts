@@ -141,6 +141,28 @@ export class IndexedDbBodyStore implements BundleBodyStore {
     }
   }
 
+  /**
+   * Drop every body.
+   *
+   * Exists for the app's "Clear All Data" reset, which sweeps `tela-` keys out of
+   * `localStorage` and, before bodies moved here, thereby deleted the documents too.
+   * Without this the reset would empty the library index while leaving every document
+   * on disk — invisible in the UI and impossible to delete from it.
+   *
+   * Clears the object store rather than deleting the database: `deleteDatabase` blocks
+   * on open connections, and this adapter holds one, so it would hang instead.
+   */
+  async clear(): Promise<void> {
+    const database = await this.ready()
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction([BODY_STORE_NAME], 'readwrite')
+      const request = transaction.objectStore(BODY_STORE_NAME).clear()
+      transaction.oncomplete = () => resolve()
+      transaction.onabort = () => reject(requestError(transaction, 'clear transaction'))
+      request.onerror = () => reject(requestError(request, 'clear'))
+    })
+  }
+
   async delete(id: string): Promise<void> {
     const database = await this.ready()
     await new Promise<void>((resolve, reject) => {

@@ -44,9 +44,9 @@
  *   renders. A save that silently dropped the body would be a document the user
  *   believes is stored and finds missing later.
  *
- * This module is the only place in the app that touches a document storage key. The
- * app-reset helpers and the welcome flag elsewhere address non-document keys and are
- * deliberately left where they are.
+ * This module and `reset.ts` are the only places in the app that touch a document
+ * storage key. The app-reset helpers and the welcome flag elsewhere address
+ * non-document keys and are deliberately left where they are.
  *
  * Nothing here opens a network connection. IndexedDB is a platform API, local to the
  * browser profile; the zero-network gate (`tests/network`) covers the built app.
@@ -316,8 +316,9 @@ export class LocalStorageAdapter implements StorageAdapter {
    * store update that could not fail. Letting a body-removal failure propagate would
    * mean a user in that context could never delete a file: a regression created by
    * routing delete through storage at all. A stranded body is inert — ids are
-   * unique so nothing reuses the key, and the app-reset helpers clear every `tela-`
-   * key regardless.
+   * unique so nothing reuses the key, and the app's "Clear All Data" reset drops
+   * every stored body through `clearStoredDocuments` (`reset.ts`), which reaches
+   * IndexedDB as well as the legacy `tela-` keys.
    *
    * Resolving the body store is inside the same guard, because resolving it is itself
    * a storage operation that a hostile environment can fail.

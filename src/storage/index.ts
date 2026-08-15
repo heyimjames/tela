@@ -26,6 +26,11 @@ export { WorkspaceStorageAdapter, NotImplementedError } from './WorkspaceStorage
  * "the browser is full" is the one storage failure a user can act on.
  */
 export { StorageQuotaExceededError, isQuotaExceededError, type StorageBackend } from './quota'
+/**
+ * Erasure for the app's "Clear All Data" reset. Bodies live in IndexedDB, which that
+ * reset's `localStorage` key sweep cannot reach on its own.
+ */
+export { clearStoredDocuments } from './reset'
 
 /**
  * Whether workspace mode is switched on.

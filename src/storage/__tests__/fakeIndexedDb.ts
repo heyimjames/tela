@@ -66,6 +66,8 @@ export interface FakeIndexedDb {
   failNextWrite(error?: Error, where?: 'request' | 'transaction'): void
   /** Make `open()` fail, the way a storage-denied context does. */
   failOpen(fail: boolean): void
+  /** Make `clear()` fail, so the reset's best-effort contract can be tested. */
+  failClear(error?: Error): void
 }
 
 export function createFakeIndexedDb(): FakeIndexedDb {
@@ -74,6 +76,7 @@ export function createFakeIndexedDb(): FakeIndexedDb {
   let openFails = false
   let pendingWriteFailure: Error | null = null
   let pendingWriteFailureWhere: 'request' | 'transaction' = 'transaction'
+  let clearFails: Error | null = null
 
   const settle = (fn: () => void): void => {
     void Promise.resolve().then(fn)
@@ -108,6 +111,19 @@ export function createFakeIndexedDb(): FakeIndexedDb {
           stores.set(name, store)
         }
         store.set(key, copyBytes(value))
+        request.onsuccess?.()
+      })
+      return request
+    },
+    clear() {
+      const request: FakeRequest<unknown> = { result: undefined, error: null, onsuccess: null, onerror: null }
+      transaction.enqueue(() => {
+        if (clearFails !== null) {
+          const failure = clearFails
+          transaction.fail(failure)
+          return
+        }
+        stores.get(name)?.clear()
         request.onsuccess?.()
       })
       return request
@@ -211,6 +227,9 @@ export function createFakeIndexedDb(): FakeIndexedDb {
     },
     failOpen: (fail) => {
       openFails = fail
+    },
+    failClear: (error = new Error('clear refused')) => {
+      clearFails = error
     },
   }
 }
