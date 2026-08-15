@@ -24,14 +24,30 @@
  * `headers`/`onResponse` hooks. The browser path uses `credentials: 'include'`
  * instead; that difference is confined to `src/workspace/client.ts`.
  *
- * Usage: CLI517_BASE_URL=http://127.0.0.1:3517 CLI517_WORKSPACE_ID=… node …
+ * Usage:
+ *
+ *   CLI517_BASE_URL=http://127.0.0.1:3517 CLI517_WORKSPACE_ID=… \
+ *     npm run test:integration:server
+ *
+ * The named script is the supported entry point: it is what the server repo's
+ * `app-integration.yml` should call, so that job depends on a command this repo
+ * declares rather than on a path into `node_modules`.
+ *
+ * It runs under `vite-node`, which the script needs for the `@/` and vendored-client
+ * aliases. `vite-node` is **not** a declared dependency of this package: it arrives
+ * hoisted as a transitive dependency of `vitest`. Declaring it directly was the
+ * obvious fix and is blocked — `package.json`'s `devDependencies` and
+ * `package-lock.json` are both certified surfaces of the MCP payload under CLI-520,
+ * and adding one line to either fails that gate. See CLI-549 for the measurement
+ * and the options; until that is ruled on, the guard against the hoist changing is
+ * the loud precondition check in the server repo's job, not this comment.
  */
 
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { DesignApiClient } from '@performance-clickt/design-api-client'
+import { ApiError, DesignApiClient } from '@performance-clickt/design-api-client'
 import { WorkspaceStorageAdapter } from '@/storage/WorkspaceStorageAdapter'
 import { ConflictError } from '@/storage/StorageAdapter'
 import { WorkspaceNotFoundError } from '@/workspace/errors'
@@ -252,8 +268,37 @@ async function main(): Promise<void> {
     !remaining.some((entry) => entry.id === bufferDoc.id),
     `${remaining.length} remaining`,
   )
-  await adapterA.archiveDocument('00000000-0000-4000-8000-000000000001')
-  check('archiving an unknown id is not an error', true)
+  // `WorkspaceStorageAdapter.archiveDocument` absorbs a **genuine** `404` so that
+  // "archiving an id that does not exist is not an error" holds in workspace mode
+  // as it does locally, while a `404` that meant something else still propagates.
+  //
+  // Both halves are asserted, because either one alone is satisfiable without the
+  // behaviour existing: asserting only that the adapter resolves would pass just
+  // as well against a server that answered `204` and swallowed nothing, and
+  // asserting neither — which is what the literal `check(…, true)` here did —
+  // passes against anything at all, including an adapter that threw.
+  const UNKNOWN_DOCUMENT_ID = '00000000-0000-4000-8000-000000000001'
+  let unknownIdApiStatus: number | null = null
+  try {
+    await clientA.archiveDocument({ workspaceId: WORKSPACE_ID, documentId: UNKNOWN_DOCUMENT_ID })
+  } catch (error) {
+    unknownIdApiStatus = error instanceof ApiError ? error.status : null
+  }
+  let unknownIdAdapterError: unknown = null
+  try {
+    await adapterA.archiveDocument(UNKNOWN_DOCUMENT_ID)
+  } catch (error) {
+    unknownIdAdapterError = error
+  }
+  check(
+    'archiving an unknown id absorbs the API’s genuine 404 rather than throwing',
+    unknownIdApiStatus === 404 && unknownIdAdapterError === null,
+    `api=${unknownIdApiStatus === null ? 'did not raise an ApiError' : `${unknownIdApiStatus}`} adapter=${
+      unknownIdAdapterError === null
+        ? 'resolved'
+        : `threw ${unknownIdAdapterError instanceof Error ? unknownIdAdapterError.name : typeof unknownIdAdapterError}`
+    }`,
+  )
 
   await clientA.logout()
   let afterLogout: unknown = null
