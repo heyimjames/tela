@@ -65,6 +65,17 @@ test.describe('zero-network runtime gate', () => {
     const layoutSize = await page.evaluate(() => document.querySelector('#root')?.innerHTML.length ?? 0)
     expect(layoutSize, 'the editor rendered no markup').toBeGreaterThan(1000)
 
+    // A service worker is the one actor that could both make requests and hide
+    // them: it has its own global scope, so the init script's hooks do not
+    // apply inside it. The app registers none (there is no `serviceWorker`
+    // reference in `src/`), and this keeps it that way rather than trusting it.
+    expect(
+      await page.evaluate(async () =>
+        navigator.serviceWorker ? (await navigator.serviceWorker.getRegistrations()).length : 0,
+      ),
+      'a service worker is registered — it could make requests this probe cannot observe',
+    ).toBe(0)
+
     // Let anything deferred — an idle callback, a lazy chunk, a late beacon —
     // have its chance before the counts are read.
     await page.waitForLoadState('networkidle')
@@ -87,7 +98,8 @@ test.describe('zero-network runtime gate', () => {
     ).toEqual([])
     expect(
       initiations.map(describeInitiation),
-      'the default-mode app initiated a fetch/XHR/WebSocket/EventSource/beacon',
+      'the default-mode app initiated network traffic (fetch/XHR/WebSocket/EventSource/beacon), ' +
+        'or constructed a worker this probe cannot observe into',
     ).toEqual([])
 
     // Same-origin traffic is expected (the app's own assets) but must be
@@ -125,6 +137,12 @@ test.describe('zero-network runtime gate', () => {
       } catch {
         /* ignore */
       }
+      try {
+        const blob = new Blob(['/* __probe_self_test_worker__ */'], { type: 'text/javascript' })
+        new Worker(URL.createObjectURL(blob)).terminate()
+      } catch {
+        /* ignore */
+      }
       // A different port is a different origin: this is the call that must come
       // back classified as external.
       await fetch('http://127.0.0.1:9/__probe_self_test_external__').catch(() => undefined)
@@ -137,8 +155,10 @@ test.describe('zero-network runtime gate', () => {
         `initiations=${initiations.length} external_classified=${recorder.external().length}`,
     )
 
-    // Every hook the gate relies on must have fired.
-    expect([...kinds].sort()).toEqual(['eventsource', 'fetch', 'websocket', 'xhr'])
+    // Every hook the gate relies on must have fired. Listed exhaustively rather
+    // than checked with `toContain`, so adding a `kind` to the recorder without
+    // covering it here is a failure instead of an untested claim.
+    expect([...kinds].sort()).toEqual(['eventsource', 'fetch', 'websocket', 'worker', 'xhr'])
     expect(initiations.some((c) => c.url.includes('__probe_self_test__'))).toBe(true)
     // A stack is what turns a future failure into a diagnosis.
     expect(initiations.every((c) => c.stack.length > 0)).toBe(true)

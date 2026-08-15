@@ -20,9 +20,18 @@
 
 import type { Page, Request } from '@playwright/test'
 
-/** A network initiation observed from inside the page. */
+/**
+ * A network initiation observed from inside the page.
+ *
+ * `worker` is here for a different reason than the rest. A Worker is not itself
+ * a network call — it is a context this recorder cannot see into, because an
+ * init script patches the page's globals and a worker has its own. The app
+ * constructs none today, so rather than leave a future one as a silent hole in
+ * the gate, constructing one is treated as an initiation: adding a worker turns
+ * the gate red and forces whoever added it to extend the probe.
+ */
 export interface Initiation {
-  kind: 'fetch' | 'xhr' | 'websocket' | 'eventsource' | 'sendbeacon'
+  kind: 'fetch' | 'xhr' | 'websocket' | 'eventsource' | 'sendbeacon' | 'worker'
   url: string
   stack: string
 }
@@ -85,6 +94,13 @@ function instrument(): void {
   window.WebSocket = wrapConstructor(window.WebSocket, 'websocket')
   if (typeof window.EventSource === 'function') {
     window.EventSource = wrapConstructor(window.EventSource, 'eventsource')
+  }
+  // Not network calls — blind spots. See the `worker` note on `Initiation`.
+  if (typeof window.Worker === 'function') {
+    window.Worker = wrapConstructor(window.Worker, 'worker')
+  }
+  if (typeof window.SharedWorker === 'function') {
+    window.SharedWorker = wrapConstructor(window.SharedWorker, 'worker')
   }
   if (typeof navigator.sendBeacon === 'function') {
     const nativeBeacon = navigator.sendBeacon.bind(navigator)
