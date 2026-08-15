@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { isWorkspaceMode } from '@/storage'
+import { isWorkspaceMode } from '@/storage/workspaceMode'
 import { createBrowserDocumentBridge } from './browserBridge'
 import { readInviteToken } from './inviteToken'
 import { AcceptInviteScreen } from './components/AcceptInviteScreen'

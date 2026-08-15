@@ -26,10 +26,10 @@ const CHILD_MARKER = 'local-mode-editor-marker'
 
 async function renderGate(workspaceMode: boolean): Promise<string> {
   vi.resetModules()
-  vi.doMock('@/storage', async () => {
-    const actual = await vi.importActual<typeof import('@/storage')>('@/storage')
-    return { ...actual, isWorkspaceMode: () => workspaceMode }
-  })
+  // Mocked at the leaf the gate actually imports. Mocking the `@/storage` barrel
+  // instead would silently stop intercepting anything the day a consumer switched
+  // to the leaf — which is exactly what happened here.
+  vi.doMock('@/storage/workspaceMode', () => ({ isWorkspaceMode: () => workspaceMode }))
   const { WorkspaceGate } = await import('../WorkspaceGate')
   return renderToStaticMarkup(
     createElement(WorkspaceGate, null, createElement('div', null, CHILD_MARKER)),
@@ -42,7 +42,7 @@ describe('WorkspaceGate', () => {
   })
 
   afterEach(() => {
-    vi.doUnmock('@/storage')
+    vi.doUnmock('@/storage/workspaceMode')
     vi.resetModules()
   })
 

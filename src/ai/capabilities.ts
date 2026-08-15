@@ -27,7 +27,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import { isWorkspaceMode } from '@/storage'
+import { isWorkspaceMode } from '@/storage/workspaceMode'
 
 export interface WorkspaceCapabilities {
   /** Whether this workspace may show AI features at all. Off unless a workspace says otherwise. */

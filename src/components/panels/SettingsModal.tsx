@@ -8,7 +8,11 @@ import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SliderField } from '@/components/controls/SliderField'
-import { clearStoredDocuments } from '@/storage'
+// Imported from its own module rather than the `@/storage` barrel: the barrel
+// pulls both adapters, and workspace mode's adapter pulls the whole API client.
+// This component needs one function, and the barrel's weight lands in the module
+// graph of every test that renders it.
+import { clearStoredDocuments } from '@/storage/reset'
 import {
   X,
   Settings,
