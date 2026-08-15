@@ -39,6 +39,8 @@
     "release:build": "node scripts/build-release.mjs",
     "release:verify": "node scripts/verify-release.mjs",
     "release:reproduce": "node scripts/reproduce-release.mjs",
+    "verify:payload": "node scripts/verify-payload-noninterference.mjs",
+    "payload:launch": "node scripts/launch-installed-payload.mjs",
     "test:evals": "node evaluations/run.mjs"
   },
   "dependencies": {
