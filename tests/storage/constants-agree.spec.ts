@@ -12,6 +12,7 @@
  * separately from the gate it protects.
  */
 
+import { readdirSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 
 import { BODY_STORE_NAME, DATABASE_NAME } from '@/storage/IndexedDbBodyStore'
@@ -32,5 +33,34 @@ test.describe('the inspector and the app name the same store', () => {
       OBSERVED_LEGACY_KEY_PREFIX,
       'the app changed the legacy body key prefix — the migration assertions address the old one',
     ).toBe(DOCUMENT_KEY_PREFIX)
+  })
+
+  /**
+   * The gate still covers what it was built to cover.
+   *
+   * Deleting a spec file does not fail a Playwright run: the remaining tests pass and
+   * the job is green, so a behaviour can stop being checked without anything going
+   * red. Pinning the set turns that into a failure someone has to look at — the same
+   * reason CLI-533 pins the op list rather than trusting behavioural coverage alone.
+   *
+   * This is a floor, not a ceiling: adding a spec is allowed and needs no edit here
+   * (`playwright.storage.config.ts` subtracts rather than allow-lists, so a new file
+   * runs by default). Removing one is the thing that has to be deliberate.
+   */
+  test('every behaviour this gate exists to cover still has a spec', () => {
+    const required = [
+      'storage-gate.spec.ts',
+      'inspector-selftest.spec.ts',
+      'workspace-cookies.spec.ts',
+      'constants-agree.spec.ts',
+    ]
+    const present = readdirSync(import.meta.dirname).filter((name) => name.endsWith('.spec.ts'))
+    // Asserted before the comparison: an empty listing would otherwise satisfy
+    // nothing-is-missing by having read the wrong directory.
+    expect(present.length, 'no spec files were found — this check read the wrong directory').toBeGreaterThan(0)
+    expect(
+      required.filter((name) => !present.includes(name)),
+      'a covered behaviour lost its spec file; the gate is quietly no longer checking it',
+    ).toEqual([])
   })
 })

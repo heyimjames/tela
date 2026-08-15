@@ -63,7 +63,14 @@ export default defineConfig({
   projects: [
     {
       name: 'storage',
-      testMatch: ['**/storage-gate.spec.ts', '**/inspector-selftest.spec.ts', '**/constants-agree.spec.ts'],
+      // Everything *except* the cookie spec, rather than a list of the files that
+      // exist today. A per-project allow-list is a silent-drop hole: a spec added to
+      // `tests/storage/` later would match no project and never run, and Playwright
+      // only errors when *no* test matches at all, so the job would stay green while
+      // quietly not running the new check. Subtracting instead means a new spec runs
+      // by default, against the default-mode build, and anything that needs the other
+      // origin has to be named here to opt out.
+      testIgnore: ['**/workspace-cookies.spec.ts'],
       use: { ...devices['Desktop Chrome'], baseURL: STORAGE_BASE_URL },
     },
     {
