@@ -49,20 +49,30 @@ export function createDesignApiClient(options: WorkspaceClientOptions = {}): Des
 /**
  * The ambient `fetch`, bound to its global.
  *
- * Not a nicety. The generated client's default is `globalThis.fetch` stored on an
- * instance field and invoked as `this.fetchImpl(url, init)` — which calls it with the
- * client as its receiver. Node's `fetch` does not care; a browser's does, because
- * `Window.fetch` brand-checks its `this` and throws
- * `TypeError: Failed to execute 'fetch' on 'Window': Illegal invocation`. Left alone,
- * **every** workspace-mode API call fails before a request is ever made: login,
- * listing, open, save, logout. CLI-538's browser-level cookie gate is what found it —
- * nothing else could, because every other test either injects its own `fetch` or runs
- * under Node, where the unbound call happens to work.
+ * History, and why this survives the upstream fix. The generated client's default
+ * used to be `globalThis.fetch` stored on an instance field and invoked as
+ * `this.fetchImpl(url, init)` — which calls it with the client as its receiver.
+ * CLI-538's browser-level cookie gate recorded that shape failing with
+ * `TypeError: Failed to execute 'fetch' on 'Window': Illegal invocation`, so this bind
+ * was added here: the vendored directory is generated from the server repo's
+ * `openapi/v1.yaml` and checked against its generator, so a hand edit there would be
+ * reverted by the next regeneration. CLI-553 fixed the generator instead — its default
+ * is now bound, and its call site is detached so even an injected unbound `fetch` is
+ * safe — and CLI-555 re-vendored that client here.
  *
- * Fixed here rather than in `vendor/design-api-client/`: that directory is generated
- * from the server repo's `openapi/v1.yaml` and is checked against its generator, so a
- * hand edit would be reverted by the next regeneration. The generator's default
- * deserves the same fix — filed as a follow-up — but the app must not wait for it.
+ * This function is therefore no longer load-bearing, and it is kept anyway, for two
+ * reasons. It composes: binding an already-bound function is a no-op, and the value is
+ * passed as an explicit `fetch`, which the client uses exactly as given. And it keeps
+ * the app's guarantee independent of the vendored bytes, which advance on someone
+ * else's schedule. `__tests__/clientFetchBinding.test.ts` pins both halves separately —
+ * this consumer's, and the vendored default's — so removing either one fails a test
+ * rather than quietly resting on the other.
+ *
+ * One caveat on the story, per CLI-553: a direct probe of the pinned Chromium 149,
+ * Firefox 151 and WebKit 26.5 found all three accept any receiver for `fetch`, so the
+ * `Illegal invocation` CLI-538 saw is not explained by the receiver mechanism and its
+ * real cause is still open. The narrow reason stands regardless — a client should not
+ * depend on an engine's tolerance for a receiver it was never given.
  *
  * Read at call time, not at module load: a test that replaces `globalThis.fetch`
  * before building a client would otherwise get the one captured at import.
