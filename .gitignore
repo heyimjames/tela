@@ -11,6 +11,8 @@ node_modules
 dist
 dist-bridge
 dist-probe
+dist-storage-probe
+dist-workspace-probe
 dist-ssr
 *.local
 

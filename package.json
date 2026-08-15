@@ -33,6 +33,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:network": "playwright test",
+    "test:storage": "playwright test --config playwright.storage.config.ts",
     "test:integration:server": "vite-node scripts/cli517-integration.mts",
     "build:app": "vite build",
     "build:bridge": "vite build --base=./ --outDir dist-bridge",

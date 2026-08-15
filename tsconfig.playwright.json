@@ -5,7 +5,15 @@
     // DOM as well as node: the probe's instrumentation runs inside the page.
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "types": ["node"],
+    "types": ["node", "vite/client"],
+    // The storage gate's harness page and its fixture builder import the app's own
+    // modules through the same aliases the app build uses (`vite.config.ts`), so the
+    // gate typechecks against the same tree it exercises.
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@performance-clickt/design-api-client": ["./vendor/design-api-client/src/index.ts"]
+    },
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -26,5 +34,10 @@
   // The zero-network gate is typechecked by `npm run typecheck` like the rest of
   // the repo. A gate that only TypeScript-at-runtime (via Playwright's own
   // transpile) would let a rename break it silently until the next CI run.
-  "include": ["playwright.config.ts", "tests/network"]
+  "include": [
+    "playwright.config.ts",
+    "playwright.storage.config.ts",
+    "tests/network",
+    "tests/storage"
+  ]
 }

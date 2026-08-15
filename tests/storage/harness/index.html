@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>tela storage harness</title>
+  </head>
+  <body>
+    <!-- Text, not markup, because a spec waits on it: a page that failed to execute
+         its module renders an empty body, and "the harness is absent" must be
+         distinguishable from "the harness answered". -->
+    <p id="harness-status">loading</p>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
