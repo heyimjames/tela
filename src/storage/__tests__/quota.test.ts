@@ -174,6 +174,48 @@ describe('bundle bodies in IndexedDB (CLI-527)', () => {
       expect(legacy.map.get('tela-files')).toBe('{"files":[]}')
     })
 
+    it('adopts on read even when the legacy store cannot be enumerated', async () => {
+      // Isolates adoption from the sweep. A plain `DocumentStore` — no `length`, no
+      // `key()` — is not enumerable, so the sweep returns early and the *only* way this
+      // body can be found is the per-document adoption path. Without this test that
+      // path could be deleted outright and every other test here would still pass,
+      // which is how it was caught.
+      const bundle = writeBundle(makeFullCoverageDocument())
+      const map = new Map<string, string>([[documentKey('doc-legacy'), base64Encode(bundle)]])
+      const opaque: DocumentStore = {
+        getItem: (key) => map.get(key) ?? null,
+        setItem: (key, value) => void map.set(key, value),
+        removeItem: (key) => void map.delete(key),
+      }
+
+      const isolated = new LocalStorageAdapter(opaque, idb.factory)
+      const { bundle: read } = await isolated.getDocument('doc-legacy')
+
+      expect(Buffer.from(read)).toEqual(Buffer.from(bundle))
+      expect(idb.contents(BODY_STORE_NAME).has('doc-legacy')).toBe(true)
+      expect(map.has(documentKey('doc-legacy'))).toBe(false)
+    })
+
+    it('still returns the document when adopting it fails', async () => {
+      // A migration that cannot complete must not turn a working read into a failed
+      // one — the bytes are already in hand, and the caller asked for a document, not
+      // for a migration. The legacy copy stays, because it is the only one there is.
+      const bundle = writeBundle(makeFullCoverageDocument())
+      const map = new Map<string, string>([[documentKey('doc-legacy'), base64Encode(bundle)]])
+      const opaque: DocumentStore = {
+        getItem: (key) => map.get(key) ?? null,
+        setItem: (key, value) => void map.set(key, value),
+        removeItem: (key) => void map.delete(key),
+      }
+      const isolated = new LocalStorageAdapter(opaque, idb.factory)
+      idb.failNextWrite()
+
+      const { bundle: read } = await settlesWithin(isolated.getDocument('doc-legacy'))
+
+      expect(Buffer.from(read)).toEqual(Buffer.from(bundle))
+      expect(map.has(documentKey('doc-legacy'))).toBe(true)
+    })
+
     it('leaves the legacy copy in place when it cannot be migrated', async () => {
       // A body that cannot be moved must not be deleted: the old copy is the only one
       // that exists, and losing it would be losing the document.
