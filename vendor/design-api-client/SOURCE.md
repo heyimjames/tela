@@ -37,7 +37,10 @@ The bare specifier `@performance-clickt/design-api-client` is aliased to
 `vendor/design-api-client/src/index.ts` in three places, which must stay in
 agreement:
 
-- `tsconfig.app.json` / `tsconfig.json` — `compilerOptions.paths`
+- `tsconfig.json`, `tsconfig.app.json` and `tsconfig.tela-node.json` —
+  `compilerOptions.paths`. All three: `tsconfig.tela-node.json` reaches
+  `src/storage/` through its `tests/**/*.ts` include, so omitting it there leaves
+  `npm run typecheck` red while `tsc -p tsconfig.app.json` is green.
 - `vite.config.ts` — `resolve.alias`
 - `vitest.config.ts` — `resolve.alias`
 
@@ -50,7 +53,7 @@ sha256 of every vendored file. Each hash equals the corresponding blob at the
 source commit — verified at vendoring time with
 `git show cbad2b0:packages/api-client/<path> | shasum -a 256`.
 
-`src/__tests__/vendoredClient.test.ts` re-checks this table on every test run, so
+`src/workspace/__tests__/vendoredClient.test.ts` re-checks this table on every test run, so
 an edit to a vendored file, or a version bump away from `1.0.0`, fails a test
 instead of silently invalidating the provenance recorded here.
 
