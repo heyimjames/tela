@@ -22,7 +22,7 @@
 
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * The seven entry points from the CLI-513 plan comment.
@@ -198,6 +198,68 @@ function expectNoAiSurface(html: string) {
   }
 }
 
+/**
+ * The one budget this file raises, and the only thing it absorbs: a single cold Vite
+ * transform of the component import graph (see `warmUpComponentGraph`).
+ *
+ * Measured at 0.7–0.9 s on an idle developer machine and observed at up to 7.6 s on a
+ * saturated shared runner (CLI-520 PR #11, `test-macos`, run 31876427907). 30 s is
+ * ~35x the local cost and ~4x the worst contended observation — far enough above both
+ * that runner contention cannot reach it, while still failing in reasonable time if
+ * the graph ever becomes pathological.
+ *
+ * No test's own budget is changed: every `it()` in this file keeps vitest's 5000 ms
+ * default, and after the warm-up each one needs ~40 ms of it. This is deliberately
+ * *not* a global `testTimeout` bump — the cost is one-time and belongs to one hook.
+ */
+const GRAPH_WARMUP_TIMEOUT_MS = 30_000
+
+/** Timings from the warm-up, asserted on by the regression pin at the end of this file. */
+const warmUp = { coldMs: 0 }
+
+/**
+ * Pay the component graph's one-time transform cost here, outside any test's budget.
+ *
+ * **Why this exists.** `loadApp` is cheap on every call but the first: measured over
+ * three isolated runs, the first cost 705–892 ms and each identical call after it cost
+ * 33–60 ms. The gap is not work the test does — it is Vite transforming the component
+ * import graph, which happens once per worker. `@/components/layout/RightSidebar`
+ * alone accounts for 772 ms of it cold and 33 ms once warm; `vi.resetModules()` clears
+ * the module registry but never the transform cache, which is why every later
+ * `loadApp` re-evaluates cheaply.
+ *
+ * That graph is the application's real one — RightSidebar renders ten panels, the
+ * exporter and the design store — so the cost is genuine, not an accident of the test.
+ * CLI-517's barrel offender was already removed in bfca518, and `@/storage` no longer
+ * appears in this graph at all, so there is no remaining heavy path to cut here.
+ *
+ * **What went wrong without it.** Left inline, that one-time cost is billed to whichever
+ * `it()` happens to run first — which is why `local mode — the default …`, and only
+ * that test, kept breaching vitest's 5000 ms default: 5011 ms on windows-latest
+ * (CLI-537) and 7565 ms on macOS under full-suite contention (CLI-520). Both passed on
+ * a re-run with no code change. Paying the cost here leaves each test measuring only
+ * its own work, so the flake's mechanism is gone rather than merely made less likely.
+ *
+ * The load mirrors the first test's exact configuration, and renders once too, so the
+ * warm-up covers the whole path that test takes rather than only its imports. Env stubs
+ * and the module registry are reset afterwards, exactly as `afterEach` does, so no test
+ * observes any state from this hook.
+ */
+beforeAll(async () => {
+  const startedAt = performance.now()
+  renderAllSurfaces(await loadApp({ ...AI_PANEL_OPEN, workspaceMode: false, endpoint: false }))
+  warmUp.coldMs = performance.now() - startedAt
+  vi.unstubAllEnvs()
+  // `vi.doMock` is *not* cleared by `vi.resetModules()` — verified, not assumed — so the
+  // stand-in store this warm-up registered via `AI_PANEL_OPEN` would otherwise stay
+  // registered for the tests that never call `loadApp` (the two predicate tests and the
+  // capability-derivation one, which import their subject directly). `loadApp` unmocks on
+  // entry, so its own callers were never affected; unmocking here makes the hook leave
+  // nothing behind either way.
+  vi.doUnmock('@/store/useUIStore')
+  vi.resetModules()
+}, GRAPH_WARMUP_TIMEOUT_MS)
+
 afterEach(() => {
   vi.unstubAllEnvs()
   vi.resetModules()
@@ -337,6 +399,68 @@ describe('entry point 8 — the inline AI prompt shortcut', () => {
     // And the original key condition still holds on its own.
     expect(isInlineAiPromptShortcut({ key: 'i', metaKey: false, ctrlKey: false }, true)).toBe(false)
     expect(isInlineAiPromptShortcut({ key: 'k', metaKey: true, ctrlKey: false }, true)).toBe(false)
+  })
+})
+
+/**
+ * The pin for the fix above — without it, the warm-up could be deleted, or the graph
+ * could grow back over budget, and nothing would go red until CI flaked again.
+ *
+ * Every assertion here is measured rather than structural, because the defect was a
+ * timing one; the thresholds are set far enough from the measurements that ordinary
+ * runner jitter cannot trip them, and far enough from the budgets that they fail
+ * *before* a real test can time out.
+ */
+describe('the cold graph transform stays out of the per-test budget', () => {
+  it('is paid by the warm-up hook, and a warm reload is a small fraction of the budget', async () => {
+    // Non-vacuity, part 1: the warm-up must have run and measured something. Deleting
+    // the `beforeAll` leaves this at 0 and fails here rather than in CI three PRs later.
+    expect(warmUp.coldMs).toBeGreaterThan(0)
+
+    const startedAt = performance.now()
+    await loadApp({ ...AI_PANEL_OPEN, workspaceMode: false, endpoint: false })
+    const warmMs = performance.now() - startedAt
+
+    /**
+     * Emit the measurements this test asserts on.
+     *
+     * A green job proves no budget was breached; it does not show how much room was
+     * left, and "the headroom is comfortable" is precisely the claim this issue has to
+     * substantiate on runners nobody can profile by hand. Vitest's default reporter
+     * prints only a per-file total, which cannot separate the warm-up's cost from any
+     * single test's. This line puts both numbers, and their margins, in every run's log
+     * on every platform — so the next person reading a slow CI run can see whether the
+     * graph is creeping toward the bounds instead of inferring it from a pass.
+     */
+    console.log(
+      `[entrypoints-budget] cold=${Math.round(warmUp.coldMs)}ms warm=${Math.round(warmMs)}ms ` +
+        `cold_bound=10000ms warm_bound=2500ms hook_budget=${GRAPH_WARMUP_TIMEOUT_MS}ms per_test_budget=5000ms`,
+    )
+
+    // The property that removes the flake: once warm, a full reload of the same graph
+    // is a small fraction of vitest's 5000 ms per-test default.
+    //
+    // The threshold is half the budget, deliberately loose. A pin that itself flakes on a
+    // saturated runner would just trade one red build for another, so it is sized against
+    // the worst contention on record rather than against the local measurement: the worst
+    // observed cold load (7565 ms, CLI-520 run 31876427907) is ~8.9x this machine's idle
+    // cold load, and applying that same factor to the warm cost (33–60 ms) predicts ~530 ms
+    // at worst. 2500 ms is ~4.7x that, and still low enough that a test cannot approach the
+    // 5000 ms budget from this cause without failing here first.
+    expect(warmMs).toBeLessThan(2500)
+
+    // Non-vacuity, part 2: prove the warm-up absorbed a real cost rather than being a
+    // no-op that happens to pass. Measured ratio is ~20x; 3x leaves ample room. If a
+    // future change makes the cold load genuinely cheap, this fails and the warm-up
+    // (and its raised hook budget) should be removed — that is the intended prompt.
+    expect(warmUp.coldMs).toBeGreaterThan(warmMs * 3)
+
+    // Import-graph regression bound, in the spirit of the CLI-517 lesson: the cold load
+    // measured 0.7–0.9 s here. 10 s is ~12x that — above any plausible contention, but
+    // below GRAPH_WARMUP_TIMEOUT_MS, so a graph that grows heavy (a new barrel
+    // dependency of the kind CLI-517 introduced) fails this test instead of quietly
+    // eating the warm-up's headroom until the hook itself starts timing out.
+    expect(warmUp.coldMs).toBeLessThan(10_000)
   })
 })
 
