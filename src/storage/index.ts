@@ -19,7 +19,18 @@ import type { StorageAdapter } from './StorageAdapter'
 export type { StorageAdapter, DocumentSummary } from './StorageAdapter'
 export { ConflictError } from './StorageAdapter'
 export { LocalStorageAdapter, DOCUMENT_KEY_PREFIX, documentKey } from './LocalStorageAdapter'
+export type { DocumentStore, BundleBodyStore } from './BundleBodyStore'
 export { WorkspaceStorageAdapter, NotImplementedError } from './WorkspaceStorageAdapter'
+/**
+ * The quota surface. Exported so a caller can branch on *why* a save failed —
+ * "the browser is full" is the one storage failure a user can act on.
+ */
+export { StorageQuotaExceededError, isQuotaExceededError, type StorageBackend } from './quota'
+/**
+ * Erasure for the app's "Clear All Data" reset. Bodies live in IndexedDB, which that
+ * reset's `localStorage` key sweep cannot reach on its own.
+ */
+export { clearStoredDocuments } from './reset'
 
 /**
  * Whether workspace mode is switched on.

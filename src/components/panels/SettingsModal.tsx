@@ -8,6 +8,7 @@ import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SliderField } from '@/components/controls/SliderField'
+import { clearStoredDocuments } from '@/storage'
 import {
   X,
   Settings,
@@ -210,13 +211,20 @@ function GeneralSettings() {
           className="rounded-[5px]"
           onClick={() => {
             if (confirm('This will clear all projects, designs, and settings. Are you sure?')) {
-              // Only clear this app's own keys — the Ads Creator runs as a
-              // same-origin iframe inside a host app, so localStorage.clear() would
-              // wipe the host app's data too.
-              Object.keys(localStorage)
-                .filter((k) => k.startsWith('tela-'))
-                .forEach((k) => localStorage.removeItem(k))
-              window.location.reload()
+              // Document bodies live in IndexedDB, which the key sweep below cannot
+              // see (CLI-527). Clearing them first is what keeps this button's promise
+              // true; without it the library index goes and every design stays on
+              // disk, invisible and undeletable. `clearStoredDocuments` never
+              // rejects, so a store that refuses cannot strand the reset half done.
+              void clearStoredDocuments().then(() => {
+                // Only clear this app's own keys — the Ads Creator runs as a
+                // same-origin iframe inside a host app, so localStorage.clear() would
+                // wipe the host app's data too.
+                Object.keys(localStorage)
+                  .filter((k) => k.startsWith('tela-'))
+                  .forEach((k) => localStorage.removeItem(k))
+                window.location.reload()
+              })
             }
           }}
         >
