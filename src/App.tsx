@@ -19,6 +19,7 @@ import { installAgentRpc } from '@/agent/rpc'
 import { useEffect } from 'react'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
+import { WorkspaceGate } from '@/workspace/WorkspaceGate'
 
 function EditorView() {
   useKeyboardShortcuts()
@@ -89,9 +90,15 @@ export default function App() {
       {/* vaul scales this wrapper back (and rounds its corners) when a sheet opens,
           revealing the dark #root behind it — the iOS "page pushed back" depth. */}
       <div data-vaul-drawer-wrapper="" className="bg-background">
-        {route.page === 'library' && <HomePage />}
-        {route.page === 'settings' && <SettingsPage />}
-        {(route.page === 'editor' || route.page === 'editor-standalone' || route.page === 'project') && <EditorView />}
+        {/* Inert with VITE_WORKSPACE_MODE off: the gate returns its children before
+            reading any workspace state, so local mode renders exactly what it did
+            before. With it on, the gate owns sign-in, invitations and the workspace
+            library, and hands over to the editor once a document is open. */}
+        <WorkspaceGate>
+          {route.page === 'library' && <HomePage />}
+          {route.page === 'settings' && <SettingsPage />}
+          {(route.page === 'editor' || route.page === 'editor-standalone' || route.page === 'project') && <EditorView />}
+        </WorkspaceGate>
       </div>
     </TooltipProvider>
   )

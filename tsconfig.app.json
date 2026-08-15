@@ -41,6 +41,8 @@
   "exclude": [
     "src/tela/nodeIo.ts",
     "src/tela/journal.ts",
+    "src/workspace/__tests__",
+    "src/storage/__tests__",
     "src/mcp",
     "src/**/*.test.ts",
     "src/**/*.child.ts"

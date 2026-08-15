@@ -7,7 +7,8 @@ import { useFileStore } from '@/store/useFileStore'
 import { Button } from '@/components/ui/button'
 import { FormatSelector } from '@/components/panels/FormatSelector'
 import { downloadSessionBundle, exportSessionBundle, openBundleFile, describeTelaError } from '@/tela/browserIo'
-import { getStorageAdapter } from '@/storage'
+import { getStorageAdapter, isWorkspaceMode } from '@/storage'
+import { getWorkspaceState, saveDocument } from '@/workspace/session'
 import {
   Undo2,
   Redo2,
@@ -77,6 +78,31 @@ export function TopBar() {
   }, [versionsOpen])
 
   const handleSaveBundle = async () => {
+    // Workspace mode saves to the server, not to the user's disk, and it must go
+    // through the session controller rather than the adapter directly: the
+    // controller holds the `contentRevision` this edit is based on, which is the
+    // whole concurrency mechanism. Calling `putDocument(id, bytes, null)` — what
+    // the local path below does — asserts "this document has no revision yet" and
+    // would be refused by the server on every save after the first.
+    //
+    // Placed before the local path and returning from inside it, so with the flag
+    // off not one statement here executes and local behaviour is unchanged.
+    if (isWorkspaceMode() && getWorkspaceState().open !== null) {
+      const outcome = await saveDocument()
+      if (outcome.kind === 'saved') {
+        setFileStatus({ tone: 'ok', text: 'Saved to workspace' })
+      } else if (outcome.kind === 'rename-not-stored') {
+        setFileStatus({ tone: 'ok', text: 'Saved — the name change is not stored on the server yet' })
+      } else if (outcome.kind === 'refused') {
+        // Deliberately not phrased as a failure: nothing was written, and the
+        // conflict notice owns the explanation and the choices.
+        setFileStatus({ tone: 'error', text: 'Save refused — this document changed on the server' })
+      } else {
+        setFileStatus({ tone: 'error', text: getWorkspaceState().notice ?? 'Could not save' })
+      }
+      return
+    }
+
     // The download is the user's artifact and its behaviour is unchanged: it runs
     // first, and nothing added after it can turn a completed save into a failure.
     try {

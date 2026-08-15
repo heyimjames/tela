@@ -34,6 +34,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@performance-clickt/design-api-client": [
+        "./vendor/design-api-client/src/index.ts"
       ]
     },
     "jsx": "react-jsx"
@@ -43,6 +46,8 @@
     "src/tela/journal.ts",
     "src/tela/**/*.test.ts",
     "src/tela/**/*.child.ts",
+    "src/workspace/__tests__/**/*.ts",
+    "src/storage/__tests__/**/*.ts",
     "tests/**/*.ts",
     "scripts/**/*.mjs",
     "evaluations/**/*.mjs"
