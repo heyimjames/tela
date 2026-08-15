@@ -429,6 +429,30 @@ test.describe('zero-network runtime gate — driven paths', () => {
     expect(after.external).toEqual([])
   })
 
+  test('a segment cannot be opened over a document with no hooks installed', async ({ page }) => {
+    // The negative control for the guard that makes every per-path zero mean
+    // something. Run on every CI job rather than once by hand: a one-off check
+    // proves the guard worked that day, not that it still works.
+    const recorder = await attachRecorder(page, BASE_URL)
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+
+    // Control: a watched document opens a segment. Without this, the offender
+    // case below could pass because `begin` is broken for every input.
+    await (await recorder.begin('selftest-guard-control')).end()
+
+    // Offender: the hooks are gone, so any zero from this document would be an
+    // artefact of nothing watching.
+    await page.evaluate(() => {
+      delete (window as unknown as { __telaNetProbe?: unknown }).__telaNetProbe
+    })
+    await expect(
+      recorder.begin('selftest-guard-offender'),
+      'a segment opened over an unwatched document — every per-path zero could be vacuous',
+    ).rejects.toThrow(/vacuously zero/)
+    console.log('[zero-network self-test] unwatched_document_rejected=true')
+  })
+
   test('a beacon fired from a lifecycle handler is caught, classified and attributed', async ({
     page,
   }) => {

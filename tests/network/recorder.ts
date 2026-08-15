@@ -235,6 +235,21 @@ export async function attachRecorder(page: Page, origin: string): Promise<Record
     harvested: () => harvestedCalls.slice(),
 
     async begin(label: string): Promise<OpenSegment> {
+      // A segment over a document whose hooks are missing would report an
+      // initiation count of zero and pass — the exact "zero because nothing was
+      // watching" failure this probe exists to rule out. `harvest` cannot raise
+      // it (an absent probe and a quiet one both yield no calls), so the
+      // condition is checked here, once per path, before the path is driven.
+      const watching = await page.evaluate(
+        () => (window as ProbeWindow).__telaNetProbe?.installed === true,
+      )
+      if (!watching) {
+        throw new Error(
+          `segment "${label}": the in-page network hooks are not installed in the current ` +
+            'document, so this path\'s initiation count would be vacuously zero',
+        )
+      }
+
       // Draw the boundary by draining everything outstanding into the previous
       // segment's territory first, so a call made before this path started
       // cannot be attributed to it (nor this path's calls to the last one).

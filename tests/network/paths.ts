@@ -237,12 +237,15 @@ function describeInitiation(call: Initiation): string {
  * not evidence a path ran, but a line naming the path and the numbers it
  * checked is.
  *
- * `minRequests` is the anti-vacuity guard and it is per path on purpose. Most of
- * these paths legitimately make no same-origin request either — the bundle is
- * already loaded and the work is all local — so requiring traffic everywhere
- * would be a false assertion. Where a path *must* produce traffic (a reload),
- * the caller says so; everywhere else the driver's returned evidence carries the
- * "it ran" claim instead, asserted before this function is called.
+ * `minRequests` applies only where a path *must* produce same-origin traffic (a
+ * reload fetches the document and its bundle). Most of these paths legitimately
+ * make no request at all — the bundle is already loaded and the work is local —
+ * so the floor is not asserted for them at all, rather than asserted as `>= 0`.
+ * A `>= 0` check cannot fail, and a check that cannot fail is worse than no
+ * check because it reads in the log like one that passed. What carries the "this
+ * path ran" claim there is the driver's own returned evidence, asserted by the
+ * caller before this function is reached; and what rules out an unwatched
+ * document is `Recorder.begin`, which refuses to open a segment over one.
  */
 export function expectSegmentClean(segment: Segment, minRequests = 0): void {
   console.log(
@@ -259,8 +262,10 @@ export function expectSegmentClean(segment: Segment, minRequests = 0): void {
     `path "${segment.label}" initiated network traffic ` +
       '(fetch/XHR/WebSocket/EventSource/beacon), or constructed a worker this probe cannot see into',
   ).toEqual([])
-  expect(
-    segment.requests.length,
-    `path "${segment.label}" saw fewer requests than it must — the recorder was not observing it`,
-  ).toBeGreaterThanOrEqual(minRequests)
+  if (minRequests > 0) {
+    expect(
+      segment.requests.length,
+      `path "${segment.label}" saw fewer requests than it must — the recorder was not observing it`,
+    ).toBeGreaterThanOrEqual(minRequests)
+  }
 }
