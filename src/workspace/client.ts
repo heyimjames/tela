@@ -21,6 +21,7 @@
 import { DesignApiClient } from '@performance-clickt/design-api-client'
 import type { FetchLike } from '@performance-clickt/design-api-client'
 import { WORKSPACE_API_BASE_URL } from './endpoint'
+import { assertApiResponseShape } from './responseShape'
 
 let cached: DesignApiClient | null = null
 
@@ -39,11 +40,39 @@ export interface WorkspaceClientOptions {
 export function createDesignApiClient(options: WorkspaceClientOptions = {}): DesignApiClient {
   return new DesignApiClient({
     baseUrl: options.baseUrl ?? WORKSPACE_API_BASE_URL,
-    fetch: options.fetch ?? browserFetch(),
+    fetch: shapeGuarded(options.fetch ?? browserFetch()),
     // Browsers only. Node's fetch ignores it, which is why the client also offers a
     // `headers` hook — irrelevant here, since this app is the browser side.
     credentials: 'include',
   })
+}
+
+/**
+ * Wrap a `fetch` so every response it produces is checked for API shape.
+ *
+ * Applied here, at the one place a client is built, rather than inside any single
+ * call: the generated client funnels every route through one `request()`, which
+ * calls this function once, so wrapping it covers the whole surface — the health
+ * probe, the document list, bundle `PUT`s, logout — and covers routes added later
+ * without anyone remembering to. That is the "which existing paths did NOT get
+ * wired into the new guard" question answered structurally rather than by a list.
+ *
+ * Injected fetches are wrapped too. A test that mounts a fake wire server is
+ * exactly the place a wrong-shaped response should still be refused; exempting
+ * tests would mean the guard the app runs under is not the guard the suite proves.
+ *
+ * `undefined` passes through untouched, so the client still raises its own "No
+ * fetch available" `TypeError` rather than this file inventing a different one.
+ */
+function shapeGuarded(inner: FetchLike | undefined): FetchLike | undefined {
+  if (inner === undefined) {
+    return undefined
+  }
+  return async (input, init) => {
+    const response = await inner(input, init)
+    assertApiResponseShape(response, input)
+    return response
+  }
 }
 
 /**
@@ -61,8 +90,9 @@ export function createDesignApiClient(options: WorkspaceClientOptions = {}): Des
  * safe — and CLI-555 re-vendored that client here.
  *
  * This function is therefore no longer load-bearing, and it is kept anyway, for two
- * reasons. It composes: binding an already-bound function is a no-op, and the value is
- * passed as an explicit `fetch`, which the client uses exactly as given. And it keeps
+ * reasons. It composes: binding an already-bound function is a no-op, and the bound
+ * value reaches the client inside `shapeGuarded`, whose wrapper calls it detached —
+ * so the receiver the global sees is still the one it handed out. And it keeps
  * the app's guarantee independent of the vendored bytes, which advance on someone
  * else's schedule. `__tests__/clientFetchBinding.test.ts` pins both halves separately —
  * this consumer's, and the vendored default's — so removing either one fails a test

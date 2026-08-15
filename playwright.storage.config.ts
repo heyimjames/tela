@@ -114,9 +114,13 @@ export default defineConfig({
       env: {
         VITE_WORKSPACE_MODE: 'true',
         VITE_AI_API_ORIGIN: '',
-        // Same-origin API, which is the deployment shape src/workspace/endpoint.ts
-        // documents — so the cookie under test is a first-party one, as in production.
-        VITE_WORKSPACE_API_BASE_URL: '',
+        // `VITE_WORKSPACE_API_BASE_URL` is deliberately *absent*, not empty. The stub
+        // mounts the API at `/api` exactly as the production proxy does (see
+        // `docs/workspace-deployment.md`), so this build has to reach it on the base
+        // path it compiled — which makes the gate an end-to-end check of the compiled
+        // default rather than a check of whatever the harness overrode it with. It
+        // used to pass `''`; that pinned the harness's own configuration and is why
+        // CLI-559's `/` default reached production with a green suite behind it.
         STUB_PORT: String(WORKSPACE_PORT),
         STUB_ROOT: 'dist-workspace-probe',
       },

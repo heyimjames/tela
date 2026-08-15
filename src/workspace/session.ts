@@ -40,6 +40,7 @@ import {
   describeWorkspaceError,
   mapApiError,
 } from './errors'
+import { UnexpectedResponseError } from './responseShape'
 
 /** What the app is showing. A closed set, so a component can switch exhaustively. */
 export type WorkspaceScreen = 'signed-out' | 'accept-invite' | 'library' | 'editor'
@@ -216,6 +217,15 @@ export async function login(email: string, password: string): Promise<void> {
       setState({ busy: false, notice: describeWorkspaceError(error) })
       return
     }
+    // The exception the catch-all below must never swallow. An `UnexpectedResponseError`
+    // means nothing answered in this API's shape — a misrouted base URL, a proxy error
+    // page, an SPA fallback returning `index.html` at 200 — and calling that a wrong
+    // password sends the user to reset a credential that was never checked. This is the
+    // defect CLI-559 shipped, and this branch is where it stops being possible.
+    if (error instanceof UnexpectedResponseError) {
+      setState({ busy: false, notice: describeWorkspaceError(error) })
+      return
+    }
     // Every other login failure is one message. The server refuses to say whether
     // the email is known, and inventing that distinction here would rebuild the
     // account-enumeration oracle it deliberately closed.
@@ -244,7 +254,15 @@ export async function acceptInvite(
       notice: `You've joined ${result.workspace.name}. Sign in with ${result.email} to continue.`,
     })
     return { email: result.email, workspaceName: result.workspace.name }
-  } catch {
+  } catch (raised) {
+    // Same trap as `login`, one screen over: this catch-all speaks for a `400` the
+    // server sent, and a response that never came from the server has no business
+    // being described as an expired invite. Guarded before the fallback for the same
+    // reason. (CLI-559.)
+    if (raised instanceof UnexpectedResponseError) {
+      setState({ busy: false, notice: describeWorkspaceError(raised) })
+      return null
+    }
     // Unknown, already-redeemed and expired are one `400` by design; the message
     // says the only true thing about all three.
     setState({ busy: false, notice: 'This invite is no longer valid. Ask for a new one.' })

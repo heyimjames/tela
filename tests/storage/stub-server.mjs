@@ -17,12 +17,22 @@
  * with a real server writing down what arrived, is the only observer that can tell
  * "the cookie was sent" from "nothing was watching".
  *
- * ## Why it also serves the app
+ * ## Why it also serves the app, and why the API lives under `/api`
  *
  * `src/workspace/endpoint.ts`: the deployment is same-origin, so the session cookie
  * is first-party and needs no `SameSite=None`. Serving the built app and the API from
  * one origin reproduces that. A separate API origin would test a configuration the
  * product does not ship.
+ *
+ * Same origin is not same path, and CLI-559 was the bill for eliding those. This stub
+ * therefore mirrors the production reverse proxy exactly: `/api/*` is the API, with
+ * the prefix stripped so the routes below read `/v1/...` as they always have, and
+ * **everything else falls through to the single-page app** — including `/v1/auth/login`
+ * at the root, which answers `index.html` with a 200 here just as Caddy does in
+ * production. The gate's build sets no `VITE_WORKSPACE_API_BASE_URL`, so what reaches
+ * this server is whatever the app *compiled*. Point the default back at `/` and the
+ * cookie gate stops reaching the library: the misconfiguration that shipped silently
+ * now has a red test in front of it.
  *
  * ## The request log is the evidence
  *
@@ -154,11 +164,18 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (pathname.startsWith('/v1/')) {
+  // The proxy's stripping form: `/api/v1/auth/login` reaches the routes below as
+  // `/v1/auth/login`, which is what the backend sees in production and what the
+  // request log records. A `/v1/...` request that arrives *without* the prefix is not
+  // rewritten into working — it falls through to the SPA, exactly as it did on the
+  // day of the defect.
+  const apiPath = pathname.startsWith('/api/') ? pathname.slice('/api'.length) : null
+
+  if (apiPath !== null) {
     const cookie = sessionFrom(request)
     requestLog.push({
       method: request.method ?? 'GET',
-      path: pathname,
+      path: apiPath,
       cookiePresent: cookie !== null,
       // Whether the cookie that arrived is the live one. A stale cookie being sent
       // after logout is a different failure from no cookie at all, and the spec must
@@ -166,7 +183,7 @@ const server = createServer(async (request, response) => {
       cookieIsLiveSession: cookie !== null && liveSession !== null && cookie === liveSession,
     })
 
-    if (pathname === '/v1/auth/login' && request.method === 'POST') {
+    if (apiPath === '/v1/auth/login' && request.method === 'POST') {
       const body = await readJsonBody(request)
       if (body?.email !== ACCOUNT.email || body?.password !== ACCOUNT.password) {
         json(response, 401, { code: 'invalid_credentials', message: 'Email or password is incorrect.' })
@@ -181,7 +198,7 @@ const server = createServer(async (request, response) => {
       return
     }
 
-    if (pathname === '/v1/auth/logout' && request.method === 'POST') {
+    if (apiPath === '/v1/auth/logout' && request.method === 'POST') {
       liveSession = null
       response.writeHead(204, {
         'set-cookie': `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
@@ -197,17 +214,17 @@ const server = createServer(async (request, response) => {
       return
     }
 
-    if (pathname === '/v1/auth/me' && request.method === 'GET') {
+    if (apiPath === '/v1/auth/me' && request.method === 'GET') {
       json(response, 200, SESSION_PAYLOAD)
       return
     }
 
-    if (pathname === `/v1/workspaces/${WORKSPACE_ID}/documents` && request.method === 'GET') {
+    if (apiPath === `/v1/workspaces/${WORKSPACE_ID}/documents` && request.method === 'GET') {
       json(response, 200, { documents: [] })
       return
     }
 
-    json(response, 404, { code: 'not_found', message: `stub has no route for ${request.method} ${pathname}` })
+    json(response, 404, { code: 'not_found', message: `stub has no route for ${request.method} ${apiPath}` })
     return
   }
 
