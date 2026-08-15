@@ -112,6 +112,11 @@ npm run preview    # serve the built bundle locally
 
 `npm run typecheck` and `npm run lint` are also available. Any static host (Vercel, Netlify, GitHub Pages, S3, a plain nginx) serves `dist/` as-is.
 
+`npm test` runs the unit and MCP suites. `npm run test:network` runs the
+zero-network probe: it builds the default-mode app, boots it in headless
+Chromium, and fails if anything reaches the network. It needs a browser
+(`npx playwright install chromium`) and runs on every pull request in CI.
+
 ## Make it yours
 
 Everything brand-related lives in two files:

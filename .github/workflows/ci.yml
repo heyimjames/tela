@@ -18,3 +18,29 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+
+  # The offline property is contractual — the app ships inside the certified MCP
+  # payload — so it gets a gate that runs on every pull request rather than a
+  # one-off proof in an issue comment. Its own job, not a step in `build`, so the
+  # check name says what failed. See tests/network/zero-network.spec.ts.
+  zero-network:
+    name: zero-network probe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+      # No `|| true`, and the probe itself never skips when a browser is absent:
+      # a gate that can quietly not run is worse than no gate.
+      - run: npx playwright install --with-deps chromium
+      # Builds the default-mode app itself (see playwright.config.ts webServer),
+      # so the subject is never a `dist/` left over from another job.
+      - run: npm run test:network
