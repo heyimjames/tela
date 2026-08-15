@@ -5,11 +5,25 @@ on:
     branches: [main]
   pull_request:
 
+# See windows-determinism.yml: supersede superseded PR runs, never cancel the
+# post-merge `main` run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Names the commit this job ran against; on `pull_request` the checkout is
+      # the merge commit, so the PR head is printed alongside it.
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=build event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -28,6 +42,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=zero-network event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
       - uses: actions/setup-node@v4
         with:
           node-version: 22

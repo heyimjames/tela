@@ -1,14 +1,41 @@
 name: Windows/macOS Determinism
 
+# The determinism suites are the load-bearing cross-platform evidence (v0.3 r2:
+# a green suite on the dev platform is not evidence the artifact works on other
+# hosts), so they must gate pull requests — before CLI-535 they ran on `push`
+# only and a PR could go green having never executed them.
+#
+# `push` is filtered to `main` so a PR branch push does not run the same matrix
+# twice; on a PR branch the `pull_request` event is the single trigger, and the
+# post-merge `main` push is the only other run.
 on:
   push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
+
+# Supersede an in-flight run when a PR branch is pushed again. Never on `main`:
+# a cancelled post-merge run would leave the merged commit without evidence.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      # Identifies the commit this job actually ran against. On `pull_request`
+      # the checkout is the merge commit, so both SHAs are printed: the merge
+      # commit that was tested and the PR head it was computed from. This line
+      # names the subject — it is not evidence that the suite ran; that is the
+      # suite's own output below.
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=test-windows event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -31,6 +58,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=test-macos event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
