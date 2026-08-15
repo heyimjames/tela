@@ -54,6 +54,27 @@ jobs:
       - run: npm run build
       - run: npm test
 
+      # `npm test` above already covers `runEvaluations()` — the vitest wrapper
+      # imports it directly. What no suite touches is the *standalone* entry
+      # point: the `test:evals` npm alias and the `invokedDirectly` block at the
+      # foot of `evaluations/run.mjs` (the argv guard, the stderr progress lines,
+      # the JSON report, the non-zero exit). That block's documented failure mode
+      # is Windows-specific — `D:` parsed as a URL authority makes the guard
+      # false — and its symptom is exit 0 with nothing run, so the report, not
+      # the exit code, is the evidence. See scripts/check-evals-report.mjs.
+      #
+      # `shell: bash` on both platforms so the redirection writes the same bytes;
+      # the Windows default shell is pwsh, whose encoding rules differ.
+      - name: Standalone evaluation runner (npm alias + CLI entry point)
+        shell: bash
+        run: |
+          # Initialised explicitly: `${runner_status:-0}` would otherwise honour an
+          # inherited environment variable of the same name and fail a clean run.
+          runner_status=0
+          npm run --silent test:evals > "$RUNNER_TEMP/evals-report.json" || runner_status=$?
+          node scripts/check-evals-report.mjs "$RUNNER_TEMP/evals-report.json"
+          exit "$runner_status"
+
   test-macos:
     runs-on: macos-latest
     steps:
@@ -77,3 +98,17 @@ jobs:
       - run: npx playwright install chromium
       - run: npm run build
       - run: npm test
+
+      # The POSIX half of the standalone-runner check; see the note in
+      # `test-windows`. Both platforms, because the r2 lesson is that a green
+      # suite on one platform is not evidence for another, and the measured cost
+      # of a full standalone run is ~3s.
+      - name: Standalone evaluation runner (npm alias + CLI entry point)
+        shell: bash
+        run: |
+          # Initialised explicitly: `${runner_status:-0}` would otherwise honour an
+          # inherited environment variable of the same name and fail a clean run.
+          runner_status=0
+          npm run --silent test:evals > "$RUNNER_TEMP/evals-report.json" || runner_status=$?
+          node scripts/check-evals-report.mjs "$RUNNER_TEMP/evals-report.json"
+          exit "$runner_status"

@@ -52,18 +52,33 @@ jobs:
       - name: Reproducibility check
         run: npm run release:reproduce
 
+      # Through the `release:build` alias, for the same reason as the verify step
+      # below: an alias no workflow exercises can rot while every job stays green.
+      #
+      # `--silent` is load-bearing, not tidiness. This step's stdout is redirected
+      # into summary.json and then parsed as JSON two lines down, and `npm run`
+      # prints its own `> tela@0.1.0 release:build` banner to stdout. Without
+      # `--silent` the banner lands at the top of the file and the `require()`
+      # below fails to parse it.
       - name: Build the release artifact
         id: build
         run: |
-          node scripts/build-release.mjs --out "$RUNNER_TEMP/tela-artifact" > "$RUNNER_TEMP/summary.json"
+          npm run --silent release:build -- --out "$RUNNER_TEMP/tela-artifact" > "$RUNNER_TEMP/summary.json"
           cat "$RUNNER_TEMP/summary.json"
           echo "manifest_sha256=$(node -e 'process.stdout.write(require(process.env.RUNNER_TEMP + "/summary.json").manifest_sha256)')" >> "$GITHUB_OUTPUT"
 
       # Verified in a separate step, from the artifact on disk, with no reference
       # to how it was produced — which is the position a downstream consumer is
       # in.
+      #
+      # Invoked through the `release:verify` npm alias rather than `node
+      # scripts/verify-release.mjs` directly. Same script, same cost, but the
+      # alias is a shipped entry point that nothing else exercises: a typo or a
+      # stale path in that package.json entry would break the documented command
+      # while every job stayed green (CLI-509's lesson). Routing the release's
+      # own verification through it means the alias cannot rot unnoticed.
       - name: Verify without executing the artifact
-        run: node scripts/verify-release.mjs "$RUNNER_TEMP/tela-artifact"
+        run: npm run release:verify -- "$RUNNER_TEMP/tela-artifact"
 
       - uses: actions/upload-artifact@v4
         with:
