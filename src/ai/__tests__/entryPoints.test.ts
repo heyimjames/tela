@@ -421,6 +421,22 @@ describe('the cold graph transform stays out of the per-test budget', () => {
     await loadApp({ ...AI_PANEL_OPEN, workspaceMode: false, endpoint: false })
     const warmMs = performance.now() - startedAt
 
+    /**
+     * Emit the measurements this test asserts on.
+     *
+     * A green job proves no budget was breached; it does not show how much room was
+     * left, and "the headroom is comfortable" is precisely the claim this issue has to
+     * substantiate on runners nobody can profile by hand. Vitest's default reporter
+     * prints only a per-file total, which cannot separate the warm-up's cost from any
+     * single test's. This line puts both numbers, and their margins, in every run's log
+     * on every platform — so the next person reading a slow CI run can see whether the
+     * graph is creeping toward the bounds instead of inferring it from a pass.
+     */
+    console.log(
+      `[entrypoints-budget] cold=${Math.round(warmUp.coldMs)}ms warm=${Math.round(warmMs)}ms ` +
+        `cold_bound=10000ms warm_bound=2500ms hook_budget=${GRAPH_WARMUP_TIMEOUT_MS}ms per_test_budget=5000ms`,
+    )
+
     // The property that removes the flake: once warm, a full reload of the same graph
     // is a small fraction of vitest's 5000 ms per-test default.
     //
