@@ -1,0 +1,126 @@
+name: MCP payload non-interference
+
+# The milestone gate for CLI-520: the application may change, the certified MCP
+# payload may not. Two things are proved on every pull request, on both target
+# operating systems:
+#
+#   1. the freshly built payload still matches the committed pre-Milestone-2
+#      baseline on every certified surface (scripts/verify-payload-noninterference.mjs);
+#   2. the artifact, installed the way a consumer installs it and launched from
+#      outside the repository, actually starts and serves its MCP surface —
+#      including with the network denied.
+#
+# (2) is not a duplicate of `npm test`. A green source-tree suite is not evidence
+# that the shipped artifact starts on another platform: v0.3 r2 shipped a
+# bare-path dynamic `import()` that worked on every developer machine and failed
+# to launch on every Windows host while all local runs were green. This job runs
+# the built `bin/tela-mcp.mjs` against its own installed `node_modules`, outside
+# the checkout, which is the only shape that can catch that class of defect.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  payload:
+    name: payload non-interference (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Both operating systems always report, so a failure on one is never hidden
+      # by the other cancelling first.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=payload-noninterference os=${{ matrix.os }} event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The analyser's negative controls. They run before the artifact exists, so
+      # a weakened comparison fails here rather than passing quietly downstream.
+      - name: Analyser controls (negative + positive)
+        run: npx vitest run tests/release/payloadNonInterference.test.ts
+
+      # `--commit` pins the subject explicitly. On `pull_request` the checkout is
+      # a merge commit that exists only on the runner, and stamping that into the
+      # artifact would record provenance nobody can reproduce.
+      - name: Build the release payload
+        shell: bash
+        run: |
+          npm run --silent release:build -- --commit "${{ github.event.pull_request.head.sha || github.sha }}" > "$RUNNER_TEMP/build.json"
+          cat "$RUNNER_TEMP/build.json"
+          node -e "
+            const summary = require(process.env.RUNNER_TEMP + '/build.json');
+            require('fs').writeFileSync(process.env.GITHUB_ENV, 'PAYLOAD_DIR=' + require('path').resolve(summary.artifact) + '\n', { flag: 'a' });
+            console.log('payload built:', summary.manifest_sha256);
+          "
+
+      # The evidence line (identical=N/M, the stamp sites, the enumerated chrome
+      # delta) is printed by the check itself on every run, pass or fail: a green
+      # job is not evidence that a comparison happened.
+      - name: Compare against the committed pre-Milestone-2 baseline
+        run: npm run verify:payload -- "$PAYLOAD_DIR"
+
+      # Outside the repository, with only the payload's own lockfile. Installing
+      # inside the checkout would let the repo's node_modules satisfy imports the
+      # payload does not actually ship, which is the failure this job exists for.
+      - name: Install the payload as a consumer would
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/installed"
+          cp -R "$PAYLOAD_DIR"/. "$RUNNER_TEMP/installed/"
+          cd "$RUNNER_TEMP/installed"
+          npm ci --omit=dev --ignore-scripts
+          echo "installed payload at $RUNNER_TEMP/installed"
+
+      - name: Launch the installed payload
+        run: npm run --silent payload:launch -- "$RUNNER_TEMP/installed"
+
+      # The offline contract, proved by denial rather than by observation. Each
+      # platform gets its own mechanism, and on both the denial is verified by
+      # scripts/assert-network-denied.mjs *inside* the same denied context before
+      # the payload runs — otherwise a wrapper that silently stopped denying
+      # anything would leave every downstream assertion green and meaningless.
+      - name: Launch with the network denied (linux netns)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          # `ip link set lo up`: a fresh namespace has loopback down, and the
+          # private bridge talks to itself. Denying loopback would test the
+          # harness, not the offline contract. External routes stay absent.
+          sudo -n unshare --net -- bash -c '
+            set -eo pipefail
+            ip link set lo up
+            "$(command -v node)" scripts/assert-network-denied.mjs
+            "$(command -v node)" scripts/launch-installed-payload.mjs "'"$RUNNER_TEMP"'/installed"
+          '
+
+      - name: Launch with the network denied (macOS sandbox)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # `(deny network*)` and nothing finer. A profile that tried to keep
+          # loopback usable was measured and did the opposite of what it read
+          # like: allowing `(remote unix-socket)` re-opened DNS via
+          # mDNSResponder, and the localhost allowance did not take effect —
+          # a "network-denied" run that still resolved names. This profile is
+          # the one whose denial is demonstrated by the control below, and it is
+          # stricter than the Linux namespace (loopback is denied here too).
+          printf '(version 1)\n(allow default)\n(deny network*)\n' > "$RUNNER_TEMP/no-network.sb"
+          sandbox-exec -f "$RUNNER_TEMP/no-network.sb" node scripts/assert-network-denied.mjs
+          sandbox-exec -f "$RUNNER_TEMP/no-network.sb" node scripts/launch-installed-payload.mjs "$RUNNER_TEMP/installed"
