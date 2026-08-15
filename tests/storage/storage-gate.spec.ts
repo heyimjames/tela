@@ -172,10 +172,16 @@ test.describe('IndexedDB body storage, in a real browser', () => {
     ).toEqual(['tela-bundle:legacy-doc'])
     expect((await readStore(page)).records, 'IndexedDB already holds the body before any migration').toEqual([])
 
-    // A fresh adapter resolves its body store, which is when the sweep runs.
+    // A fresh adapter resolves its body store, which is when the sweep runs — and the
+    // call that triggers it deliberately asks for a *different* document. Reading
+    // `legacy-doc` itself would also migrate it, through `#adoptLegacyBody`, so this
+    // test would pass with the sweep deleted and the bodies of every document the
+    // user never reopens still sitting in `localStorage`. That is the quota failure
+    // the sweep exists to prevent, and asking for an unrelated id is what separates
+    // the two paths.
     await harness.freshAdapter()
-    const read = await harness.get('legacy-doc')
-    expect(read, 'the legacy document could not be read after migration').toMatchObject({ ok: true })
+    const missing = await harness.get('no-such-document')
+    expect(missing.ok, 'reading an unknown id succeeded — the fixture is not what this test assumes').toBe(false)
 
     const migrated = await readStore(page)
     expect(migrated.records.map((record) => record.id)).toEqual(['legacy-doc'])
@@ -185,6 +191,9 @@ test.describe('IndexedDB body storage, in a real browser', () => {
       'the legacy copy survived the migration and is still consuming the localStorage budget',
     ).toEqual([])
 
+    // And the document reads back, from its new home, byte for byte.
+    const read = await harness.get('legacy-doc')
+    expect(read, 'the legacy document could not be read after migration').toMatchObject({ ok: true })
     const returned = fromBase64((read as { base64: string }).base64)
     expect(Buffer.from(returned).equals(Buffer.from(fixture.bytes))).toBe(true)
 
