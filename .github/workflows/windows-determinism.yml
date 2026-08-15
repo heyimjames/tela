@@ -68,9 +68,12 @@ jobs:
       - name: Standalone evaluation runner (npm alias + CLI entry point)
         shell: bash
         run: |
+          # Initialised explicitly: `${runner_status:-0}` would otherwise honour an
+          # inherited environment variable of the same name and fail a clean run.
+          runner_status=0
           npm run --silent test:evals > "$RUNNER_TEMP/evals-report.json" || runner_status=$?
           node scripts/check-evals-report.mjs "$RUNNER_TEMP/evals-report.json"
-          exit "${runner_status:-0}"
+          exit "$runner_status"
 
   test-macos:
     runs-on: macos-latest
@@ -103,6 +106,9 @@ jobs:
       - name: Standalone evaluation runner (npm alias + CLI entry point)
         shell: bash
         run: |
+          # Initialised explicitly: `${runner_status:-0}` would otherwise honour an
+          # inherited environment variable of the same name and fail a clean run.
+          runner_status=0
           npm run --silent test:evals > "$RUNNER_TEMP/evals-report.json" || runner_status=$?
           node scripts/check-evals-report.mjs "$RUNNER_TEMP/evals-report.json"
-          exit "${runner_status:-0}"
+          exit "$runner_status"
