@@ -53,8 +53,17 @@ export interface FakeIndexedDb {
   factory: IDBFactory
   /** The bodies currently stored, by object-store name then key. */
   contents(storeName: string): Map<string, unknown>
-  /** Make the next `put` fail with `error` — a quota rejection unless told otherwise. */
-  failNextWrite(error?: Error): void
+  /**
+   * Make the next `put` fail with `error` — a quota rejection unless told otherwise.
+   *
+   * `where` picks how the failure arrives, because browsers do both: a real IndexedDB
+   * quota rejection usually aborts the *transaction* while the request itself reports
+   * nothing (`'transaction'`), and some failures come back on the request
+   * (`'request'`, which also aborts, as a real implementation would). Code that
+   * resolved a write on `request.onsuccess` would report the `'transaction'` case as a
+   * successful save.
+   */
+  failNextWrite(error?: Error, where?: 'request' | 'transaction'): void
   /** Make `open()` fail, the way a storage-denied context does. */
   failOpen(fail: boolean): void
 }
@@ -64,6 +73,7 @@ export function createFakeIndexedDb(): FakeIndexedDb {
   let created = false
   let openFails = false
   let pendingWriteFailure: Error | null = null
+  let pendingWriteFailureWhere: 'request' | 'transaction' = 'transaction'
 
   const settle = (fn: () => void): void => {
     void Promise.resolve().then(fn)
@@ -85,9 +95,11 @@ export function createFakeIndexedDb(): FakeIndexedDb {
         const failure = pendingWriteFailure
         if (failure !== null) {
           pendingWriteFailure = null
-          request.error = failure
           transaction.fail(failure)
-          request.onerror?.()
+          if (pendingWriteFailureWhere === 'request') {
+            request.error = failure
+            request.onerror?.()
+          }
           return
         }
         let store = stores.get(name)
@@ -193,8 +205,9 @@ export function createFakeIndexedDb(): FakeIndexedDb {
   return {
     factory: factory as unknown as IDBFactory,
     contents: (storeName) => stores.get(storeName) ?? new Map<string, unknown>(),
-    failNextWrite: (error = quotaExceededError()) => {
+    failNextWrite: (error = quotaExceededError(), where: 'request' | 'transaction' = 'transaction') => {
       pendingWriteFailure = error
+      pendingWriteFailureWhere = where
     },
     failOpen: (fail) => {
       openFails = fail

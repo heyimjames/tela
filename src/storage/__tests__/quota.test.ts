@@ -227,6 +227,27 @@ describe('bundle bodies in IndexedDB (CLI-527)', () => {
       expect(idb.contents(BODY_STORE_NAME).has('doc-1')).toBe(false)
     })
 
+    it('catches a quota failure that arrives only as a transaction abort', async () => {
+      // The realistic IndexedDB shape: the `put` request reports nothing and the
+      // transaction aborts. A `write` that resolved on `request.onsuccess` — or that
+      // watched only `request.onerror` — would report this as a successful save and
+      // leave the user believing a document was stored that was not.
+      idb.failNextWrite(quotaExceededError(), 'transaction')
+
+      await expect(
+        settlesWithin(adapter.putDocument('doc-1', writeBundle(makeFullCoverageDocument()), null)),
+      ).rejects.toBeInstanceOf(StorageQuotaExceededError)
+      expect(idb.contents(BODY_STORE_NAME).has('doc-1')).toBe(false)
+    })
+
+    it('catches a quota failure that arrives on the request', async () => {
+      idb.failNextWrite(quotaExceededError(), 'request')
+
+      await expect(
+        settlesWithin(adapter.putDocument('doc-1', writeBundle(makeFullCoverageDocument()), null)),
+      ).rejects.toBeInstanceOf(StorageQuotaExceededError)
+    })
+
     it('rejects an over-quota save on the localStorage fallback too', async () => {
       const full = new LocalStorageAdapter(
         {
