@@ -28,6 +28,7 @@
 import { ApiError, ConflictError as ClientConflictError, ValidationError } from '@performance-clickt/design-api-client'
 import type { BundleRejectionCode } from '@performance-clickt/design-api-client'
 import { ConflictError as StorageConflictError } from '@/storage/StorageAdapter'
+import { UnexpectedResponseError } from './responseShape'
 
 /**
  * The session is gone — expired, revoked, or never established.
@@ -165,6 +166,22 @@ export function describeWorkspaceError(error: unknown): string {
     error instanceof BundleRejectedError
   ) {
     return error.message
+  }
+  if (error instanceof UnexpectedResponseError) {
+    // Deliberately says nothing about credentials, permissions or the document. The
+    // honest content of this failure is "whatever answered was not this API".
+    //
+    // It names two causes rather than one, because the guard cannot tell them apart
+    // and should not pretend to: a misrouted base URL (CLI-559's defect) and a proxy
+    // or gateway answering in the API's place (an outage, an error page) produce the
+    // same wrong-shaped body. Blaming only the address would send a reader hunting a
+    // build flag during what is actually a server outage. The technical detail —
+    // status, content type, URL — stays on the thrown error, where a developer
+    // console shows it, rather than in a dialog.
+    return (
+      'The server sent an unexpected response, so the app could not read it. ' +
+      'The API address may be wrong, or something between the app and the API answered instead.'
+    )
   }
   if (error instanceof RateLimitedError) {
     const wait = error.retryAfterSeconds

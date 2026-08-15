@@ -109,7 +109,10 @@ test.describe('workspace mode session cookie', () => {
     // an authenticated call made after logout must arrive with nothing attached, and
     // the server must refuse it.
     const status = await page.evaluate(async () => {
-      const response = await fetch('/v1/auth/me', { credentials: 'include' })
+      // `/api/...`, because that is where the deployment — and this gate's stub —
+      // mount the API. A bare `/v1/auth/me` would reach the SPA fallback and answer
+      // 200 with `index.html`, which is CLI-559's failure verbatim.
+      const response = await fetch('/api/v1/auth/me', { credentials: 'include' })
       return response.status
     })
     expect(status, 'a call made after logout was still authenticated').toBe(401)
