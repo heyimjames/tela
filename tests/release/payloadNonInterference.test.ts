@@ -14,6 +14,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
 import {
   APP_CHROME_PATTERNS,
@@ -23,8 +24,10 @@ import {
   describeStamped,
   locateStampSites,
   runSelfTest,
+  verifyBaselineRecord,
   verifyStamped,
 } from '../../scripts/lib/payload-noninterference.mjs'
+import { renderSums } from '../../scripts/lib/release.mjs'
 
 const sha256 = (bytes: Uint8Array | Buffer) => createHash('sha256').update(bytes).digest('hex')
 
@@ -140,6 +143,39 @@ describe('payload package.json', () => {
 
   it('rejects a changed key that is outside the pinned set, rather than ignoring it', () => {
     expect(comparePackageJson(baseline, { ...baseline, files: ['dist'] }).unexpectedKeys).toEqual(['files'])
+  })
+})
+
+describe('the committed baseline record', () => {
+  // The record is the trust anchor: every comparison is made against it rather
+  // than against a rebuilt months-old commit. If it can be edited to match a
+  // drifted payload, the whole proof launders the change it exists to catch.
+  const record = JSON.parse(readFileSync(new URL('../baselines/mcp-payload-df44d15.json', import.meta.url), 'utf8'))
+
+  it('is self-consistent: its file hashes reconstruct the published manifest digest', () => {
+    expect(verifyBaselineRecord(record, renderSums)).toEqual([])
+    // Pinned absolutely, not just "it reconstructs to whatever it claims": this
+    // is the digest the baseline release build printed, recorded independently.
+    expect(record.recorded_from.artifact_manifest_sha256).toBe('d75854c77da603d3cd570c3cc0e0517298fc3610521fc7a90e565cdffa86febe')
+    expect(record.baseline_commit).toBe('df44d15b0c18cf98c2ef72050c42552555ad633e')
+    expect(Object.keys(record.files)).toHaveLength(136)
+  })
+
+  it('rejects a record whose file hashes were edited to match a drifted payload', () => {
+    const tampered = { ...record, files: { ...record.files, 'schemas/tela-document-v1.schema.json': 'b'.repeat(64) } }
+    expect(verifyBaselineRecord(tampered, renderSums)[0]).toMatch(/do not reconstruct its recorded manifest digest/)
+  })
+
+  it('rejects a record with a missing or malformed stamp entry', () => {
+    const withoutStamp = { ...record, stamped: { ...record.stamped, 'provenance.json': undefined } }
+    expect(verifyBaselineRecord(withoutStamp, renderSums).some((problem) => problem.includes('provenance.json'))).toBe(true)
+
+    const malformed = { ...record, stamped: { ...record.stamped, 'NOTICES': { size: 1, offsets: [], normalizedSha256: 'nope' } } }
+    expect(verifyBaselineRecord(malformed, renderSums).some((problem) => problem.includes('malformed'))).toBe(true)
+  })
+
+  it('rejects an empty record rather than reporting a vacuous pass', () => {
+    expect(verifyBaselineRecord({ ...record, files: {} }, renderSums)[0]).toMatch(/lists no files/)
   })
 })
 

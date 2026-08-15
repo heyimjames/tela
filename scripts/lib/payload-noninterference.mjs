@@ -97,6 +97,57 @@ export function sha256(bytes) {
 }
 
 /**
+ * Check that a baseline record is internally consistent.
+ *
+ * The record is a trust anchor: every comparison is made against it rather than
+ * against a rebuilt months-old commit, so a record that has been edited — by
+ * hand, by a merge resolution, by someone "fixing" a red check — would launder a
+ * real payload change into a pass. `recorded_from.artifact_manifest_sha256` is
+ * the digest of the baseline artifact's own `SHA256SUMS`, which is exactly the
+ * manifest digest the release build printed and the release evidence recorded.
+ * Because `SHA256SUMS` is a pure function of the per-file hashes, that digest can
+ * be **recomputed from the record's own `files` map** and compared.
+ *
+ * So this is not decoration: change any one of the 136 recorded hashes and the
+ * reconstruction stops matching a digest that was published elsewhere.
+ *
+ * Returns a list of problems; empty means consistent.
+ */
+export function verifyBaselineRecord(record, renderSums) {
+  const problems = []
+  const files = record?.files
+  if (!files || Object.keys(files).length === 0) {
+    problems.push('the record lists no files')
+    return problems
+  }
+  const recordedDigest = record.recorded_from?.artifact_manifest_sha256
+  if (!recordedDigest) {
+    problems.push('the record carries no recorded_from.artifact_manifest_sha256 to check itself against')
+    return problems
+  }
+  if (record.recorded_from.file_count !== Object.keys(files).length) {
+    problems.push(`the record claims ${record.recorded_from.file_count} files but lists ${Object.keys(files).length}`)
+  }
+  const reconstructed = sha256(
+    Buffer.from(renderSums(Object.entries(files).map(([path, sha]) => ({ path, sha256: sha }))), 'utf8'),
+  )
+  if (reconstructed !== recordedDigest) {
+    problems.push(
+      `the record's file hashes do not reconstruct its recorded manifest digest ` +
+        `(reconstructed ${reconstructed}, recorded ${recordedDigest}) — the record has been altered since it was generated`,
+    )
+  }
+  for (const path of STAMPED_PATHS) {
+    const stamped = record.stamped?.[path]
+    if (!stamped) problems.push(`the record carries no stamp record for "${path}"`)
+    else if (!Number.isInteger(stamped.size) || !Array.isArray(stamped.offsets) || stamped.offsets.length === 0 || !/^[0-9a-f]{64}$/.test(stamped.normalizedSha256 ?? '')) {
+      problems.push(`the stamp record for "${path}" is malformed`)
+    }
+  }
+  return problems
+}
+
+/**
  * Every regular file under `directory`, hashed from the bytes on disk.
  *
  * Deliberately not read from the artifact's own `SHA256SUMS`: that file is a

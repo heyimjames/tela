@@ -37,8 +37,10 @@ import {
   hashTree,
   runSelfTest,
   sha256,
+  verifyBaselineRecord,
   verifyStamped,
 } from './lib/payload-noninterference.mjs'
+import { renderSums } from './lib/release.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_BASELINE = join(root, 'tests/baselines/mcp-payload-df44d15.json')
@@ -64,6 +66,19 @@ async function main() {
   log('self-test ok: the analyser still rejects non-stamp drift, moved stamp sites, unrelated 40-hex runs, and length changes')
 
   const baseline = JSON.parse(await readFile(args.baseline, 'utf8'))
+
+  // The record is the trust anchor for every comparison below, so it is checked
+  // against itself before it is believed: its per-file hashes must reconstruct
+  // the baseline artifact's manifest digest, which was published independently
+  // by the release build. An edited record cannot quietly launder a real change.
+  const recordProblems = verifyBaselineRecord(baseline, renderSums)
+  if (recordProblems.length > 0) {
+    log('BASELINE RECORD REJECTED — nothing was compared')
+    for (const problem of recordProblems) log(`  - ${problem}`)
+    process.exit(2)
+  }
+  log(`baseline record self-consistent: ${Object.keys(baseline.files).length} file hashes reconstruct manifest digest ${baseline.recorded_from.artifact_manifest_sha256}`)
+
   const artifactDir = resolve(args.artifact)
   const currentCommit = await readCommit(artifactDir)
   const currentFiles = await hashTree(artifactDir)

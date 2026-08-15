@@ -152,9 +152,25 @@ resolved names. It is recorded here because the failure mode is invisible withou
 | Zero-network runtime gate | `tests/network/zero-network.spec.ts` | 3 passed (`external_requests=0`, recorder self-test classified its own 6 deliberate calls) |
 | Full suite | `npm test` | 40 files, 523 tests passed |
 
+## The baseline record is checked against itself
+
+The record is the trust anchor: every comparison is made against it rather than against a
+rebuilt months-old commit, so a record edited to match a drifted payload would launder the
+change this whole document exists to catch. `recorded_from.artifact_manifest_sha256` is the
+digest of the baseline artifact's own `SHA256SUMS` — the value the baseline release build
+printed (`d75854c7…`). Because `SHA256SUMS` is a pure function of the per-file hashes, the
+checker **recomputes that digest from the record's own `files` map** and refuses to compare
+anything if it does not match. Editing any one of the 136 recorded hashes breaks it.
+
+Residual, and stated rather than papered over: the four `stamped` entries (offsets and
+normalised hashes) cannot be reconstructed from anything else available at check time, so
+they remain a trust anchor established when the record was generated. They are reviewable in
+the record file's git history, and `tests/release/payloadNonInterference.test.ts` pins the
+baseline commit and manifest digest absolutely so a wholesale record swap fails a test.
+
 ## Test-of-the-test
 
-Every clause was mutation-proofed against a copy of the built payload. All five went red:
+Every clause was mutation-proofed against a copy of the built payload. All seven went red:
 
 | Mutation | Result |
 |---|---|
@@ -163,6 +179,14 @@ Every clause was mutation-proofed against a copy of the built payload. All five 
 | Flip one byte in `dist/mcp/tela-mcp.mjs` **outside** the stamp | FAILED — `bytes outside the commit stamp moved` (exit 1) |
 | Add `dist/mcp/extra-payload-file.mjs` | FAILED — `payload shape changed: … 0x in the baseline and 1x now` (exit 1) |
 | Add a dependency to the payload `package.json` | FAILED — `pinned key "dependencies" changed` (exit 1) |
+| Edit the baseline record to match a drifted `schemas/` hash | FAILED — `BASELINE RECORD REJECTED — nothing was compared`; `the record's file hashes do not reconstruct its recorded manifest digest` (exit 2) |
+| Weaken the analyser to a hex-erasing regex | FAILED — `SELF-TEST FAILED — the comparison cannot be trusted, nothing was judged` (exit 2), before any payload was examined |
+
+The instrument that proves the network is denied was given the same treatment: run
+**without** a sandbox, `scripts/assert-network-denied.mjs` reports
+`FAILED — 1.1.1.1:443 — the connection SUCCEEDED; this environment is NOT network-denied`
+and exits 1. A denial check that cannot report a non-denied environment would make every
+offline claim in this document worthless.
 
 The analyser additionally runs its **own** self-test on every invocation, before it is
 allowed to judge anything: it re-proves that it rejects non-stamp drift, a stamp site that
