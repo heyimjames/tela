@@ -205,6 +205,21 @@ describe('chunk boundaries chosen by the transport, not the protocol', () => {
     expect(text).not.toContain('�')
   })
 
+  it('delivers a final unterminated event even when trailing bytes are half a character', async () => {
+    // The connection died mid-character after a complete event. Flushing the decoder
+    // at the end (`decoder.decode()` with no argument) would append U+FFFD to the tail
+    // and make that complete event unparseable, so the parser deliberately does not do
+    // it — the dangling bytes are discarded instead. This test is the reason that line
+    // is absent; without it, adding the flush back looks harmless.
+    const { text, deltas } = await stream([
+      'data: {"text":"complete"}',
+      new Uint8Array([0xe2]), // first byte of a 3-byte sequence that never finished
+    ])
+
+    expect(text).toBe('complete')
+    expect(deltas).toEqual(['complete'])
+  })
+
   it('delivers a final event that arrives without its terminating newline', async () => {
     // A complete event whose trailing "\n" never arrives is still a complete event.
     // Held in `buffer` and never flushed, it is silently dropped and the caller gets a

@@ -75,8 +75,12 @@ export async function streamAIResponse(options: {
   // terminating newline never arrives — dropping that one silently truncated the
   // answer, and swallowed a provider error delivered there entirely. A genuinely
   // half-written event still fails to parse and is still ignored.
-  // `decoder.decode()` with no argument flushes any dangling multi-byte sequence.
-  buffer += decoder.decode()
+  //
+  // Deliberately NOT `buffer += decoder.decode()` here. That final flush emits U+FFFD
+  // for a dangling multi-byte sequence, which can only append a replacement character
+  // to the tail — turning a complete final event followed by a truncated character into
+  // an unparseable one. Discarding those bytes is what we want, and it is what omitting
+  // the flush does.
   consume(buffer)
 
   return fullText
