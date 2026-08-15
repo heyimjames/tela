@@ -39,11 +39,39 @@ export interface WorkspaceClientOptions {
 export function createDesignApiClient(options: WorkspaceClientOptions = {}): DesignApiClient {
   return new DesignApiClient({
     baseUrl: options.baseUrl ?? WORKSPACE_API_BASE_URL,
-    ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+    fetch: options.fetch ?? browserFetch(),
     // Browsers only. Node's fetch ignores it, which is why the client also offers a
     // `headers` hook — irrelevant here, since this app is the browser side.
     credentials: 'include',
   })
+}
+
+/**
+ * The ambient `fetch`, bound to its global.
+ *
+ * Not a nicety. The generated client's default is `globalThis.fetch` stored on an
+ * instance field and invoked as `this.fetchImpl(url, init)` — which calls it with the
+ * client as its receiver. Node's `fetch` does not care; a browser's does, because
+ * `Window.fetch` brand-checks its `this` and throws
+ * `TypeError: Failed to execute 'fetch' on 'Window': Illegal invocation`. Left alone,
+ * **every** workspace-mode API call fails before a request is ever made: login,
+ * listing, open, save, logout. CLI-538's browser-level cookie gate is what found it —
+ * nothing else could, because every other test either injects its own `fetch` or runs
+ * under Node, where the unbound call happens to work.
+ *
+ * Fixed here rather than in `vendor/design-api-client/`: that directory is generated
+ * from the server repo's `openapi/v1.yaml` and is checked against its generator, so a
+ * hand edit would be reverted by the next regeneration. The generator's default
+ * deserves the same fix — filed as a follow-up — but the app must not wait for it.
+ *
+ * Read at call time, not at module load: a test that replaces `globalThis.fetch`
+ * before building a client would otherwise get the one captured at import.
+ */
+function browserFetch(): FetchLike | undefined {
+  const ambient = globalThis.fetch
+  // Left undefined where there is none, so the client raises its own "No fetch
+  // available" TypeError rather than this file inventing a different failure.
+  return ambient === undefined ? undefined : (ambient.bind(globalThis) as FetchLike)
 }
 
 /** The shared client, built on first use. */

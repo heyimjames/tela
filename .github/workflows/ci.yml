@@ -64,3 +64,39 @@ jobs:
       # Builds the default-mode app itself (see playwright.config.ts webServer),
       # so the subject is never a `dist/` left over from another job.
       - run: npm run test:network
+
+  # Bundle bodies live in IndexedDB (CLI-527), and the committed vitest suite can only
+  # assert that against a double. This job runs the real-browser proof — 6 MB
+  # byte-identity, a genuine quota rejection, the legacy migration, both "Clear All
+  # Data" buttons — plus workspace mode's session-cookie behaviour, which no
+  # Node-environment test can observe at all. Its own job, like the zero-network probe,
+  # so the check name says what failed. See playwright.storage.config.ts.
+  storage-gate:
+    name: browser storage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=storage-gate event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+      # No `|| true`, and no skip-when-no-browser in the suite itself: a gate that can
+      # quietly not run is worse than no gate.
+      - run: npx playwright install --with-deps chromium
+      # Builds both subjects itself — the default-mode app plus its harness, and a
+      # separate workspace-mode build for the cookie project — each into its own
+      # directory, so neither can become the other's subject and neither touches
+      # `dist/`.
+      - run: npm run test:storage
