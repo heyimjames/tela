@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useRouterStore } from '@/store/useRouterStore'
 import { useUIStore, type AppMode } from '@/store/useUIStore'
 import { useAIStore } from '@/store/useAIStore'
-import { AI_ENABLED } from '@/lib/aiApi'
+import { useAiUiEnabled } from '@/ai'
 import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,7 @@ type Tab = 'general' | 'ai' | 'canvas' | 'appearance'
 export function SettingsPage() {
   const navigate = useRouterStore((s) => s.navigate)
   const [tab, setTab] = useState<Tab>('general')
+  const aiUiEnabled = useAiUiEnabled()
 
   return (
     <div className="h-dvh flex bg-background">
@@ -43,7 +44,7 @@ export function SettingsPage() {
             { id: 'ai' as Tab, label: 'AI Assistant', icon: Wand2 },
             { id: 'canvas' as Tab, label: 'Canvas & Tools', icon: Mouse },
             { id: 'appearance' as Tab, label: 'Appearance', icon: Palette },
-          ].filter((t) => t.id !== 'ai' || AI_ENABLED)).map((t) => {
+          ].filter((t) => t.id !== 'ai' || aiUiEnabled)).map((t) => {
             const Icon = t.icon
             return (
               <button
@@ -63,7 +64,9 @@ export function SettingsPage() {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-[640px] mx-auto px-8 py-8">
           {tab === 'general' && <GeneralSettings />}
-          {tab === 'ai' && <AISettings />}
+          {/* Content gated as well as the nav item — `tab` is component state that can
+              still hold 'ai' after a capability is revoked. */}
+          {tab === 'ai' && aiUiEnabled && <AISettings />}
           {tab === 'canvas' && <CanvasSettings />}
           {tab === 'appearance' && <AppearanceSettings />}
         </div>

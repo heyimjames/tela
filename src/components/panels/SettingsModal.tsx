@@ -3,7 +3,7 @@ import { useUIStore, type AppMode } from '@/store/useUIStore'
 import { useAIStore } from '@/store/useAIStore'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
-import { AI_ENABLED } from '@/lib/aiApi'
+import { useAiUiEnabled } from '@/ai'
 import { AI_MODELS, normalizeAIModel } from '@/lib/aiModels'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,11 +33,15 @@ export function SettingsModal() {
   const [tab, setTab] = useState<SettingsTab>('general')
   const isMobile = useIsMobile()
 
-  const tabs = SETTINGS_TABS.filter((t) => t.id !== 'ai' || AI_ENABLED)
+  const aiUiEnabled = useAiUiEnabled()
+  const tabs = SETTINGS_TABS.filter((t) => t.id !== 'ai' || aiUiEnabled)
+  // The content is gated as well as the nav item. `tab` is component state that can
+  // hold 'ai' from before a capability was revoked, and filtering the nav alone would
+  // leave that stale state rendering the AI settings with no way to see why.
   const body = (
     <>
       {tab === 'general' && <GeneralSettings />}
-      {tab === 'ai' && <AISettings />}
+      {tab === 'ai' && aiUiEnabled && <AISettings />}
       {tab === 'canvas' && <CanvasSettings />}
       {tab === 'appearance' && <AppearanceSettings />}
     </>

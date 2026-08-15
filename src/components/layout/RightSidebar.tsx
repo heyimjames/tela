@@ -8,6 +8,7 @@ import { FrameAlignmentPanel } from '@/components/panels/FrameAlignmentPanel'
 import { ExportPanel } from '@/components/panels/ExportPanel'
 import { AutoResizePanel } from '@/components/panels/AutoResizePanel'
 import { AIPanel } from '@/components/panels/AIPanel'
+import { useAiUiEnabled } from '@/ai'
 import { DrawToolPanel } from '@/components/panels/DrawToolPanel'
 import { LayerInspector } from '@/components/panels/LayerInspector'
 
@@ -17,6 +18,11 @@ export function RightSidebar() {
   const layers = useDesignStore((s) => s.document.layers)
   const rightPanel = useUIStore((s) => s.rightPanel)
   const setRightPanel = useUIStore((s) => s.setRightPanel)
+  // Gated at the render site as well as at the store transition. The store refuses
+  // to enter the 'ai' panel while AI is off, so this branch should be unreachable —
+  // but "should be unreachable" is not a reason to render an ungated panel if it
+  // ever is.
+  const aiUiEnabled = useAiUiEnabled()
   const exportPanelOpen = useUIStore((s) => s.exportPanelOpen)
   const setExportPanelOpen = useUIStore((s) => s.setExportPanelOpen)
 
@@ -47,7 +53,7 @@ export function RightSidebar() {
 
   return (
     <aside className="hidden md:flex flex-col bg-card border-l border-border h-full overflow-hidden">
-      {rightPanel === 'ai' ? (
+      {rightPanel === 'ai' && aiUiEnabled ? (
         <div className="flex-1 overflow-hidden p-3">
           <AIPanel />
         </div>

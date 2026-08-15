@@ -3,7 +3,7 @@ import { CHROME_SIGNAL } from '@/brand/chrome'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { relayoutActiveFrame } from '@/store/useAIStore'
-import { AI_ENABLED } from '@/lib/aiApi'
+import { useAiUiEnabled } from '@/ai'
 import { getBrandColor } from '@/brand/palette'
 import { useContextMenuStore, type ContextMenuItem } from '@/store/useContextMenuStore'
 import type { Layer } from '@/types/design'
@@ -52,6 +52,25 @@ function RevealWords({ text, baseDelay = 0, stagger = 0.045 }: { text: string; b
   )
 }
 
+/**
+ * Whether the reformat nudge should be offered.
+ *
+ * Extracted from the effect below so the AI condition is testable. Inside the effect
+ * it is only reachable by running a `useEffect`, which static rendering does not do —
+ * a test asserting "the nudge is absent" against rendered markup would pass whether
+ * or not the gate existed, which is worse than no test.
+ */
+export function shouldOfferAiRelayout(input: {
+  formatChanged: boolean
+  contentCount: number
+  aiUiEnabled: boolean
+}): boolean {
+  if (!input.formatChanged) return false
+  if (input.contentCount === 0) return false
+  // The nudge only offers AI re-layout, so it is never offered when AI is unavailable.
+  return input.aiUiEnabled
+}
+
 // After a format change, the deterministic reflow has already kept the design
 // safe. This pill fades in offering the *optional* AI pass that recomposes it
 // for the new shape — "constraints keep you safe, AI makes it nice". Transient,
@@ -64,18 +83,17 @@ function ReformatNudge() {
   const [visible, setVisible] = useState(false)
   const [busy, setBusy] = useState(false)
   const prevId = useRef(format.id)
+  const aiUiEnabled = useAiUiEnabled()
 
   useEffect(() => {
     // First mount (prevId === current) never nudges; only real format changes do.
-    if (prevId.current === format.id) return
+    const formatChanged = prevId.current !== format.id
     prevId.current = format.id
-    if (contentCount === 0) return
-    // The nudge only offers AI re-layout, so skip it when AI is not configured.
-    if (!AI_ENABLED) return
+    if (!shouldOfferAiRelayout({ formatChanged, contentCount, aiUiEnabled })) return
     setVisible(true)
     const t = setTimeout(() => setVisible(false), 8000)
     return () => clearTimeout(t)
-  }, [format.id, contentCount])
+  }, [format.id, contentCount, aiUiEnabled])
 
   const runRelayout = async () => {
     setBusy(true)
@@ -89,7 +107,10 @@ function ReformatNudge() {
 
   return (
     <AnimatePresence>
-      {visible && (
+      {/* `aiUiEnabled` is re-checked at the render site, not only in the effect that
+          sets `visible`: a capability revoked mid-session must take the nudge down
+          with it rather than leave an AI call-to-action up until its timer expires. */}
+      {visible && aiUiEnabled && (
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
