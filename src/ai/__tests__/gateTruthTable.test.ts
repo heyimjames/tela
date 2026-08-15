@@ -266,17 +266,29 @@ describe('the conjunction is stated once', () => {
     const offenders: string[] = []
     let scanned = 0
 
+    /** The one module allowed to state the conjunction, in POSIX form. */
+    const RESOLVER = 'ai/gate.ts'
+    let sawResolver = false
+
     for await (const entry of glob('**/*.{ts,tsx}', { cwd: srcRoot })) {
-      const rel = String(entry)
+      // Normalised, because `glob` yields the platform separator: on Windows this is
+      // `ai\gate.ts`, which silently missed the exemption below and made the resolver
+      // report itself as an offender. Caught by CI on Windows while every local run
+      // was green — a comparison against a hard-coded `/` path is not portable.
+      const rel = String(entry).split(/[\\/]/).join('/')
       if (rel.includes('__tests__')) continue
       const source = await readFile(join(srcRoot, rel), 'utf8')
       const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
       scanned += 1
-      if (composesBothHalves(code) && rel !== 'ai/gate.ts') offenders.push(rel)
+      if (rel === RESOLVER) sawResolver = true
+      if (composesBothHalves(code) && rel !== RESOLVER) offenders.push(rel)
     }
 
     // The scan must actually have read the tree — an empty sweep would "pass".
     expect(scanned, 'the source sweep found no files to read').toBeGreaterThan(20)
+    // ...and it must have reached the resolver under the name the exemption uses, or
+    // the exemption is dead and every other assertion here is measuring the wrong set.
+    expect(sawResolver, `the sweep never saw ${RESOLVER} — path normalisation is wrong`).toBe(true)
     expect(offenders, 'these modules compose the AI halves themselves').toEqual([])
 
     // ...and the one module that is allowed to must really contain it, or the
