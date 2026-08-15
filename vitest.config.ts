@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Kept in step with vite.config.ts and tsconfig — see vendor/design-api-client/SOURCE.md.
+      '@performance-clickt/design-api-client': fileURLToPath(
+        new URL('./vendor/design-api-client/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {
