@@ -250,6 +250,13 @@ beforeAll(async () => {
   renderAllSurfaces(await loadApp({ ...AI_PANEL_OPEN, workspaceMode: false, endpoint: false }))
   warmUp.coldMs = performance.now() - startedAt
   vi.unstubAllEnvs()
+  // `vi.doMock` is *not* cleared by `vi.resetModules()` — verified, not assumed — so the
+  // stand-in store this warm-up registered via `AI_PANEL_OPEN` would otherwise stay
+  // registered for the tests that never call `loadApp` (the two predicate tests and the
+  // capability-derivation one, which import their subject directly). `loadApp` unmocks on
+  // entry, so its own callers were never affected; unmocking here makes the hook leave
+  // nothing behind either way.
+  vi.doUnmock('@/store/useUIStore')
   vi.resetModules()
 }, GRAPH_WARMUP_TIMEOUT_MS)
 
@@ -415,10 +422,16 @@ describe('the cold graph transform stays out of the per-test budget', () => {
     const warmMs = performance.now() - startedAt
 
     // The property that removes the flake: once warm, a full reload of the same graph
-    // is a small fraction of vitest's 5000 ms per-test default. 1000 ms is ~25x the
-    // measured warm cost (33–60 ms) so contention cannot trip it, and still only a
-    // fifth of the budget, so it goes red well before any test can time out.
-    expect(warmMs).toBeLessThan(1000)
+    // is a small fraction of vitest's 5000 ms per-test default.
+    //
+    // The threshold is half the budget, deliberately loose. A pin that itself flakes on a
+    // saturated runner would just trade one red build for another, so it is sized against
+    // the worst contention on record rather than against the local measurement: the worst
+    // observed cold load (7565 ms, CLI-520 run 31876427907) is ~8.9x this machine's idle
+    // cold load, and applying that same factor to the warm cost (33–60 ms) predicts ~530 ms
+    // at worst. 2500 ms is ~4.7x that, and still low enough that a test cannot approach the
+    // 5000 ms budget from this cause without failing here first.
+    expect(warmMs).toBeLessThan(2500)
 
     // Non-vacuity, part 2: prove the warm-up absorbed a real cost rather than being a
     // no-op that happens to pass. Measured ratio is ~20x; 3x leaves ample room. If a
