@@ -8,9 +8,9 @@
  */
 
 import { useMemo } from 'react'
-import { AI_ENABLED } from '@/lib/aiApi'
 import { DisabledAiProvider, type AiProvider } from './AiProvider'
-import { getWorkspaceCapabilities, useWorkspaceCapabilities } from './capabilities'
+import { useWorkspaceCapabilities } from './capabilities'
+import { aiEnabledFor, isAiEnabled } from './gate'
 
 export type {
   AiMessage,
@@ -30,28 +30,14 @@ export {
 } from './capabilities'
 
 /**
- * Whether AI may run at all in this session — the gate itself, independent of who
- * is asking.
+ * The gate, re-exported from `./gate` — which is where the condition is stated, once.
  *
- * Both conditions must hold, and they are different questions:
- *
- * - `aiEnabled` — *is this workspace allowed AI?* Server-side, off by default, and
- *   always false in local mode.
- * - `AI_ENABLED` — *is an endpoint configured for this build?* (`VITE_AI_API_ORIGIN`,
- *   `src/lib/aiApi.ts`.) This condition already gated the dock item and the settings
- *   tabs before CLI-513; it is kept rather than replaced, because dropping it would
- *   let a workspace with the capability render a panel whose only action throws.
- *
- * CLI-513 gated the UI. CLI-533 established that the UI is not the only caller: the
- * agent command bus (`src/agent/commands.ts`) can reach AI over postMessage and
- * `window.tela.dispatch` without rendering anything. Hence a resolver named for the
- * capability rather than for the surface — the RPC gate and the UI gate must answer
- * the same question, and two functions computing "the same" condition is how they
- * eventually stop matching.
+ * Both halves must hold and they are different questions (*is this workspace allowed
+ * AI?* and *is an endpoint configured for this build?*); `./gate` documents them and
+ * owns the AND. CLI-534 collapsed three separate statements of that AND — here, in the
+ * hook below, and in `postCanvasAI` — into that one module.
  */
-export function isAiEnabled(): boolean {
-  return getWorkspaceCapabilities().aiEnabled === true && AI_ENABLED
-}
+export { AI_ENDPOINT_CONFIGURED, aiEnabledFor, isAiEnabled, workspaceAllowsAi } from './gate'
 
 /**
  * Whether any AI entry point may be rendered.
@@ -59,9 +45,6 @@ export function isAiEnabled(): boolean {
  * Identical to `isAiEnabled` and deliberately kept as its own name: components read
  * a UI-shaped question, and the CLI-513 entry-point suite asserts on this name. It
  * delegates rather than restating the condition.
- *
- * The composite is narrower than what shipped before, which is the direction a
- * dormant feature's gate should move.
  */
 export function isAiUiEnabled(): boolean {
   return isAiEnabled()
@@ -70,10 +53,14 @@ export function isAiUiEnabled(): boolean {
 /**
  * The hook form. Subscribes to the capability store so a component gates correctly
  * even if the workspace record arrives after it first rendered.
+ *
+ * Composes through `aiEnabledFor` over the set it subscribed to, rather than restating
+ * the condition: taking the capabilities as an argument is what lets the hook delegate
+ * and still avoid re-reading the store.
  */
 export function useAiUiEnabled(): boolean {
   const capabilities = useWorkspaceCapabilities()
-  return useMemo(() => capabilities.aiEnabled === true && AI_ENABLED, [capabilities])
+  return useMemo(() => aiEnabledFor(capabilities), [capabilities])
 }
 
 const disabled = new DisabledAiProvider()

@@ -2,7 +2,7 @@
  * Adapter selection.
  *
  * One flag, `VITE_WORKSPACE_MODE`, matching the mechanism the app already uses for
- * `VITE_AI_API_ORIGIN` (`src/lib/aiApi.ts`) rather than introducing a second way to
+ * `VITE_AI_API_ORIGIN` (`src/ai/endpoint.ts`) rather than introducing a second way to
  * configure the same build. Unset means local, which is what the certified offline
  * payload ships as: workspace mode has to be switched on deliberately, and no
  * absent-variable or typo path can turn it on by accident.
