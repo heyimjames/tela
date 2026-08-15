@@ -199,7 +199,56 @@ describe('the collapse preserved which half reports the refusal', () => {
   })
 })
 
+/** The workspace half, however it is spelled — the raw field test or the named helper. */
+const HALF_WORKSPACE = /aiEnabled\s*===\s*true|workspaceAllowsAi\s*\(/
+/** The endpoint half. */
+const HALF_ENDPOINT = /AI_ENDPOINT_CONFIGURED/
+
+/**
+ * Whether a module joins **both** halves in one `&&` expression.
+ *
+ * Order-independent and multi-line tolerant on purpose. A first version of this check
+ * pinned the two orderings it expected (`aiEnabled === true &&` / `&& AI_ENDPOINT_CONFIGURED`)
+ * and a re-composition written the other way round — `AI_ENDPOINT_CONFIGURED && workspaceAllowsAi()`
+ * — walked straight past it. A guard that only catches the shape you happened to
+ * imagine is the vacuity trap one level up: it reports "no drift" for a class of drift
+ * it cannot see. Splitting on statement boundaries rather than newlines keeps a
+ * conjunction spread over several lines in one piece.
+ */
+function composesBothHalves(code: string): boolean {
+  return code
+    .split(/[;{}]/)
+    .some((statement) => statement.includes('&&') && HALF_WORKSPACE.test(statement) && HALF_ENDPOINT.test(statement))
+}
+
 describe('the conjunction is stated once', () => {
+  /**
+   * The detector's own self-test. `composesBothHalves` is the instrument every
+   * assertion below depends on, so it is checked against known-positive and
+   * known-negative samples rather than trusted — a detector that silently matches
+   * nothing would report a clean tree forever.
+   */
+  it('the drift detector catches a re-composition in either order', () => {
+    for (const positive of [
+      'return workspaceAllowsAi(caps) && AI_ENDPOINT_CONFIGURED',
+      'return AI_ENDPOINT_CONFIGURED && workspaceAllowsAi(caps)',
+      'return caps.aiEnabled === true && AI_ENDPOINT_CONFIGURED',
+      'return AI_ENDPOINT_CONFIGURED && caps.aiEnabled === true',
+      'return (\n  workspaceAllowsAi(caps) &&\n  AI_ENDPOINT_CONFIGURED\n)',
+    ]) {
+      expect(composesBothHalves(positive), `missed: ${positive}`).toBe(true)
+    }
+
+    for (const negative of [
+      'import { AI_ENDPOINT_CONFIGURED } from "@/ai/endpoint"',
+      'if (!workspaceAllowsAi()) { throw x } if (!AI_ENDPOINT_CONFIGURED) { throw y }',
+      'return workspaceAllowsAi(caps) && somethingElse',
+      'return isAiEnabled() && userAskedForIt',
+    ]) {
+      expect(composesBothHalves(negative), `false positive: ${negative}`).toBe(false)
+    }
+  })
+
   /**
    * The structural half of this issue, asserted rather than described.
    *
@@ -223,9 +272,7 @@ describe('the conjunction is stated once', () => {
       const source = await readFile(join(srcRoot, rel), 'utf8')
       const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
       scanned += 1
-      // Both halves named in one expression is the shape the issue removed.
-      const composes = /aiEnabled\s*===\s*true\s*&&/.test(code) || /&&\s*AI_ENDPOINT_CONFIGURED/.test(code)
-      if (composes && rel !== 'ai/gate.ts') offenders.push(rel)
+      if (composesBothHalves(code) && rel !== 'ai/gate.ts') offenders.push(rel)
     }
 
     // The scan must actually have read the tree — an empty sweep would "pass".
