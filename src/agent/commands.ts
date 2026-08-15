@@ -318,3 +318,22 @@ export async function dispatchPublic(command: { op: string; [k: string]: unknown
 export function getSchema() {
   return COMMANDS.getSchema.handler({})
 }
+
+/**
+ * The ops declared as AI-reaching, for the gate's own test to pin.
+ *
+ * `requiresAi` is an opt-in marker, and an opt-in marker is exactly the kind of
+ * safety mechanism that covers only what someone remembered to wire into it. The
+ * dispatch sweep in `__tests__/rpcAiGate.test.ts` calls every op with no arguments,
+ * which catches a new AI op only if it reaches AI without them — a future
+ * `generateCopy(prompt)` would bail out early and slip past. Exporting the marked
+ * set lets that suite pin it, so adding *any* op forces a deliberate decision here
+ * rather than a silent default. `postCanvasAI`'s own check remains the backstop for
+ * anything that still gets through.
+ */
+export function aiGatedOps(): string[] {
+  return Object.entries(BRIDGE_COMMANDS)
+    .filter(([, def]) => def.requiresAi)
+    .map(([op]) => op)
+    .sort()
+}

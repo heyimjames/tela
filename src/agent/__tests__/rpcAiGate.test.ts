@@ -61,7 +61,7 @@ async function load(options: {
   const ai = await import('@/ai')
   if (options.grant) ai.adoptWorkspaceCapabilities({ aiEnabled: true })
 
-  const { dispatch, dispatchPublic, getSchema } = await import('@/agent/commands')
+  const { dispatch, dispatchPublic, getSchema, aiGatedOps } = await import('@/agent/commands')
   const { RENDER_COMMANDS } = await import('@/agent/renderOps')
 
   const publicOps = (getSchema() as { commands: { op: string }[] }).commands.map((c) => c.op)
@@ -70,6 +70,7 @@ async function load(options: {
     aiReached,
     dispatch,
     dispatchPublic,
+    aiGatedOps,
     publicOps,
     bridgeOnlyOps: Object.keys(RENDER_COMMANDS),
   }
@@ -102,6 +103,23 @@ describe('the RPC surface this issue enumerated', () => {
     // The bridge-only ops must never be reachable over postMessage (rpc.ts routes
     // there); AI gating is not an excuse to merge the two tables.
     for (const op of app.bridgeOnlyOps) expect(app.publicOps).not.toContain(op)
+  })
+
+  /**
+   * The durability guard, and an honest statement of what the sweep below cannot do.
+   *
+   * The sweep dispatches every op with **no arguments**, so it detects a new
+   * AI-reaching op only if that op reaches AI without them. A future
+   * `generateCopy({ prompt })` would throw on the missing prompt and the sweep would
+   * report "AI not reached" — true, and meaningless. Pinning the marked set closes
+   * that gap from the other side: any op added to either table breaks the assertion
+   * above, and any change to what is considered AI-reaching breaks this one, so a
+   * human has to come here and decide. `postCanvasAI`'s check is the backstop for
+   * whatever still gets through both.
+   */
+  it('marks exactly the ops known to reach AI — adding one forces a decision here', async () => {
+    const app = await load({ workspaceMode: false, endpoint: false, grant: false })
+    expect(app.aiGatedOps()).toEqual(['relayoutFrame'])
   })
 })
 
@@ -159,21 +177,28 @@ describe('with the capability off, no op on either surface reaches AI', () => {
     const app = await load({ workspaceMode: false, endpoint: false, grant: false })
     const { useWorkspaceStore } = await import('@/store/useWorkspaceStore')
 
-    const created = await app.dispatch({ op: 'addFrame' })
-    const otherFrameId = (created.result as { frameId: string }).frameId
-    await app.dispatch({ op: 'selectFrame', frameId: otherFrameId })
+    // TWO frames, deliberately. An active one and a different one to aim at — the
+    // active page starts with none, so creating a single frame would leave nothing
+    // for `relayoutFrame` to switch *to*, and the assertion below would be skipped
+    // rather than satisfied.
+    const active = (await app.dispatch({ op: 'addFrame' })).result as { frameId: string }
+    const other = (await app.dispatch({ op: 'addFrame' })).result as { frameId: string }
+    await app.dispatch({ op: 'selectFrame', frameId: active.frameId })
 
+    // Preconditions, asserted rather than assumed: without these the test below can
+    // pass by never exercising anything.
+    expect(other.frameId).not.toBe(active.frameId)
+    expect(useWorkspaceStore.getState().activeFrameId).toBe(active.frameId)
     const framesBefore = useWorkspaceStore.getState().getActivePage()?.frames.length
-    // relayoutFrame's handler switches the active frame *before* it calls AI. A gate
-    // living inside the handler would let that mutation through; this one does not.
-    const target = useWorkspaceStore
-      .getState()
-      .getActivePage()
-      ?.frames.find((f) => f.id !== otherFrameId)
-    if (target) {
-      await app.dispatch({ op: 'relayoutFrame', frameId: target.id })
-      expect(useWorkspaceStore.getState().activeFrameId).toBe(otherFrameId)
-    }
+    expect(framesBefore).toBe(2)
+
+    // relayoutFrame's handler switches the active frame *before* it awaits AI. A gate
+    // living inside the handler would let that mutation land and only then refuse;
+    // this one refuses first, so the switch never happens.
+    const result = await app.dispatch({ op: 'relayoutFrame', frameId: other.frameId })
+
+    expect(result.ok).toBe(false)
+    expect(useWorkspaceStore.getState().activeFrameId).toBe(active.frameId)
     expect(useWorkspaceStore.getState().getActivePage()?.frames.length).toBe(framesBefore)
   })
 })
