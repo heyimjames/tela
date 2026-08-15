@@ -1,6 +1,7 @@
 import { useDesignStore, createTextLayer } from '@/store/useDesignStore'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { relayoutActiveFrame } from '@/store/useAIStore'
+import { AiDisabledError, isAiEnabled } from '@/ai'
 import { getTextBounds, createMeasureContext } from '@/engine/textMeasure'
 import { AD_FORMATS } from '@/brand/formats'
 import { getBrandColor } from '@/brand/palette'
@@ -28,6 +29,15 @@ export interface CommandDef {
   description: string
   /** param name → short description (type + meaning). Drives getSchema. */
   params: Record<string, string>
+  /**
+   * Marks an op whose handler can reach AI code.
+   *
+   * Declared on the command rather than checked inside the handler so the gate is
+   * visible in the table a reviewer reads, and so `run` can refuse *before* the
+   * handler is entered — "no RPC path reaches AI code" is a statement about entry,
+   * not about what the handler decides once it is running.
+   */
+  requiresAi?: true
   handler: (args: Record<string, unknown>) => unknown | Promise<unknown>
 }
 
@@ -245,6 +255,7 @@ const COMMANDS: Record<string, CommandDef> = {
   relayoutFrame: {
     description: 'AI re-layout: re-compose a frame\'s existing content to fit its current format (call setFrameFormat first to change size). Preserves copy/colours, recomposes positions. Async, uses the LLM.',
     params: { frameId: 'string? — frame to re-layout (default: active frame)' },
+    requiresAi: true,
     handler: async (a) => {
       if (a.frameId && a.frameId !== useWorkspaceStore.getState().activeFrameId) {
         useWorkspaceStore.getState().setActiveFrame(a.frameId as string)
@@ -269,6 +280,22 @@ const BRIDGE_COMMANDS: Record<string, CommandDef> = { ...COMMANDS, ...RENDER_COM
 async function run(table: Record<string, CommandDef>, command: { op: string; [k: string]: unknown }): Promise<CommandResult> {
   const def = command && Object.prototype.hasOwnProperty.call(table, command.op) ? table[command.op] : undefined
   if (!def) return { ok: false, error: `Unknown command "${command?.op}". Call { op: "getSchema" } for the list.` }
+  /**
+   * The AI gate, on the dispatch path rather than in the handlers.
+   *
+   * CLI-513 gated eight UI entry points; this bus is a ninth route into the same
+   * code that renders nothing, so none of those gates sits on it. `isAiEnabled()`
+   * is the same resolver the UI reads — `aiEnabled` AND an endpoint configured —
+   * so the two surfaces cannot drift apart.
+   *
+   * Checked here, before `def.handler` is called, so a gated op has no side effects
+   * at all: `relayoutFrame` would otherwise switch the active frame on its way to
+   * the refusal. Reported with `AiDisabledError`'s message so an agent sees the
+   * same shape `DisabledAiProvider` produces, not a second vocabulary for "off".
+   */
+  if (def.requiresAi && !isAiEnabled()) {
+    return { ok: false, error: new AiDisabledError(command.op).message }
+  }
   try {
     return { ok: true, result: await def.handler(command) }
   } catch (e) {

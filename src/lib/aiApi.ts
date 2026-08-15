@@ -12,6 +12,9 @@
  * is false) and the app is fully usable without them. The request/response
  * contract is documented in `docs/ai-endpoint.md`.
  */
+import { AiDisabledError } from "@/ai/AiProvider";
+import { getWorkspaceCapabilities } from "@/ai/capabilities";
+
 const AI_ORIGIN = (import.meta.env.VITE_AI_API_ORIGIN as string | undefined) ?? "";
 const AI_PATH = (import.meta.env.VITE_AI_API_PATH as string | undefined) ?? "/api/tela-ai";
 
@@ -35,8 +38,24 @@ export interface CanvasAIRequest {
 }
 
 /** POST to the configured AI endpoint. Credentials are included so a same-origin
- *  proxy can use session cookies; a cross-origin proxy must allow them via CORS. */
+ *  proxy can use session cookies; a cross-origin proxy must allow them via CORS.
+ *
+ *  Both halves of the AND-gate are enforced here, at the one function every AI
+ *  generator funnels through (`generateCopy`, `generateAdDesign`,
+ *  `relayoutForFormat` via `completeCanvasAI`, and the streaming parser). The
+ *  dispatch gate in `src/agent/commands.ts` stops the RPC ops that are known to
+ *  reach AI; this stops the ones nobody remembered to mark. A gate that covers
+ *  only the paths wired into it covers only today's paths.
+ *
+ *  The capability half is composed locally rather than imported from `@/ai`:
+ *  `src/ai/index.ts` imports `AI_ENABLED` from this module, so importing it back
+ *  would be a cycle. `@/ai/capabilities` and `@/ai/AiProvider` are leaves and safe
+ *  to import — and the composition is the same one `isAiEnabled()` makes. */
 export async function postCanvasAI(req: CanvasAIRequest): Promise<Response> {
+  if (getWorkspaceCapabilities().aiEnabled !== true) {
+    throw new AiDisabledError("postCanvasAI");
+  }
+
   if (!AI_ENABLED) {
     throw new Error(
       "AI Assist is not configured. Set VITE_AI_API_ORIGIN to point at your AI proxy endpoint.",

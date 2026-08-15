@@ -30,7 +30,8 @@ export {
 } from './capabilities'
 
 /**
- * Whether any AI entry point may be rendered.
+ * Whether AI may run at all in this session — the gate itself, independent of who
+ * is asking.
  *
  * Both conditions must hold, and they are different questions:
  *
@@ -38,14 +39,32 @@ export {
  *   always false in local mode.
  * - `AI_ENABLED` — *is an endpoint configured for this build?* (`VITE_AI_API_ORIGIN`,
  *   `src/lib/aiApi.ts`.) This condition already gated the dock item and the settings
- *   tabs before this change; it is kept rather than replaced, because dropping it
- *   would let a workspace with the capability render a panel whose only action throws.
+ *   tabs before CLI-513; it is kept rather than replaced, because dropping it would
+ *   let a workspace with the capability render a panel whose only action throws.
  *
- * The composite is narrower than what shipped before on every path, which is the
- * direction a dormant feature's gate should move.
+ * CLI-513 gated the UI. CLI-533 established that the UI is not the only caller: the
+ * agent command bus (`src/agent/commands.ts`) can reach AI over postMessage and
+ * `window.tela.dispatch` without rendering anything. Hence a resolver named for the
+ * capability rather than for the surface — the RPC gate and the UI gate must answer
+ * the same question, and two functions computing "the same" condition is how they
+ * eventually stop matching.
+ */
+export function isAiEnabled(): boolean {
+  return getWorkspaceCapabilities().aiEnabled === true && AI_ENABLED
+}
+
+/**
+ * Whether any AI entry point may be rendered.
+ *
+ * Identical to `isAiEnabled` and deliberately kept as its own name: components read
+ * a UI-shaped question, and the CLI-513 entry-point suite asserts on this name. It
+ * delegates rather than restating the condition.
+ *
+ * The composite is narrower than what shipped before, which is the direction a
+ * dormant feature's gate should move.
  */
 export function isAiUiEnabled(): boolean {
-  return getWorkspaceCapabilities().aiEnabled === true && AI_ENABLED
+  return isAiEnabled()
 }
 
 /**
