@@ -68,6 +68,14 @@ export interface WorkspaceState {
   readonly notice: string | null
   readonly busy: boolean
   /**
+   * The address to pre-fill on the sign-in form.
+   *
+   * Set after redeeming an invitation. The contract mints no session there, so the
+   * user has to sign in — retyping the address they just proved they control would
+   * be a pointless obstacle at the least forgiving moment in the flow.
+   */
+  readonly prefillEmail: string | null
+  /**
    * True once a save was refused and not yet resolved. Distinct from `conflict`
    * only in that a component can render "unsaved" without reading revisions.
    */
@@ -84,6 +92,7 @@ const INITIAL: WorkspaceState = {
   conflict: null,
   notice: null,
   busy: false,
+  prefillEmail: null,
   hasUnsavedRefusal: false,
 }
 
@@ -231,6 +240,7 @@ export async function acceptInvite(
     setState({
       screen: 'signed-out',
       busy: false,
+      prefillEmail: result.email,
       notice: `You've joined ${result.workspace.name}. Sign in with ${result.email} to continue.`,
     })
     return { email: result.email, workspaceName: result.workspace.name }

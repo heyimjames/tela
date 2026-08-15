@@ -103,6 +103,26 @@ describe('invite-only: no enrolment surface', () => {
     expect(offender).toMatch(RENDERED_ENROLMENT_PHRASES)
   })
 
+  it('pre-fills a redeemed invitation address into the sign-in form', () => {
+    // Guards against the prop going dead: it is declared and consumed by
+    // LoginScreen, and this asserts it reaches the rendered input rather than
+    // being quietly ignored.
+    const markup = renderToStaticMarkup(
+      createElement(LoginScreen, {
+        notice: null,
+        busy: false,
+        initialEmail: 'invited@example.test',
+        onSubmit: () => {},
+      }),
+    )
+    expect(markup).toContain('value="invited@example.test"')
+
+    const withoutPrefill = renderToStaticMarkup(
+      createElement(LoginScreen, { notice: null, busy: false, onSubmit: () => {} }),
+    )
+    expect(withoutPrefill).not.toContain('invited@example.test')
+  })
+
   it('tells the visitor how access actually works', () => {
     const markup = renderToStaticMarkup(
       createElement(LoginScreen, { notice: null, busy: false, onSubmit: () => {} }),

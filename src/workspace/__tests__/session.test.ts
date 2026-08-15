@@ -154,6 +154,15 @@ describe('invite acceptance', () => {
     expect(getWorkspaceState().user).toBeNull()
     expect(getWorkspaceState().notice).toContain('Studio')
     expect(getWorkspaceState().notice).toContain(CREDENTIALS.email)
+    // Carried so the sign-in form can pre-fill it: the user has just proved they
+    // control this address, and making them retype it is a pointless obstacle.
+    expect(getWorkspaceState().prefillEmail).toBe(CREDENTIALS.email)
+  })
+
+  it('leaves the prefill unset when the invite is refused', () => {
+    // Otherwise a failed redemption would seed the login form with an address the
+    // server never confirmed.
+    expect(getWorkspaceState().prefillEmail).toBeNull()
   })
 
   it('gives one clear message for an expired, unknown or already-used token', async () => {

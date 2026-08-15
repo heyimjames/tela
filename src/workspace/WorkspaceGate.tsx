@@ -91,6 +91,12 @@ export function WorkspaceGate({ children }: { children: ReactNode }) {
       <LoginScreen
         notice={state.notice}
         busy={state.busy}
+        // Keyed so a prefill arriving after the form has mounted actually reaches
+        // the input: `useState(initialEmail)` only reads its argument on the first
+        // render, so without a remount the redeemed address would be ignored — the
+        // exact way an "initial value" prop silently becomes dead.
+        key={state.prefillEmail ?? 'signed-out'}
+        initialEmail={state.prefillEmail ?? undefined}
         onSubmit={(email, password) => {
           void login(email, password)
         }}
