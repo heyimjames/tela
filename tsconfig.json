@@ -22,6 +22,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@performance-clickt/design-api-client": [
+        "./vendor/design-api-client/src/index.ts"
       ]
     }
   }

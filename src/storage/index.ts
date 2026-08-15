@@ -12,6 +12,7 @@
  * runtime — a network request on a path that is required never to make one.
  */
 
+import { isWorkspaceMode } from './workspaceMode'
 import { LocalStorageAdapter } from './LocalStorageAdapter'
 import { WorkspaceStorageAdapter } from './WorkspaceStorageAdapter'
 import type { StorageAdapter } from './StorageAdapter'
@@ -33,17 +34,11 @@ export { StorageQuotaExceededError, isQuotaExceededError, type StorageBackend } 
 export { clearStoredDocuments } from './reset'
 
 /**
- * Whether workspace mode is switched on.
- *
- * Opt-in by exact value. Anything else — unset, empty, `false`, `0`, or a typo —
- * is local mode. The alternative, treating any non-empty string as truthy, would
- * make `VITE_WORKSPACE_MODE=false` enable workspace mode.
+ * Re-exported from its own leaf module so a caller that needs only the predicate
+ * can import it without pulling both adapters (and the API client) along. See
+ * `./workspaceMode` for why that matters.
  */
-export function isWorkspaceMode(): boolean {
-  const raw = (import.meta.env?.VITE_WORKSPACE_MODE as string | undefined) ?? ''
-  const value = raw.trim().toLowerCase()
-  return value === 'true' || value === '1'
-}
+export { isWorkspaceMode } from './workspaceMode'
 
 let cached: StorageAdapter | null = null
 

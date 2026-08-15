@@ -1,0 +1,37 @@
+{
+  "name": "@performance-clickt/design-api-client",
+  "version": "1.0.0",
+  "description": "Generated TypeScript client for the frozen HiveMind Design Workspaces v1 API.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/performance-clickt/hivemind-design-server.git",
+    "directory": "packages/api-client"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "5.9.2"
+  }
+}
