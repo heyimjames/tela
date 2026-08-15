@@ -45,7 +45,7 @@ export interface ObservedRequest {
 }
 
 interface ProbeWindow extends Window {
-  __telaNetProbe?: { installed: true; calls: Initiation[] }
+  __telaNetProbe?: { installed: true; doc: string; calls: Initiation[] }
 }
 
 /**
@@ -58,7 +58,14 @@ function instrument(): void {
   const w = window as ProbeWindow
   if (w.__telaNetProbe) return
   const calls: Initiation[] = []
-  w.__telaNetProbe = { installed: true, calls }
+  // A token identifying *this* document. The init script runs again in every
+  // new document, so a fresh token is how the test side detects that the array
+  // it was slicing has been replaced by a navigation rather than truncated.
+  w.__telaNetProbe = {
+    installed: true,
+    doc: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    calls,
+  }
 
   const record = (kind: Initiation['kind'], url: unknown): void => {
     calls.push({ kind, url: String(url), stack: new Error().stack ?? '<no stack>' })
@@ -130,6 +137,31 @@ export function isExternal(url: string, origin: string): boolean {
   }
 }
 
+/**
+ * What one driven UI path did to the network (CLI-536).
+ *
+ * The gate's headline number is an aggregate zero over a whole session, which
+ * cannot say *which* path was covered. A segment is that zero, per path, so the
+ * probe log names each covered path and its own counts — and so a future
+ * regression points at the path that caused it instead of at the session.
+ */
+export interface Segment {
+  label: string
+  /** Browser-level requests observed while the segment was open. */
+  requests: ObservedRequest[]
+  /** Of those, the ones that left the app origin. */
+  external: ObservedRequest[]
+  /** In-page initiations harvested while the segment was open. */
+  initiations: Initiation[]
+  /** True if the document was replaced (navigation/reload) inside the segment. */
+  documentReplaced: boolean
+}
+
+/** An open segment. Call `end()` once; calling it twice is a test-authoring bug. */
+export interface OpenSegment {
+  end(): Promise<Segment>
+}
+
 export interface Recorder {
   /** Every request the browser made, in order. */
   requests: ObservedRequest[]
@@ -139,6 +171,21 @@ export interface Recorder {
   initiations(): Promise<Initiation[]>
   /** Whether the in-page hooks are actually installed in the live document. */
   installed(): Promise<boolean>
+  /**
+   * Copy any not-yet-copied in-page initiations into the test-side accumulator.
+   *
+   * The in-page array dies with its document, so anything a page does on its way
+   * out — a `pagehide` beacon, the "pre-reload initiations" CLI-528 left
+   * uncovered — is only reportable from the in-page hooks if it is harvested
+   * *before* the document is torn down. Call this before triggering any
+   * navigation. (The browser-level observer is unaffected: it lives test-side
+   * and sees the teardown window regardless. That is the point of having two.)
+   */
+  harvest(): Promise<Initiation[]>
+  /** Everything harvested so far, across every document this page has held. */
+  harvested(): Initiation[]
+  /** Open a named segment covering one driven UI path. */
+  begin(label: string): Promise<OpenSegment>
 }
 
 /** Attach both observers to a page. Call before the first `goto`. */
@@ -157,6 +204,26 @@ export async function attachRecorder(page: Page, origin: string): Promise<Record
     })
   })
 
+  // Test-side accumulator. Survives the documents it is harvested from, which is
+  // what lets a segment span a reload.
+  const harvestedCalls: Initiation[] = []
+  let cursor: { doc: string; consumed: number } | null = null
+  let documentsSeen = 0
+
+  const harvest = async (): Promise<Initiation[]> => {
+    const snapshot = await page.evaluate(() => {
+      const probe = (window as ProbeWindow).__telaNetProbe
+      return probe ? { doc: probe.doc, calls: probe.calls.slice() } : null
+    })
+    if (!snapshot) return []
+    const fresh =
+      cursor && cursor.doc === snapshot.doc ? snapshot.calls.slice(cursor.consumed) : snapshot.calls
+    if (!cursor || cursor.doc !== snapshot.doc) documentsSeen += 1
+    cursor = { doc: snapshot.doc, consumed: snapshot.calls.length }
+    harvestedCalls.push(...fresh)
+    return fresh
+  }
+
   return {
     requests,
     external: () => requests.filter((r) => r.external),
@@ -164,5 +231,34 @@ export async function attachRecorder(page: Page, origin: string): Promise<Record
       page.evaluate(() => (window as ProbeWindow).__telaNetProbe?.calls ?? []),
     installed: async () =>
       page.evaluate(() => (window as ProbeWindow).__telaNetProbe?.installed === true),
+    harvest,
+    harvested: () => harvestedCalls.slice(),
+
+    async begin(label: string): Promise<OpenSegment> {
+      // Draw the boundary by draining everything outstanding into the previous
+      // segment's territory first, so a call made before this path started
+      // cannot be attributed to it (nor this path's calls to the last one).
+      await harvest()
+      const requestsAt = requests.length
+      const harvestedAt = harvestedCalls.length
+      const documentsAt = documentsSeen
+      let ended = false
+
+      return {
+        async end(): Promise<Segment> {
+          if (ended) throw new Error(`segment "${label}" ended twice`)
+          ended = true
+          await harvest()
+          const segmentRequests = requests.slice(requestsAt)
+          return {
+            label,
+            requests: segmentRequests,
+            external: segmentRequests.filter((r) => r.external),
+            initiations: harvestedCalls.slice(harvestedAt),
+            documentReplaced: documentsSeen > documentsAt,
+          }
+        },
+      }
+    },
   }
 }

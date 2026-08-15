@@ -28,8 +28,20 @@
 
 import { expect, test } from '@playwright/test'
 
-import { attachRecorder, isExternal, type Initiation } from './recorder'
+import { attachRecorder, isExternal, type Initiation, type Segment } from './recorder'
 import { BASE_URL } from './origin'
+import {
+  exportOnce,
+  expectSegmentClean,
+  fireLifecycleEvents,
+  importAsset,
+  importViaToolbar,
+  instantiateTemplate,
+  layerCount,
+  PNG_FILE,
+  readState,
+  SVG_FILE,
+} from './paths'
 
 /** A readable one-line description of an initiation, for failure messages. */
 function describeInitiation(call: Initiation): string {
@@ -192,5 +204,316 @@ test.describe('zero-network runtime gate', () => {
     expect(isExternal('%%not a url%%', BASE_URL)).toBe(false)
     // Genuinely unparseable, so the fail-loud branch is exercised.
     expect(isExternal('http://[::bad::]/x', BASE_URL)).toBe(true)
+  })
+})
+
+/**
+ * The paths CLI-528 left uncovered (CLI-536).
+ *
+ * The gate above proves a booted, editor-open app is silent. CLI-528's wrap-up
+ * disclosed what that does *not* reach: export flows, template instantiation,
+ * asset import, `pagehide`/`visibilitychange` beacons, and initiations made on
+ * the way out of a document. Those are the paths a phone-home would most
+ * plausibly sit on — "flush analytics when the user leaves" is the single most
+ * common shape of the thing this contract forbids — and until now none of them
+ * had ever been driven under the recorder.
+ *
+ * **What is different about the lifecycle coverage.** There is no `pagehide`,
+ * `visibilitychange`, `beforeunload` or `unload` listener anywhere in `src/`,
+ * and no `navigator.sendBeacon` call. So that path's zero is the purest form of
+ * the trap the Lessons Log names: a count that is zero because nothing was
+ * watching looks exactly like a count that is zero because nothing happened.
+ * Two self-tests below answer it, and they run on every CI job rather than
+ * being a mutation someone performed once:
+ *
+ *  - `recorder segments attribute calls to the path that made them` proves the
+ *    per-path boundaries are real — that a call lands in its own segment and not
+ *    a neighbour's — because a per-path zero produced by mis-drawn boundaries is
+ *    worthless however honest the underlying app is.
+ *  - `a beacon fired from a lifecycle handler is caught, classified and
+ *    attributed` installs the exact listener the app does not have, drives both
+ *    the synthetic events and a *real* reload, and demands the instrument catch
+ *    the beacon in both. That is what makes this section's `toEqual([])`
+ *    assertions falsifiable, and it is also the coverage for "pre-reload
+ *    initiations": it proves the browser-level observer reports a request
+ *    issued by a document that no longer exists.
+ *
+ * It also exercises `navigator.sendBeacon`, a recorder hook that shipped in
+ * CLI-528 and had never been fired by any test.
+ */
+test.describe('zero-network runtime gate — driven paths', () => {
+  test('export, template, asset-import and lifecycle paths make no network request', async ({
+    page,
+  }) => {
+    const recorder = await attachRecorder(page, BASE_URL)
+    await page.goto('/')
+
+    // ---- Boot assertions, before any zero is read -------------------------
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+    expect(
+      await recorder.installed(),
+      'the in-page network hooks are not installed — every zero below would be vacuous',
+    ).toBe(true)
+
+    // Each path records itself as it is checked, and the recorded list is
+    // compared against the expected set at the end. A path deleted from this
+    // test — or one that returns early before its check — then fails the run
+    // instead of quietly shrinking the gate's coverage (the CLI-538 lesson
+    // about pinning a covered set).
+    const covered: string[] = []
+    const clean = (segment: Segment, minRequests = 0): void => {
+      expectSegmentClean(segment, minRequests)
+      covered.push(segment.label)
+    }
+
+    // ---- Path: instantiate a template ------------------------------------
+    const templateSegment = await recorder.begin('template-instantiate')
+    await instantiateTemplate(page, /Stat Callout/)
+    const template = await templateSegment.end()
+
+    const templated = await readState(page)
+    // Proof the *template* path ran, not merely that some editor opened: these
+    // layer names exist only in `src/brand/templates.ts`'s Stat Callout.
+    expect(templated.frames.map((f) => f.name)).toContain('Stat Callout')
+    expect(templated.frames[0]?.layers.map((l) => l.name)).toEqual(
+      expect.arrayContaining(['Big Number', 'Description', 'Accent Line']),
+    )
+    clean(template)
+
+    // ---- Path: export a frame, in both encoders --------------------------
+    // Raster and vector are separate implementations (`engine/compositor.ts`
+    // canvas encode versus `engine/svgExport.ts` string build), so one is not
+    // evidence about the other.
+    const pngSegment = await recorder.begin('export-png')
+    const pngDownload = await exportOnce(page, 'png')
+    const png = await pngSegment.end()
+    expect(pngDownload.suggestedFilename(), 'the PNG export produced no file').toMatch(/\.png$/)
+    clean(png)
+
+    const svgSegment = await recorder.begin('export-svg')
+    const svgDownload = await exportOnce(page, 'svg')
+    const svg = await svgSegment.end()
+    expect(svgDownload.suggestedFilename(), 'the SVG export produced no file').toMatch(/\.svg$/)
+    clean(svg)
+
+    // ---- Path: import an asset -------------------------------------------
+    // Raster and SVG take different branches inside the asset store (an image
+    // decode versus a text read), and the tool bar is a different entry point
+    // again, so all three are driven.
+    const rasterSegment = await recorder.begin('asset-import-png')
+    const afterRaster = await importAsset(page, PNG_FILE)
+    const raster = await rasterSegment.end()
+    expect(afterRaster, 'the PNG import added no asset').toBe(1)
+    clean(raster)
+
+    const vectorSegment = await recorder.begin('asset-import-svg')
+    const afterVector = await importAsset(page, SVG_FILE)
+    const vector = await vectorSegment.end()
+    expect(afterVector, 'the SVG import added no asset').toBe(2)
+    clean(vector)
+
+    const layersBefore = layerCount(await readState(page))
+    const toolbarSegment = await recorder.begin('asset-import-toolbar')
+    await importViaToolbar(page, PNG_FILE)
+    await expect
+      .poll(async () => layerCount(await readState(page)), {
+        message: 'the tool bar image import added no layer',
+      })
+      .toBe(layersBefore + 1)
+    const toolbar = await toolbarSegment.end()
+    clean(toolbar)
+
+    // ---- Path: page lifecycle events -------------------------------------
+    const lifecycleSegment = await recorder.begin('lifecycle-events')
+    const fired = await fireLifecycleEvents(page)
+    // Harvest while the document is still alive; see `Recorder.harvest`.
+    await recorder.harvest()
+    const lifecycle = await lifecycleSegment.end()
+    expect(fired, 'the lifecycle events were not dispatched').toEqual([
+      'visibilitychange',
+      'pagehide',
+      'beforeunload',
+      'blur',
+      'freeze',
+    ])
+    clean(lifecycle)
+
+    // ---- Path: real teardown and reload ----------------------------------
+    // The real thing, not a synthetic event: the document is destroyed and
+    // rebuilt. Anything it tried to say on its way out is visible to the
+    // browser-level observer, which is what covers CLI-528's "pre-reload
+    // initiations".
+    await recorder.harvest()
+    const reloadSegment = await recorder.begin('reload-teardown')
+    await page.reload()
+    // Routing is in-memory, so a reload lands back on the file library rather
+    // than the editor. Asserting the app came back up at all is the point here.
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2_000)
+    const reload = await reloadSegment.end()
+    expect(reload.documentReplaced, 'the reload did not replace the document').toBe(true)
+    expect(
+      await recorder.installed(),
+      'the hooks did not reinstall after reload — the reloaded document was unwatched',
+    ).toBe(true)
+    // A reload must fetch the document and its bundle, so this segment is the
+    // one that can carry a real non-zero floor.
+    clean(reload, 3)
+
+    // ---- Session aggregate ------------------------------------------------
+    const externalTotal = recorder.external()
+    const initiationsTotal = recorder.harvested()
+    console.log(
+      `[zero-network] paths_covered=${covered.length} [${covered.join(', ')}] ` +
+        `session_requests=${recorder.requests.length} session_external=${externalTotal.length} ` +
+        `session_initiations=${initiationsTotal.length}`,
+    )
+
+    // The covered set, pinned. Every path above must have reached its check —
+    // a driver that threw, returned early, or was deleted changes this list.
+    expect(covered, 'a covered path did not reach its network check').toEqual([
+      'template-instantiate',
+      'export-png',
+      'export-svg',
+      'asset-import-png',
+      'asset-import-svg',
+      'asset-import-toolbar',
+      'lifecycle-events',
+      'reload-teardown',
+    ])
+    expect(externalTotal.map((r) => `${r.method} ${r.url}`)).toEqual([])
+    expect(initiationsTotal.map(describeInitiation)).toEqual([])
+    expect(recorder.requests.length, 'no requests at all — the recorder saw nothing load').toBeGreaterThan(0)
+  })
+
+  test('recorder segments attribute calls to the path that made them', async ({ page }) => {
+    // Without this, every per-path zero above could be produced by boundaries
+    // that never contained anything.
+    const recorder = await attachRecorder(page, BASE_URL)
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+
+    const quietBefore = await recorder.begin('selftest-quiet-before')
+    const before = await quietBefore.end()
+
+    const noisy = await recorder.begin('selftest-noisy')
+    await page.evaluate(async () => {
+      await fetch('/__segment_probe_same_origin__').catch(() => undefined)
+      await fetch('http://127.0.0.1:9/__segment_probe_external__').catch(() => undefined)
+    })
+    const loud = await noisy.end()
+
+    const quietAfter = await recorder.begin('selftest-quiet-after')
+    const after = await quietAfter.end()
+
+    console.log(
+      `[zero-network self-test] segment_attribution before=${before.initiations.length} ` +
+        `noisy=${loud.initiations.length} noisy_external=${loud.external.length} ` +
+        `after=${after.initiations.length}`,
+    )
+
+    // The calls land in the segment that made them...
+    expect(loud.initiations.map((c) => c.url)).toEqual([
+      '/__segment_probe_same_origin__',
+      'http://127.0.0.1:9/__segment_probe_external__',
+    ])
+    expect(loud.external.map((r) => r.url)).toEqual([
+      'http://127.0.0.1:9/__segment_probe_external__',
+    ])
+    // ...and in no other segment, which is what makes a neighbouring path's
+    // `[]` mean "this path was silent" rather than "the boundary was empty".
+    expect(before.initiations).toEqual([])
+    expect(after.initiations).toEqual([])
+    expect(before.external).toEqual([])
+    expect(after.external).toEqual([])
+  })
+
+  test('a beacon fired from a lifecycle handler is caught, classified and attributed', async ({
+    page,
+  }) => {
+    const recorder = await attachRecorder(page, BASE_URL)
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+
+    // The listener the app deliberately does not have. Installed here so the
+    // lifecycle assertions above are demonstrably capable of failing.
+    await page.evaluate(() => {
+      const emit = (tag: string): void => {
+        try {
+          navigator.sendBeacon(`/__lifecycle_beacon_${tag}__`, 'x')
+        } catch {
+          /* the attempt is the point, not the outcome */
+        }
+        try {
+          navigator.sendBeacon(`http://127.0.0.1:9/__lifecycle_beacon_external_${tag}__`, 'x')
+        } catch {
+          /* ignore */
+        }
+        void fetch(`/__lifecycle_keepalive_${tag}__`, { keepalive: true }).catch(() => undefined)
+      }
+      window.addEventListener('pagehide', () => emit('pagehide'))
+      document.addEventListener('visibilitychange', () => emit('visibilitychange'))
+    })
+
+    // ---- Synthetic events, document still alive: the in-page hooks answer ---
+    const synthetic = await recorder.begin('selftest-lifecycle-synthetic')
+    await fireLifecycleEvents(page)
+    await recorder.harvest()
+    const fromHooks = await synthetic.end()
+
+    const kinds = [...new Set(fromHooks.initiations.map((c) => c.kind))].sort()
+    console.log(
+      `[zero-network self-test] lifecycle kinds=${kinds.join(',')} ` +
+        `initiations=${fromHooks.initiations.length} external=${fromHooks.external.length}`,
+    )
+    // `sendbeacon` is the hook this whole issue is about; asserting the set
+    // exhaustively means a future hook added to the recorder without coverage
+    // here is a failure rather than an untested claim.
+    expect(kinds).toEqual(['fetch', 'sendbeacon'])
+    expect(
+      fromHooks.initiations.some((c) => c.url.includes('__lifecycle_beacon_pagehide__')),
+      'a beacon fired from a pagehide handler was not recorded',
+    ).toBe(true)
+    expect(
+      fromHooks.initiations.some((c) => c.url.includes('__lifecycle_beacon_visibilitychange__')),
+      'a beacon fired from a visibilitychange handler was not recorded',
+    ).toBe(true)
+    expect(
+      fromHooks.external.length,
+      'a cross-origin beacon was not classified as external — the lifecycle gate could not fail',
+    ).toBeGreaterThan(0)
+
+    // ---- Real teardown: the in-page array dies with the document ----------
+    // Only the browser-level observer can answer here, and it must, or the
+    // "pre-reload initiations" the gate claims to cover would be unobservable.
+    const teardown = await recorder.begin('selftest-lifecycle-teardown')
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Files', level: 1 })).toBeVisible()
+    await page.waitForTimeout(1_000)
+    const fromBrowser = await teardown.end()
+
+    const teardownBeacons = fromBrowser.requests.filter((r) => r.url.includes('__lifecycle_'))
+    console.log(
+      `[zero-network self-test] teardown_requests=${fromBrowser.requests.length} ` +
+        `teardown_beacons=${teardownBeacons.length} teardown_external=${fromBrowser.external.length}`,
+    )
+    expect(
+      teardownBeacons.map((r) => r.url.replace(BASE_URL, '')).sort(),
+      'a real page teardown fired beacons the browser-level observer did not report — ' +
+        'the gate cannot see initiations made on the way out of a document',
+    ).toEqual([
+      '/__lifecycle_beacon_pagehide__',
+      '/__lifecycle_beacon_visibilitychange__',
+      '/__lifecycle_keepalive_pagehide__',
+      '/__lifecycle_keepalive_visibilitychange__',
+      'http://127.0.0.1:9/__lifecycle_beacon_external_pagehide__',
+      'http://127.0.0.1:9/__lifecycle_beacon_external_visibilitychange__',
+    ])
+    expect(
+      fromBrowser.external.length,
+      'the teardown window classified nothing as external — the reload gate could not fail',
+    ).toBeGreaterThan(0)
+    expect(fromBrowser.documentReplaced).toBe(true)
   })
 })
