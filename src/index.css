@@ -2,10 +2,20 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+/* JetBrains Mono is no longer named by any stack — the chrome mono role moved to
+   the Pyrito "Paper Mono" stack below. The @import stays because the emitted
+   woff2 is a *certified payload file*: dropping it changes the payload's file
+   shape and `npm run verify:payload` fails on a difference outside the
+   enumerated application chrome. Removing it therefore belongs with a baseline
+   re-record, which is a release-engineering change, not a branding one. */
 @import "@fontsource-variable/jetbrains-mono";
 
-/* Inter Variable is the bundled default. To use your own brand font, add an
-   @font-face here and set FONT_FAMILY in src/engine/textMeasure.ts. */
+/* Inter Variable is the bundled default for CANVAS text (see
+   src/engine/textMeasure.ts) — it is the document typeface, not the chrome
+   typeface, and it is pinned so an export renders identically on every device.
+   The app chrome takes the Pyrito stacks declared in `@theme inline` below.
+   To use your own brand font on the canvas, add an @font-face here and set
+   FONT_FAMILY in src/engine/textMeasure.ts. */
 
 /* No `dark:` variant is defined on purpose. Dark is not a mode here — it is the
    base :root ramp below, and nothing ever sets a `.dark` class. Declaring the
@@ -14,83 +24,99 @@
    flip the tokens in this block, not resurrect `dark:` utilities. */
 
 :root {
-  /* Brand tokens — Neutrals (see src/brand/palette.ts) */
-  --charcoal: #0b0f0e;
-  --cloud: #f3f4f6;
-  --paper: #eef1f3;
-  --stone: #e7eaed;
-  --slate: #5c6470;
+  /* ------------------------------------------------------------------
+     Pyrito brand tokens — transcribed from the kit's own pyrito-tokens.css
+     (brand kit v1.2.0). Names and values are the kit's; nothing here is
+     sampled, derived by eye, or rounded.
 
-  /* Brand tokens — Brand (HiveMind hive ramp) */
-  --hive-50: #dae9e6;
-  --hive-100: #97c4bd;
-  --hive-300: #5ba89a;
-  --hive-500: #1f7a82;
-  --hive-700: #0f4a52;
-  --hive-900: #07262b;
-  --brand-dark: var(--hive-700);
-  --brand-primary: var(--hive-500);
-  --brand-accent: var(--hive-100);
-
-  /* Brand tokens — Accent CTA scale */
-  --ember-500: #F56139;
+     Two kit tokens are deliberately ABSENT: `edge-cyan` and `facet-mid` are
+     D20 linework and facet colours, and the kit forbids them anywhere outside
+     the mark (`color.edge-cyan-restricted`). Declaring them here would be an
+     invitation to use them, so the only place either value appears in this
+     repo is inside the supplied SVG art — asserted in src/brand/brand.test.ts,
+     and the reason neither hex is written out even in this comment.
+     ------------------------------------------------------------------ */
+  --pyrito-ink: #0B0F0E;
+  --pyrito-abyss: #07262B;
+  --pyrito-teal-50: #DAE9E6;
+  --pyrito-teal-100: #97C4BD;
+  --pyrito-teal-300: #5BA89A;
+  --pyrito-teal: #1F7A82;
+  --pyrito-teal-700: #0F4A52;
+  --pyrito-ember: #F86B3C;
+  --pyrito-off-white: #F4F6F5;
+  --pyrito-white: #FFFFFF;
 
   /* ------------------------------------------------------------------
      Chrome ramp — DARK.
 
-     The app chrome is dark by default, matching the HiveMind wiki's dark
-     theme (wiki.gethivemind.co, data-theme="dark"). --ground and --hairline
-     are sampled straight off that theme; the rest fill in the ramp it
-     implies (--surface / --surface-float / --surface-hover) or are chosen to
-     clear WCAG AA on it (--mist, --alert-300). Text, primary, link and ink
-     are not here at all — they alias the brand ramp above.
+     `color.ink-surface` (must) puts Ink under the application, and
+     `color.abyss-depth` (should) reserves Abyss for lifted branded ground
+     rather than the canvas — so ground is Ink and panels are Abyss.
 
-     These seven are the ONLY dark hexes in the codebase. If a component
-     needs a dark colour it takes a token from here; it never re-types a hex
-     (that drift is exactly what the eyebrow regression cost us).
+     The three steps above Abyss are not new colours. Each is a point ON the
+     documented ramp, mixed between two adjacent kit tokens, so every value
+     the chrome paints is provably inside the brand system and no undocumented
+     hex is introduced (the kit's `color.no-invented-accents`, and this
+     issue's "no hex outside the documented token set"). Read the percentage
+     as "how far along abyss → teal-700 this step sits".
 
-     Ordering is a lift ramp: ground (darkest) → surface → surface-float,
-     with hairline as the only rule colour. Note the document canvas is NOT
-     on this ramp — frames paint their own backgrounds and are untouched.
+     --mist is the same idea applied to text: the documented text colour
+     pulled toward the panel it sits on, which is what "muted" means. It stays
+     SOLID — an alpha muted compounds against whichever surface it lands on
+     and silently drops under AA (the r6 eyebrow lesson).
+
+     Ordering is a lift ramp: ground (darkest) → surface → surface-float →
+     surface-hover, with hairline as the only rule colour. Note the document
+     canvas is NOT on this ramp — frames paint their own backgrounds and are
+     untouched. If a component needs a dark colour it takes a token from here;
+     it never re-types a value.
      ------------------------------------------------------------------ */
-  --ground: #06191c;        /* app background; input wells share it */
-  --surface: #0b2226;       /* panels, cards, sidebars — lifted off ground */
-  --surface-float: #0e272c; /* menus, popovers, dialogs — above the panels */
-  --surface-hover: #12333a; /* hover/pressed fills, muted blocks */
-  --hairline: #16424a;      /* every 1px rule */
-  --mist: #8ea1a4;          /* muted chrome text — 6.1:1 on --surface */
-  --alert-300: #ff6b6b;     /* destructive on dark; the light #ef3737 is 4.2:1 */
+  --ground: var(--pyrito-ink);   /* app background; input wells share it */
+  --surface: var(--pyrito-abyss); /* panels, cards, sidebars — lifted off ground */
+  --surface-float: color-mix(in srgb, var(--pyrito-abyss) 78%, var(--pyrito-teal-700)); /* menus, popovers, dialogs */
+  --surface-hover: color-mix(in srgb, var(--pyrito-abyss) 60%, var(--pyrito-teal-700)); /* hover/pressed fills, muted blocks */
+  --hairline: color-mix(in srgb, var(--pyrito-abyss) 38%, var(--pyrito-teal-700));      /* every 1px rule */
+  --mist: color-mix(in srgb, var(--pyrito-off-white) 58%, var(--pyrito-abyss));         /* muted chrome text */
 
   /* Semantic mapping.
-     Foreground/primary/accent deliberately alias existing brand tokens
-     rather than restating their hex: text is --paper, the primary action
-     flips hive-500 → hive-300 for contrast on dark and takes hive-900 ink,
-     and links/secondary accent are hive-100. */
+
+     Teal leads every interaction (`color.teal-leads`, must). It leads at three
+     ramp steps rather than one, because a fill, a focus ring and a run of body
+     text need different contrast against the same ground, and the ramp — not a
+     new colour — is where that difference comes from:
+       --primary  teal      the colour of a filled button (white on it, 5.0:1)
+       --ring     teal-300  the focus ring, 5.7:1 on a panel — well clear of the
+                            3:1 non-text floor
+       --link     teal-100  the colour of a word you can click (8.3:1 on a panel)
+     Teal itself as link text would sit at 3.2:1 on --surface and fail AA; the
+     `text-primary` that survives elsewhere marks active/selected state, not a
+     link.
+
+     --destructive is Ember. That is not a substitution for a missing red: the
+     kit names alerts as Ember's job (`color.ember-sparse` — "sparingly for
+     alerts or one deliberate warm emphasis"), and it is confined to
+     destructive affordances, never a panel or page field
+     (`color.ember-no-fields`, must_not). */
   --background: var(--ground);
-  --foreground: var(--paper);
+  --foreground: var(--pyrito-off-white);
   --card: var(--surface);
-  --card-foreground: var(--paper);
+  --card-foreground: var(--pyrito-off-white);
   --popover: var(--surface-float);
-  --popover-foreground: var(--paper);
-  --primary: var(--hive-300);
-  --primary-foreground: var(--hive-900);
+  --popover-foreground: var(--pyrito-off-white);
+  --primary: var(--pyrito-teal);
+  --primary-foreground: var(--pyrito-white);
   --secondary: var(--surface-hover);
-  --secondary-foreground: var(--paper);
+  --secondary-foreground: var(--pyrito-off-white);
   --muted: var(--surface-hover);
-  /* Solid, never alpha — an alpha muted compounds against whichever surface
-     it lands on and silently drops under AA (the r6 eyebrow lesson). */
   --muted-foreground: var(--mist);
   --accent: var(--surface-hover);
-  --accent-foreground: var(--hive-50);
-  --destructive: var(--alert-300);
-  /* Ink, not white: --alert-300 is a light red, and white on it is 2.8:1. */
-  --destructive-foreground: var(--ground);
-  /* Text links are the wiki's secondary accent, a step lighter than the primary
-     action — hive-300 is the colour of a filled button, hive-100 the colour of
-     a word you can click. Separate token because they are separate jobs; the
-     `text-primary` that survives elsewhere marks active/selected state, not a
-     link. */
-  --link: var(--hive-100);
+  --accent-foreground: var(--pyrito-teal-50);
+  --destructive: var(--pyrito-ember);
+  /* Ink, not white: Ember is a light warm tone. White on it is 2.9:1, under
+     AA; Ink on it is 6.6:1. */
+  --destructive-foreground: var(--pyrito-ink);
+  --link: var(--pyrito-teal-100);
   --border: var(--hairline);
   /* The input RULE, not an input fill. shadcn ships `--input` doing both jobs
      (`border-input` and `bg-input/30`); on this ramp the rule colour is lighter
@@ -98,7 +124,7 @@
      came out brighter than an enabled one. Every `bg-input` consumer is gone;
      this token is a border colour only. */
   --input: var(--hairline);
-  --ring: var(--hive-300);
+  --ring: var(--pyrito-teal-300);
 
   /* Radius */
   --radius: 5px;
@@ -109,35 +135,48 @@
 
   /* Sidebar */
   --sidebar: var(--surface);
-  --sidebar-foreground: var(--paper);
-  --sidebar-primary: var(--hive-300);
-  --sidebar-primary-foreground: var(--hive-900);
+  --sidebar-foreground: var(--pyrito-off-white);
+  --sidebar-primary: var(--pyrito-teal);
+  --sidebar-primary-foreground: var(--pyrito-white);
   --sidebar-accent: var(--surface-hover);
-  --sidebar-accent-foreground: var(--hive-50);
+  --sidebar-accent-foreground: var(--pyrito-teal-50);
   --sidebar-border: var(--hairline);
-  --sidebar-ring: var(--hive-300);
+  --sidebar-ring: var(--pyrito-teal-300);
 
-  /* Charts (brand-derived) — the ramp steps up for legibility on dark:
-     hive-500 is too close to the ground to carry a series. */
-  --chart-1: var(--hive-300);
-  --chart-2: var(--ember-500);
-  --chart-3: var(--hive-100);
-  --chart-4: var(--hive-500);
+  /* Charts — the teal ramp carries the series and Ember marks the one that
+     needs to stand apart, which is exactly the "one deliberate warm emphasis"
+     the kit allows. The ramp steps up for legibility on dark: teal itself is
+     close enough to the ground that it cannot carry a thin series line. */
+  --chart-1: var(--pyrito-teal-300);
+  --chart-2: var(--pyrito-ember);
+  --chart-3: var(--pyrito-teal-100);
+  --chart-4: var(--pyrito-teal);
   --chart-5: var(--mist);
 
   color-scheme: dark;
 }
 
 @theme inline {
-  /* UI chrome renders in the platform system font first — SF Pro on Apple
-     devices (-apple-system must lead), Segoe on Windows — then falls back to the
-     bundled Inter. Canvas/design text stays Inter via engine/textMeasure.ts so
-     exports are identical across devices. */
-  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  /* Mono/eyebrow accents per the HiveMind type rules — JetBrains Mono is
-     bundled (see the @import above); the platform monos are the fallback. */
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  /* Chrome typography — the Pyrito stacks, declared exactly as the kit's
+     pyrito-tokens.css writes them.
+
+     The kit ships NO font binaries, and nothing here may fetch one: a webfont
+     request would break the payload's zero-network contract, and the probe in
+     tests/network is what would catch it. So "Cal Sans UI" / "Cal Sans Heading"
+     / "Paper Mono" are named first and resolve only for a viewer who has them
+     installed; for everyone else the documented fallbacks carry the interface,
+     which is what `type.fallbacks` (must) asks for. Do not add an @font-face or
+     an @import to make these resolve.
+
+     Canvas/design text is a different question and does NOT use these stacks —
+     it stays Inter via engine/textMeasure.ts so an export renders identically
+     on every device regardless of what the viewer has installed. */
+  --font-sans: 'Cal Sans UI', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Cal Sans Heading', var(--font-sans);
+  /* Mono is role-restricted by the kit (`type.mono-restricted`, must): code,
+     identifiers, and labels with technical meaning — which in this app is the
+     `.eyebrow` inspector label and nothing else. */
+  --font-mono: 'Paper Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -225,8 +264,10 @@
   }
   #root {
     height: 100dvh;
-    /* Dark backdrop revealed when a sheet scales the app back (iOS depth). */
-    background-color: #000;
+    /* Dark backdrop revealed when a sheet scales the app back (iOS depth).
+       Ink, not black — the backdrop is the deepest thing on screen and the
+       brand's deepest surface is Ink. */
+    background-color: var(--pyrito-ink);
   }
   /* Balanced headings — no lonely last word (make-interfaces #10) */
   h1, h2, h3, h4 {
@@ -287,7 +328,7 @@ img:not([data-no-outline]) {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--hive-700);
+  background: var(--pyrito-teal-700);
 }
 
 /* Hide the scrollbar while preserving scrollability (used on the sidebar panels). */

@@ -15,7 +15,7 @@ import type { DesignDocument } from '@/types/design'
 import { getBrandColor } from '@/brand/palette'
 import { BRAND } from '@/brand/brand.config'
 import { BrandLockup } from '@/components/brand/BrandLockup'
-import { HiveMark } from '@/components/brand/HiveMark'
+import { PyritoMark } from '@/components/brand/PyritoMark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDeleteModal } from '@/components/library/ConfirmDeleteModal'
@@ -940,7 +940,7 @@ function FirstRunWelcome({ onNewFile, onTemplates }: { onNewFile: () => void; on
       <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-[520px]">
           <div className="mb-1 flex items-center gap-2">
-            <HiveMark size={18} />
+            <PyritoMark size={18} />
             <h2 className="text-[16px] font-semibold text-foreground">Welcome to {BRAND.productName}</h2>
           </div>
           <p className="text-[13px] leading-relaxed text-muted-foreground">

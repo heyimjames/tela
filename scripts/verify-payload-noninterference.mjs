@@ -43,7 +43,7 @@ import {
 import { renderSums } from './lib/release.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DEFAULT_BASELINE = join(root, 'tests/baselines/mcp-payload-df44d15.json')
+const DEFAULT_BASELINE = join(root, 'tests/baselines/mcp-payload-a92383c.json')
 
 const failures = []
 const notes = []

@@ -100,3 +100,48 @@ jobs:
       # directory, so neither can become the other's subject and neither touches
       # `dist/`.
       - run: npm run test:storage
+
+  # The brand is a contractual surface too — the app is the operator-facing face
+  # of the payload — and `src/brand/brand.test.ts` can only prove the sources say
+  # the right thing. Whether the browser AGREES is a separate question: a token
+  # can be declared and shadowed, a `color-mix()` can fail to parse and degrade
+  # to nothing, and an SVG can decline to use the font embedded inside it. Its
+  # own job, like the two probes above, so the check name says what failed. See
+  # playwright.brand.config.ts.
+  brand-render:
+    name: rendered brand gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI subject
+        shell: bash
+        run: |
+          echo "ci-subject job=brand-render event=${{ github.event_name }} run_id=${{ github.run_id }}"
+          echo "ci-subject checkout_sha=$(git rev-parse HEAD)"
+          echo "ci-subject pr_head_sha=${{ github.event.pull_request.head.sha }}"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+      # No `|| true`, and no skip-when-no-browser in the suite itself: a gate that
+      # can quietly not run is worse than no gate.
+      - run: npx playwright install --with-deps chromium
+      # Builds its own default-mode subject into dist-brand/ (see
+      # playwright.brand.config.ts webServer), so it never measures a `dist/`
+      # left over from another job.
+      - run: npm run test:brand
+      # The rendered screenshots are the human-readable half of the evidence, and
+      # a reviewer should not have to re-run the job to see them.
+      - name: Upload rendered-brand screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brand-render-screenshots
+          path: test-results/brand/
+          if-no-files-found: ignore

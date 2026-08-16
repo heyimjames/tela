@@ -11,6 +11,7 @@ node_modules
 dist
 dist-bridge
 dist-probe
+dist-brand
 dist-storage-probe
 dist-workspace-probe
 dist-ssr

@@ -1,42 +1,57 @@
 import type { BrandToken } from '@/types/brand'
 
 /**
- * HiveMind | Design brand palette.
+ * Pyrito Design brand palette.
  *
- * The "Brand" group is the HiveMind division's hive teal ramp, taken verbatim
- * from the Clickt division lockup sheet (`--hive-50 … --hive-900`). Token *keys*
- * are deliberately unchanged from the values they replace (`brand-primary`,
- * `brand-dark`, `brand-accent`): documents, MCP `tela_set_brand_context` calls,
- * and saved `.tela` bundles address colours by key, so re-keying the ramp would
- * silently orphan every existing document. Labels carry the hive names.
+ * The "Brand" group is the Pyrito core teal ramp, taken verbatim from the brand
+ * kit (`teal-50 … teal-700` plus `abyss`); the ramp's values are unchanged by
+ * the rebrand — the kit's teal ramp and the ramp this group already carried are
+ * the same six colours — so no saved document shifts hue. Only the labels move
+ * from the retired division names to the kit's own token names.
+ *
+ * Token *keys* are deliberately unchanged (`brand-primary`, `brand-dark`,
+ * `brand-accent`): documents, MCP `tela_set_brand_context` calls, and saved
+ * `.tela` bundles address colours by key, so re-keying the ramp would silently
+ * orphan every existing document.
+ *
+ * The same constraint governs retirement. `accent-1` and `accent-2` carried
+ * sibling-division colours, and a standalone Pyrito has no siblings to point at
+ * (`identity.standalone`, `identity.no-endorsement`) — but deleting the keys
+ * would throw `Unknown brand token` for any document already using them, and
+ * repointing them at a Pyrito colour would silently repaint that document. They
+ * are therefore moved to a `legacy` group: still resolvable by key, no longer
+ * listed in `BRAND_GROUPS`, so the picker stops offering them and the AI roster
+ * (which selects by group) stops naming them. Existing artwork is untouched;
+ * new artwork cannot reach them.
  */
 export const BRAND_PALETTE: Record<string, BrandToken> = {
-  // --- Neutrals --- (division ink/offwhite/mist/cloud/slate)
+  // --- Neutrals ---
   'charcoal':     { label: 'Ink',           hex: '#0b0f0e', group: 'neutrals' },
   'charcoal-60':  { label: 'Ink 60',        hex: '#0b0f0e99', group: 'neutrals' },
   'white':        { label: 'White',         hex: '#ffffff', group: 'neutrals' },
   'cloud':        { label: 'Cloud',         hex: '#f3f4f6', group: 'neutrals' },
-  'paper':        { label: 'Offwhite',      hex: '#eef1f3', group: 'neutrals' },
+  'paper':        { label: 'Off-white',     hex: '#f4f6f5', group: 'neutrals' },
   'stone':        { label: 'Mist',          hex: '#e7eaed', group: 'neutrals' },
   'slate':        { label: 'Slate',         hex: '#5c6470', group: 'neutrals' },
 
-  // --- Brand --- (hive ramp, HiveMind division)
-  'brand-wash':    { label: 'Hive 50',       hex: '#dae9e6', group: 'brand' },
-  'brand-accent':  { label: 'Hive 100',      hex: '#97c4bd', group: 'brand' },
-  'brand-mid':     { label: 'Hive 300',      hex: '#5ba89a', group: 'brand' },
-  'brand-primary': { label: 'Hive 500',      hex: '#1f7a82', group: 'brand' },
-  'brand-dark':    { label: 'Hive 700',      hex: '#0f4a52', group: 'brand' },
-  'brand-ink':     { label: 'Hive 900',      hex: '#07262b', group: 'brand' },
+  // --- Brand --- (Pyrito core ramp)
+  'brand-wash':    { label: 'Teal 50',      hex: '#dae9e6', group: 'brand' },
+  'brand-accent':  { label: 'Teal 100',     hex: '#97c4bd', group: 'brand' },
+  'brand-mid':     { label: 'Teal 300',     hex: '#5ba89a', group: 'brand' },
+  'brand-primary': { label: 'Teal',         hex: '#1f7a82', group: 'brand' },
+  'brand-dark':    { label: 'Teal 700',     hex: '#0f4a52', group: 'brand' },
+  'brand-ink':     { label: 'Abyss',        hex: '#07262b', group: 'brand' },
 
-  // --- Accent --- (sibling Clickt divisions + the shared ember, so an accent
-  // dropped next to the hive ramp still belongs to the same brand system)
-  'accent-1':      { label: 'Perf',   hex: '#b4e01f', group: 'accent' },
-  'accent-2':      { label: 'Studio', hex: '#4e4060', group: 'accent' },
-  // Labelled "Clickt Ember" on purpose: the `ember-*` scale below is the
-  // editor's own ember (#F56139, the template CTA and CHROME_SIGNAL). Two
-  // swatches both reading "Ember" is unresolvable in the picker.
-  'accent-3':      { label: 'Clickt Ember', hex: '#f86b3c', group: 'accent' },
+  // --- Accent --- (the kit allows exactly two general accents, Teal and Ember;
+  // Teal is the Brand group above, so Ember is the whole of this one. Slate is a
+  // neutral kept here for the picker's convenience, not a brand accent.)
+  'accent-3':      { label: 'Ember',  hex: '#f86b3c', group: 'accent' },
   'accent-4':      { label: 'Slate',  hex: '#5c6470', group: 'accent' },
+
+  // --- Legacy --- (resolvable for documents that already reference them;
+  // deliberately absent from BRAND_GROUPS, so nothing offers them again)
+  'accent-1':      { label: 'Perf',   hex: '#b4e01f', group: 'legacy' },
+  'accent-2':      { label: 'Studio', hex: '#4e4060', group: 'legacy' },
 
   // --- Traffic ---
   'green':   { label: 'Green',   hex: '#78d55c', group: 'traffic' },
@@ -64,7 +79,10 @@ export const BRAND_PALETTE: Record<string, BrandToken> = {
   'ember-200': { label: 'Ember 200', hex: '#FFC2AF', group: 'ember' },
   'ember-300': { label: 'Ember 300', hex: '#FF9B7F', group: 'ember' },
   'ember-400': { label: 'Ember 400', hex: '#FC7754', group: 'ember' },
-  'ember-500': { label: 'Ember 500', hex: '#F56139', group: 'ember' },
+  // The scale's anchor is the kit's Ember exactly, so CHROME_SIGNAL and every
+  // starter-template CTA resolve to a documented brand value rather than to the
+  // editor's own near-miss (#F56139) that predated the kit.
+  'ember-500': { label: 'Ember 500', hex: '#F86B3C', group: 'ember' },
   'ember-600': { label: 'Ember 600', hex: '#D24825', group: 'ember' },
   'ember-700': { label: 'Ember 700', hex: '#A73920', group: 'ember' },
   'ember-800': { label: 'Ember 800', hex: '#822D1D', group: 'ember' },
@@ -84,10 +102,11 @@ export const BRAND_PALETTE: Record<string, BrandToken> = {
   'gold-900': { label: 'Gold 900', hex: '#4C3F1A', group: 'gold' },
   'gold-950': { label: 'Gold 950', hex: '#2E260F', group: 'gold' },
 
-  // --- Teal scale --- (interpolated through the hive anchors: 100/300/400 are
-  // hive-50/100/300, 600/800/950 are hive-500/700/900. The pre-re-skin scale
-  // slid off-hue into indigo at 800–950, which is why gradients built on
-  // `teal-800` + `brand-dark` used to match; they now share the hive hue.)
+  // --- Teal scale --- (interpolated through the Pyrito core-ramp anchors:
+  // 100/300/400 are teal-50/100/300, 600/800/950 are teal/teal-700/abyss. The
+  // pre-re-skin scale slid off-hue into indigo at 800–950, which is why
+  // gradients built on `teal-800` + `brand-dark` used to match; they now share
+  // the brand hue.)
   'teal-50':  { label: 'Teal 50',  hex: '#F1F8F7', group: 'teal' },
   'teal-100': { label: 'Teal 100', hex: '#DAE9E6', group: 'teal' },
   'teal-200': { label: 'Teal 200', hex: '#B9D8D3', group: 'teal' },

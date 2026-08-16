@@ -31,12 +31,26 @@ interface AIStore {
 }
 
 /**
- * The pre-re-skin seed values, kept verbatim so the persist `migrate` below can
+ * Every retired seed identity, kept verbatim so the persist `migrate` below can
  * tell "never touched the default" from "deliberately typed this".
+ *
+ * One entry per rebrand. They accumulate rather than get replaced: a user who
+ * has not opened the app since before a given rebrand still has that era's
+ * string in local storage, and the only way to recognise it is to still know
+ * what it was.
  */
-const PRE_RESKIN_DEFAULTS = {
-  productName: 'Tela',
-  productDescription: 'A local-first design canvas for social and ad creatives.',
+const RETIRED_DEFAULTS = {
+  /** v0 — the original Tela identity. */
+  1: {
+    productName: 'Tela',
+    productDescription: 'A local-first design canvas for social and ad creatives.',
+  },
+  /** v1 — the "HiveMind | Design" re-skin (CLI-506). */
+  2: {
+    productName: 'HiveMind | Design',
+    productDescription:
+      'A local-first design canvas for social and ad creatives, built for the HiveMind division.',
+  },
 } as const
 
 export const useAIStore = create<AIStore>()(
@@ -61,19 +75,29 @@ export const useAIStore = create<AIStore>()(
     {
       name: 'tela-ai',
       /**
-       * v1 → the "HiveMind | Design" re-skin. `productName` /
-       * `productDescription` seed from BRAND but are *persisted*, so a returning
-       * user's stored copy pins the retired product identity into every AI
-       * prompt ("Product: Tela") forever. Reset only the values that are still
-       * the untouched pre-re-skin defaults; anything the user actually edited is
-       * their own context and is left alone.
+       * v1 → the "HiveMind | Design" re-skin (CLI-506).
+       * v2 → the Pyrito Design rebrand (CLI-561).
+       *
+       * `productName` / `productDescription` seed from BRAND but are
+       * *persisted*, so a returning user's stored copy pins the retired product
+       * identity into every AI prompt — and, because these strings are seed
+       * context for generated ad copy, a stale one does not just sit in a
+       * settings field, it gets written into the user's creatives. Bumping the
+       * version without this migration is how "Product: HiveMind | Design"
+       * survives a rebrand that grepped clean.
+       *
+       * Reset only values that are still an untouched default from *some*
+       * earlier era; anything the user actually edited is their own context and
+       * is left alone. Each era is checked, so a user returning from two
+       * rebrands ago is carried forward the same as one returning from the last.
        */
-      version: 1,
+      version: 2,
       migrate: (persisted, fromVersion) => {
         const s = { ...(persisted as Record<string, unknown>) }
-        if (fromVersion < 1) {
-          if (s.productName === PRE_RESKIN_DEFAULTS.productName) s.productName = BRAND.productName
-          if (s.productDescription === PRE_RESKIN_DEFAULTS.productDescription) {
+        for (const [version, retired] of Object.entries(RETIRED_DEFAULTS)) {
+          if (fromVersion >= Number(version)) continue
+          if (s.productName === retired.productName) s.productName = BRAND.productName
+          if (s.productDescription === retired.productDescription) {
             s.productDescription = BRAND.ai.productDescription
           }
         }

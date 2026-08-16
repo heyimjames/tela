@@ -15,3 +15,9 @@ export type BrandGroup =
   | 'ember'
   | 'gold'
   | 'teal'
+  /**
+   * Retired tokens: still resolvable by key so documents that already reference
+   * them keep rendering, but deliberately absent from `BRAND_GROUPS`, so no
+   * picker or AI roster offers them again. See `BRAND_PALETTE`.
+   */
+  | 'legacy'

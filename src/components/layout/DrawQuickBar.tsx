@@ -77,8 +77,8 @@ export function DrawQuickBar() {
                 const active = color.token === token
                 // Show the palette LABEL, never the key. Keys are frozen for
                 // document compatibility ('brand-primary'), while the picker
-                // labels the same swatch 'Hive 500' — printing the key here
-                // gives one colour two names, one of them retired.
+                // labels the same swatch 'Teal' — printing the key here gives
+                // one colour two names, one of them retired.
                 const label = BRAND_PALETTE[token]?.label ?? token
                 return (
                   <button
