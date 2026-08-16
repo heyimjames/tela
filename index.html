@@ -2,20 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- HiveMind d20 mark. The .ico carries 16 (bold variant) / 32 / 48; the SVG
-         is the scalable master; the 192 PNG covers Android/PWA surfaces. -->
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <!-- Theme-adaptive pair: the flat mark's faces are hive-900/700, which reads
-         as a dark blob on a dark tab strip (the cyan edging is sub-pixel at
-         16px). d20-flat-bold.svg is the variant authored for dark chrome.
-         Browsers that ignore `media` on rel=icon fall through to the last one. -->
-    <link rel="icon" type="image/svg+xml" href="/d20-flat.svg" media="(prefers-color-scheme: light)" />
-    <link rel="icon" type="image/svg+xml" href="/d20-flat-bold.svg" media="(prefers-color-scheme: dark)" />
+    <!-- Pyrito D20 mark. The kit's compact treatment is the D20 alone for
+         favicons and app icons, and the mark's colours and geometry are fixed:
+         `/d20-flat.svg` is the master art (identical polygons, fills and
+         linework to the kit's pyrito-d20.svg — asserted in
+         src/brand/brand.test.ts), and the PNGs are renderings of it.
+
+         One SVG icon, not a light/dark pair. The dark-scheme icon used to point
+         at a bold *redraw* of the mark with the interior facets removed, which
+         the kit forbids (`identity.fixed-mark-colors`: no altering the internal
+         geometry). Legibility on a dark tab strip is a real cost of dropping it
+         and is disclosed on CLI-561; a compliant answer is a rendering of the
+         master, not a second drawing of it. The .ico is unlinked for the same
+         reason — its 16px entry is that redraw. -->
+    <link rel="icon" type="image/svg+xml" href="/d20-flat.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/d20-flat-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1F7A82" />
-    <title>HiveMind | Design — a design canvas for social &amp; ad creatives</title>
+    <!-- Ink: the app's canvas, so the browser's own chrome matches the surface
+         it frames rather than accenting against it. -->
+    <meta name="theme-color" content="#0B0F0E" />
+    <title>Pyrito Design — a design canvas for social &amp; ad creatives</title>
     <meta name="description" content="Create on-brand creatives for LinkedIn, Instagram, and Facebook. Design once, export to every format. Local-first, no backend required." />
   </head>
   <body>

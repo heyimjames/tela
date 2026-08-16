@@ -240,7 +240,7 @@ describe('persistence policy', () => {
     // Changing the key or the version silently orphans every returning user's context
     // instead of migrating it.
     expect(app.storageKeys()).toContain('tela-ai')
-    expect(written!.version).toBe(1)
+    expect(written!.version).toBe(2)
 
     // Rehydrating a stuck spinner or a stale error from a previous session would
     // present a failure the user never triggered.
@@ -259,7 +259,7 @@ describe('persistence policy', () => {
   it('rehydrates a stored context over the BRAND defaults', async () => {
     const app = await loadWithStorage({
       state: { productName: 'Acme Widgets', model: 'claude-haiku-5' },
-      version: 1,
+      version: 2,
     })
 
     expect(app.useAIStore.getState().productName).toBe('Acme Widgets')
@@ -314,8 +314,8 @@ describe('the v0 → v1 re-skin migration', () => {
     expect(app.useAIStore.getState().productDescription).toBe('My own description.')
   })
 
-  it('is not invoked at all for state already at version 1', async () => {
-    const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 1 })
+  it('is not invoked at all for state already at the current version', async () => {
+    const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 2 })
 
     // Someone who deliberately typed the old strings back in after the re-skin keeps
     // them; the migration is a one-time repair, not a standing policy. Note what this
@@ -327,16 +327,83 @@ describe('the v0 → v1 re-skin migration', () => {
   })
 
   it('leaves state written by a newer build alone — the guard, actually invoked', async () => {
-    const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 2 })
+    const app = await loadWithStorage({ state: { ...PRE_RESKIN }, version: 3 })
 
     // A downgrade (a user rolled back to this build) is the one case that hands
     // `migrate` a `fromVersion` above its own, and it is the only way to exercise the
-    // `fromVersion < 1` guard at all: with a matching version `persist` skips the
+    // `fromVersion` guard at all: with a matching version `persist` skips the
     // migration entirely, so widening that comparison is invisible to every other test
     // here. Re-branding a context on a downgrade would silently retype the user's
     // product brief.
     expect(app.useAIStore.getState().productName).toBe(PRE_RESKIN.productName)
     expect(app.useAIStore.getState().productDescription).toBe(PRE_RESKIN.productDescription)
+  })
+})
+
+describe('the v1 → v2 Pyrito migration', () => {
+  /**
+   * The identity CLI-506 seeded. Anyone who opened the app between that re-skin
+   * and this one has these exact strings in local storage, and they are seed
+   * context for generated ad copy — so a missed migration does not just show a
+   * stale settings field, it writes the retired brand into the user's creatives.
+   */
+  const HIVEMIND_ERA = {
+    productName: 'HiveMind | Design',
+    productDescription:
+      'A local-first design canvas for social and ad creatives, built for the HiveMind division.',
+  }
+
+  it('replaces the untouched re-skin defaults with the Pyrito brand', async () => {
+    const app = await loadWithStorage({
+      state: { ...HIVEMIND_ERA, model: 'claude-sonnet-5' },
+      version: 1,
+    })
+    const state = app.useAIStore.getState()
+
+    expect(state.productName).toBe(BRAND.productName)
+    expect(state.productDescription).toBe(BRAND.ai.productDescription)
+    // Named rather than left to `not.toBe(BRAND.productName)`: this is the
+    // string the whole rebrand exists to remove, and asserting its absence by
+    // name is what makes the test fail if the migration is dropped.
+    expect(state.productName).not.toContain('HiveMind')
+    expect(state.productDescription).not.toContain('HiveMind')
+    expect(state.model).toBe('claude-sonnet-5')
+  })
+
+  it('leaves a value the user actually typed alone', async () => {
+    const app = await loadWithStorage({
+      state: { productName: 'Acme Widgets', productDescription: 'Widgets that widget.' },
+      version: 1,
+    })
+
+    expect(app.useAIStore.getState().productName).toBe('Acme Widgets')
+    expect(app.useAIStore.getState().productDescription).toBe('Widgets that widget.')
+  })
+
+  it('carries a user returning from two rebrands ago all the way forward', async () => {
+    // The reason the migration walks every retired era rather than only the last
+    // one. A v0 record holds the *Tela* strings, which the v1 era's comparison
+    // would not recognise; if the eras were replaced instead of accumulated,
+    // this user would keep "Product: Tela" forever.
+    const app = await loadWithStorage({
+      state: { productName: 'Tela', productDescription: 'A local-first design canvas for social and ad creatives.' },
+      version: 0,
+    })
+
+    expect(app.useAIStore.getState().productName).toBe(BRAND.productName)
+  })
+
+  it('does not touch a record that is already Pyrito', async () => {
+    // The control for the assertion above: the migration must be able to leave
+    // things alone, or "it rewrote the field" is indistinguishable from "it
+    // rewrites every field it sees".
+    const app = await loadWithStorage({
+      state: { productName: BRAND.productName, productDescription: 'Hand-written brief.' },
+      version: 1,
+    })
+
+    expect(app.useAIStore.getState().productName).toBe(BRAND.productName)
+    expect(app.useAIStore.getState().productDescription).toBe('Hand-written brief.')
   })
 })
 

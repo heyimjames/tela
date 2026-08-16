@@ -1,60 +1,73 @@
 /**
- * Product lockup — the d20 mark, the wordmark, a hairline separator, and the
- * product name.
+ * The product lockup — the Pyrito Design *Register* asset, rendered verbatim.
  *
- * Construction follows the Clickt division lockup sheet (`.lockup`): the parts
- * sit on one baseline-aligned row, the wordmark is Inter 800 with tight
- * (-0.055em) tracking, the separator is a 1px rule at 28% opacity with ~0.58em
- * of air either side, and the endorsing name is Inter 500 at normal tracking.
- * Only the level changes here: on the division sheet the wordmark is "clickt"
- * endorsed by "HiveMind"; inside this product it is "HiveMind" endorsed by
- * "Design".
+ * Nothing here composes a lockup. The version this replaces assembled one from
+ * parts (mark + wordmark + hairline separator + endorsing name, with its own
+ * font weights and tracking), and the kit forbids exactly that: `surface.
+ * register-canonical` (must) makes the Register system the only surface lockup,
+ * `surface.no-alternate-treatment` (must_not) rules out divider-rail and badge
+ * treatments as canonical, and the asset policy says "Do not reconstruct or
+ * rearrange the lockup." So the component's whole job is to choose the right
+ * supplied file and size it.
  *
- * The two halves are split out of `BRAND.productName` so the file stays the one
- * place a fork edits its identity: "HiveMind | Design" renders as the lockup,
- * and a name without a pipe falls back to a plain wordmark.
+ * Everything the lockup needs travels inside the asset: the fixed D20, the
+ * "Pyrito" wordmark in Cal Sans Heading, the Teal rule, the uppercase Paper Mono
+ * "DESIGN" identifier, and the Ember terminal square. The two typefaces are
+ * embedded in the SVG as base64 `data:` URIs, so the brand type renders with no
+ * font installed and — importantly for the payload's zero-network contract — no
+ * request of any kind. `tests/brand/brand.spec.ts` proves the embedded faces
+ * actually render, by contrast against the same asset with its `@font-face`
+ * rules stripped; if the two ever match, the type silently fell back and the
+ * test goes red.
+ *
+ * Both variants are imported so the choice is a value, not a build flag, and
+ * the choice itself lives in `ACTIVE_BRAND_THEME` — one seam for a future light
+ * mode to flip.
  */
-import { BRAND } from '@/brand/brand.config'
-import { HiveMark } from '@/components/brand/HiveMark'
+import darkLockupUrl from '@/assets/brand/pyrito-design-register-dark.svg'
+import lightLockupUrl from '@/assets/brand/pyrito-design-register-light.svg'
+import { ACTIVE_BRAND_THEME, type BrandTheme } from '@/brand/theme'
 
-const [WORD, ENDORSEMENT] = (() => {
-  const [word, ...rest] = BRAND.productName.split('|')
-  return [word.trim(), rest.join('|').trim()]
-})()
+/**
+ * Light goes on white and light surfaces, dark on Ink and Abyss — the kit's
+ * `surface_lockups.variants`. Naming both here (rather than a ternary at the
+ * point of use) is what makes the unused one a deliberate import instead of an
+ * oversight.
+ */
+const LOCKUP_BY_THEME: Record<BrandTheme, string> = {
+  light: lightLockupUrl,
+  dark: darkLockupUrl,
+}
+
+/** The asset's own geometry, from its viewBox — used only to preserve ratio. */
+const ASSET_WIDTH = 340
+const ASSET_HEIGHT = 108
+/** The D20's height inside that box, so `size` keeps meaning "mark size". */
+const MARK_HEIGHT = 96
 
 interface Props {
-  /** Mark size in px; type scales from it. */
+  /**
+   * Mark size in px. The rest of the lockup scales from it, so a call site that
+   * previously sized the composed lockup by its mark keeps its proportions.
+   */
   size?: number
   className?: string
 }
 
 export function BrandLockup({ size = 28, className }: Props) {
+  const height = (size * ASSET_HEIGHT) / MARK_HEIGHT
+  const width = (height * ASSET_WIDTH) / ASSET_HEIGHT
+
   return (
-    <span className={`inline-flex items-center ${className ?? ''}`} style={{ gap: size * 0.3 }}>
-      <HiveMark size={size} />
-      <span className="inline-flex items-center whitespace-nowrap leading-none">
-        <span
-          className="font-heading text-foreground"
-          style={{ fontWeight: 800, fontSize: size * 0.54, letterSpacing: '-0.045em' }}
-        >
-          {WORD}
-        </span>
-        {ENDORSEMENT && (
-          <>
-            <span
-              aria-hidden
-              className="bg-current opacity-30"
-              style={{ width: 1, height: size * 0.46, margin: `0 ${size * 0.24}px` }}
-            />
-            <span
-              className="font-heading text-foreground/80"
-              style={{ fontWeight: 500, fontSize: size * 0.54, letterSpacing: '-0.01em' }}
-            >
-              {ENDORSEMENT}
-            </span>
-          </>
-        )}
-      </span>
-    </span>
+    <img
+      src={LOCKUP_BY_THEME[ACTIVE_BRAND_THEME]}
+      width={width}
+      height={height}
+      className={className}
+      alt="Pyrito Design"
+      data-no-outline
+      data-brand-lockup={ACTIVE_BRAND_THEME}
+      draggable={false}
+    />
   )
 }

@@ -868,7 +868,7 @@ export function PreviewPanel() {
           >
             {/* Document ink, not chrome ink. This overlay paints INSIDE the
                 frame body, which is the one deliberately-white surface the dark
-                re-skin leaves alone — so --foreground (--paper) and
+                re-skin leaves alone — so --foreground (off-white) and
                 --muted-foreground (--mist) would land at ~1.05:1 and ~2.4:1 on
                 it. Derived from --charcoal so it still comes from the palette. */}
             <p

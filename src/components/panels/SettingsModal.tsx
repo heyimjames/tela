@@ -365,7 +365,7 @@ function AppearanceSettings() {
     <div className="space-y-6">
       <div className="space-y-3">
         <h3 className="text-[14px] font-medium text-foreground">Theme</h3>
-        <p className="text-[12px] text-muted-foreground">Dark only for now, matching the HiveMind wiki. Light mode coming soon.</p>
+        <p className="text-[12px] text-muted-foreground">Dark only for now. Light mode coming soon.</p>
         <div className="flex gap-2">
           <div className="px-4 py-2 bg-foreground text-background rounded-[5px] text-[12px] font-medium">Dark</div>
           <div className="px-4 py-2 bg-muted text-muted-foreground rounded-[5px] text-[12px] opacity-50 cursor-not-allowed">Light (soon)</div>
@@ -472,7 +472,7 @@ function SettingsToggle({ label, description, value, onChange }: { label: string
         onClick={onChange}
       >
         {/* The knob takes the ink of whatever track it is on. A --foreground knob
-            on the ON track (--hive-300) is 2.46:1 — under the 3:1 floor for a
+            on the ON track is 2.46:1 — under the 3:1 floor for a
             control whose only state cue is knob position — so ON uses the
             primary's own ink and OFF stays paper on --muted. */}
         <div
