@@ -34,14 +34,21 @@ import { isAbsolute, join, normalize, resolve, sep, dirname, relative } from 'no
 
 import { toolError } from './errors'
 
+/**
+ * Pure default-root policy, exported so both platform branches and the clean
+ * break can be proved without mutating or inspecting either location.
+ */
+export function defaultApprovedRootFor(platformName: NodeJS.Platform, home: string, localAppData?: string): string {
+  if (platformName === 'win32') {
+    if (localAppData) return join(localAppData, 'Pyrito', 'Design')
+    return join(home, 'AppData', 'Local', 'Pyrito', 'Design')
+  }
+  return join(home, 'Library', 'Application Support', 'Pyrito', 'Design')
+}
+
 /** Default runtime roots from the architecture contract. */
 export function defaultApprovedRoot(): string {
-  if (platform() === 'win32') {
-    const local = process.env.LOCALAPPDATA
-    if (local) return join(local, 'Pyrito', 'Design')
-    return join(homedir(), 'AppData', 'Local', 'Pyrito', 'Design')
-  }
-  return join(homedir(), 'Library', 'Application Support', 'Pyrito', 'Design')
+  return defaultApprovedRootFor(platform(), homedir(), process.env.LOCALAPPDATA)
 }
 
 /**

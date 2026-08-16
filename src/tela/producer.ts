@@ -22,7 +22,10 @@
 
 declare const __TELA_SOURCE_COMMIT__: string | undefined
 
-export const PRODUCER_NAME = 'pyrito-design'
+// Frozen portable-format identity. Existing .tela bundles record this value;
+// changing it for a product rebrand would create two producer identities for
+// one compatible format family.
+export const PRODUCER_NAME = 'tela-design'
 export const PRODUCER_VERSION = '0.1.1'
 export const UNKNOWN_SOURCE_COMMIT = '0000000000000000000000000000000000000000'
 

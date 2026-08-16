@@ -4,7 +4,7 @@
  * `SERVER_NAME` is what the MCP handshake advertises; `EXTERNAL_ID` is the
  * registered plugin/server id both hosts use in their manifests. They are
  * deliberately different strings and deliberately *not* `tela`: the user's
- * already-registered local `tela` server is the unrelated Pyrito Wiki, and
+ * already-registered local `tela` server is the unrelated Tela Wiki, and
  * colliding with it would silently shadow a working integration.
  */
 

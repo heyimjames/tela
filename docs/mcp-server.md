@@ -8,7 +8,7 @@ brand context and versions, and render or export finished artwork.
 - Registered plugin/server id: `clickt-tela-design`
 - Transport: local stdio only. **No network access of any kind.**
 
-> The separately registered local `tela` server is Pyrito Wiki and is unrelated to
+> The separately registered local `tela` server is Tela Wiki and is unrelated to
 > this one. They do not share an identity, a process, or any state.
 
 ## Running it
@@ -54,6 +54,21 @@ Both hosts execute the same launcher and see identical tool and resource schemas
 | `TELA_BRIDGE_ROOT` | Location of the bundled application build. Defaults to `dist-bridge/` beside the compiled server. |
 | `TELA_CHROMIUM_EXECUTABLE` | Path to the pinned Chromium shipped with the payload. Falls back to Playwright's own resolution. |
 | `TELA_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error`. Default `info`. |
+
+#### Existing installs: clean-break root change
+
+Version 0.1.1 changes only the **default** approved root from the former
+`Clickt/AdStudio/tela` location to `Pyrito/Design`. It does not inspect, copy,
+move, rewrite, or delete anything in the former location. Existing files stay
+there until an operator moves them.
+
+To keep using an existing library, stop every Pyrito Design MCP process, create
+the new default directory, and copy the contents of the former directory into
+it with the operating system's ordinary file manager. Keep the former directory
+as a backup until the copied `.tela` files reopen and export successfully. If a
+destination name already exists, stop and resolve the collision manually; do
+not merge or overwrite bundles. Alternatively, set `TELA_APPROVED_ROOT` to a
+dedicated operator-approved directory and leave both defaults untouched.
 
 ## Working model
 
