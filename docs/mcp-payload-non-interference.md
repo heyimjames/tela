@@ -8,17 +8,17 @@ document records how we prove those additions did not disturb the payload, and w
 
 Issue: **CLI-520**, baseline re-recorded on **CLI-561**. Harness:
 `scripts/verify-payload-noninterference.mjs`, `scripts/lib/payload-noninterference.mjs`.
-Baseline record: `tests/baselines/mcp-payload-bb59912.json`.
+Baseline record: `tests/baselines/mcp-payload-d350c8c.json`.
 CI: `.github/workflows/payload-noninterference.yml`.
 
 ## The baseline
 
 | | |
 |---|---|
-| Baseline commit | `a92383c9e29560bc559011d3d9443be238406fa5` |
-| Why this commit | the removal of the forbidden D20 redraw (PYR-10) — the first commit at which the payload carries the current brand identity *and* nothing the brand kit forbids |
-| Baseline archive sha256 | `07b3be6731c1631f2f27427953ef449a799cbfd70825ccd12da8907a485af9c9` |
-| Baseline manifest sha256 | `303f6b2112d9cc7a388b726b53d8f70db159d6c2c2b63a7e2e94d062ee3d72df` |
+| Baseline commit | `d350c8c429030ca0c71eb1b5ad8f16c7ba7cefa2` |
+| Why this commit | the Pyrito Design v0.1.1 release state (PYR-11), where user-facing product identity, repository provenance, runtime roots, schemas, and producer metadata all agree |
+| Baseline archive sha256 | `88cc9c675f20658fb5840115846b638a9d42d6d6249b9e34257694ac96856adb` |
+| Baseline manifest sha256 | `637445f277fa8eb190dccf8a35d85ab8eefe410bb8d3123e9e99fc9881e20bd3` |
 | Files in the payload | 136 (135 manifested + `SHA256SUMS`) |
 
 The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
@@ -81,6 +81,22 @@ and `index.css` after the `bb59912` record was taken. That is the invariant work
 designed rather than an anomaly: the application may change, the certified MCP payload may
 not, and the app bundle lives in the chrome set for precisely this reason. Re-recording here
 folds that already-permitted drift into the certified state.
+
+### Why the baseline moved for v0.1.1 (PYR-11)
+
+The release cut intentionally changes certified payload identity rather than application
+chrome alone. It advances the package, MCP handshake, and document producer to `0.1.1`,
+records `Pyrito-ai/pyrito-design` as repository provenance, moves the default approved root
+from the retired Clickt AdStudio directory to `Pyrito/Design`, and replaces current
+user-facing Tela labels with Pyrito Design. The `.tela` extension, `tela_*` tools,
+`tela-mcp` launcher, schema URLs, registered external id, and `TELA_*` environment variables
+remain unchanged compatibility contracts.
+
+Because `package.json`, `package-lock.json`, the JSON schemas, and compiled MCP server all
+change deliberately, treating the previous record as authoritative would reject the release
+for the exact identity changes PYR-11 requires. The new record was generated—not
+hand-edited—from the verified artifact built at `d350c8c`; the previous baseline remains in
+Git history and is removed from the working tree so there is only one active trust anchor.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 
