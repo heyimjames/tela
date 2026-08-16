@@ -12,9 +12,16 @@
          at a bold *redraw* of the mark with the interior facets removed, which
          the kit forbids (`identity.fixed-mark-colors`: no altering the internal
          geometry). Legibility on a dark tab strip is a real cost of dropping it
-         and is disclosed on CLI-561; a compliant answer is a rendering of the
-         master, not a second drawing of it. The .ico is unlinked for the same
-         reason — its 16px entry is that redraw. -->
+         and is disclosed on PYR-10; a compliant answer is a rendering of the
+         master, not a second drawing of it.
+
+         That redraw is now *deleted*, not merely unlinked: d20-flat-bold.svg,
+         d20-bold-16.png, and favicon.ico (whose 16px entry was the redraw) all
+         shipped inside the certified payload while nothing referenced them, so
+         the forbidden art was still distributed. There is deliberately no
+         favicon.ico: agents that request /favicon.ico by convention fall back
+         to the SVG icon above, and a 404 on the few that do not beats shipping
+         a mark the brand kit forbids. -->
     <link rel="icon" type="image/svg+xml" href="/d20-flat.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/d20-flat-192.png" />
