@@ -28,8 +28,8 @@ const PUBLISHED = [
     content: generate(
       telaDocumentSchema,
       DOCUMENT_SCHEMA_ID,
-      'Tela portable document, v1',
-      'The complete editable Tela state stored as document.json inside a .tela bundle. Every object is closed: unknown properties are invalid, so a reader can never silently discard a field it does not recognise.',
+      'Pyrito Design portable document, v1',
+      'The complete editable Pyrito Design state stored as document.json inside a .tela compatibility bundle. Every object is closed: unknown properties are invalid, so a reader can never silently discard a field it does not recognise.',
     ),
   },
   {
@@ -37,7 +37,7 @@ const PUBLISHED = [
     content: generate(
       telaManifestSchema,
       BUNDLE_SCHEMA_ID,
-      'Tela bundle manifest, v1',
+      'Pyrito Design bundle manifest, v1',
       'The manifest.json entry of a .tela bundle. It carries format identity, producer and source commit, the document hash, the sorted asset inventory, the reader limits, migration metadata, and the semantic content revision. It deliberately carries no save-time timestamp.',
     ),
   },

@@ -45,7 +45,7 @@ determinism contract in the field intended to make bundles auditable.
 
 ### `document.json`
 
-The complete editable Tela state, as RFC 8785 canonical JSON: all pages, all frames
+The complete editable Pyrito Design state, as RFC 8785 canonical JSON: all pages, all frames
 (including `backgroundColor`, `locked`, and `visible`), loose elements, all eight
 layer types with their full optional surface, auto-layout configs including nesting,
 the active page and frame, workspace settings, document identity and timestamps,
@@ -144,7 +144,7 @@ file.
 recorded in the manifest by id.
 
 A document from a **newer** schema version is rejected with a message telling the
-user to update Tela. It is never best-effort parsed: opening a v2 file with a v1
+user to update Pyrito Design. It is never best-effort parsed: opening a v2 file with a v1
 reader and saving it would write back a v1 file with the v2 fields deleted — a
 data-loss bug that looks like a successful save.
 

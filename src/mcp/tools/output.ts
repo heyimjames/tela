@@ -191,7 +191,7 @@ export function registerOutputTools(server: McpServer): void {
     name: 'tela_open_editor',
     title: 'Open editor',
     description:
-      'Load the design into the private editor session so it can be rendered and inspected as the app sees it. This is the bridge to the running Tela application; it does not open a window on the user\'s desktop and does not use the user\'s browser. Starts the browser on first use.',
+      'Load the design into the private editor session so it can be rendered and inspected as the app sees it. This is the bridge to the running Pyrito Design application; it does not open a window on the user\'s desktop and does not use the user\'s browser. Starts the browser on first use.',
     inputSchema: z.strictObject({ design: designArg, response_format: responseFormatSchema }),
     outputSchema: z.strictObject({ design: z.string(), loaded: z.boolean(), page_count: z.int().nonnegative(), session_revision: z.int() }),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },

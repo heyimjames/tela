@@ -294,7 +294,7 @@ describe('tampering with the manifest', () => {
     const { manifest, document, assets } = decompose()
     const patched = { ...manifest, schemaVersion: 2 }
     const error = expectTelaError(() => readBundle(recompose(patched, document, assets)), 'future_schema_version')
-    expect(error.message).toMatch(/Update Tela/)
+    expect(error.message).toMatch(/Update Pyrito Design/)
   })
 })
 

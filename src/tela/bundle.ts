@@ -370,7 +370,7 @@ function assertBundleVersionUnderstood(manifest: Record<string, unknown>): void 
   if (version > CURRENT_BUNDLE_SCHEMA_VERSION) {
     throw telaError(
       'future_schema_version',
-      `this bundle uses bundle format v${version}; this build understands up to v${CURRENT_BUNDLE_SCHEMA_VERSION}. Update Tela to open it.`,
+      `this bundle uses bundle format v${version}; this build understands up to v${CURRENT_BUNDLE_SCHEMA_VERSION}. Update Pyrito Design to open it.`,
       String(version),
     )
   }

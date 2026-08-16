@@ -22,8 +22,8 @@
 
 declare const __TELA_SOURCE_COMMIT__: string | undefined
 
-export const PRODUCER_NAME = 'tela-design'
-export const PRODUCER_VERSION = '0.1.0'
+export const PRODUCER_NAME = 'pyrito-design'
+export const PRODUCER_VERSION = '0.1.1'
 export const UNKNOWN_SOURCE_COMMIT = '0000000000000000000000000000000000000000'
 
 /**

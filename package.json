@@ -1,7 +1,7 @@
 {
   "name": "tela",
-  "version": "0.1.0",
-  "description": "A fast, local-first design canvas for social & ad creatives — brandable, no backend required. Built with React, Zustand and Tailwind.",
+  "version": "0.1.1",
+  "description": "Pyrito Design: a local-first design canvas for social and ad creatives with an editable .tela source.",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -16,13 +16,13 @@
     "zustand",
     "figma-alternative"
   ],
-  "homepage": "https://github.com/heyimjames/tela",
+  "homepage": "https://github.com/Pyrito-ai/pyrito-design",
   "repository": {
     "type": "git",
-    "url": "https://github.com/heyimjames/tela.git"
+    "url": "https://github.com/Pyrito-ai/pyrito-design.git"
   },
   "bugs": {
-    "url": "https://github.com/heyimjames/tela/issues"
+    "url": "https://github.com/Pyrito-ai/pyrito-design/issues"
   },
   "scripts": {
     "dev": "vite",

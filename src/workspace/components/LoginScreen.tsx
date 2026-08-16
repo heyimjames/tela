@@ -44,7 +44,7 @@ export function LoginScreen({ notice, busy, initialEmail, onSubmit }: LoginScree
       >
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
-          <p className="text-sm text-muted-foreground">Tela design workspaces.</p>
+          <p className="text-sm text-muted-foreground">Pyrito Design workspaces.</p>
         </div>
 
         {notice === null ? null : (

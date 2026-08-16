@@ -28,8 +28,8 @@ export const BRAND = {
   /** Display name used in the live post preview and templates. */
   displayName: 'Pyrito Design',
 
-  /** Public website shown on starter templates. */
-  website: 'clickt.ca',
+  /** Public website shown on starter templates. Empty until Pyrito defines one. */
+  website: '',
 
   /** Seed context for the optional AI Assist feature. */
   ai: {

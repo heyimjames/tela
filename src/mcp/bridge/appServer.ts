@@ -1,7 +1,7 @@
 /**
  * The private loopback application server.
  *
- * This serves the **bundled production Tela build** to the private browser. It
+ * This serves the **bundled production Pyrito Design build** to the private browser. It
  * is not a development server: there is no Vite, no watcher, and no module
  * graph at runtime — just static bytes from a directory produced at build time.
  *
@@ -101,7 +101,7 @@ export async function startBridgeServer(): Promise<BridgeServer> {
   } catch {
     throw toolError(
       'bridge_failed',
-      'the bundled Tela application build is missing',
+      'the bundled Pyrito Design application build is missing',
       'run `npm run build:bridge` in the tela-design payload to produce dist-bridge/, or set TELA_BRIDGE_ROOT to an existing build; the bridge never falls back to a development server',
     )
   }

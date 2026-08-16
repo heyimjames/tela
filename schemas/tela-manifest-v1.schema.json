@@ -1,6 +1,6 @@
 {
   "$id": "https://schemas.clickt.ca/tela/bundle/v1",
-  "title": "Tela bundle manifest, v1",
+  "title": "Pyrito Design bundle manifest, v1",
   "description": "The manifest.json entry of a .tela bundle. It carries format identity, producer and source commit, the document hash, the sorted asset inventory, the reader limits, migration metadata, and the semantic content revision. It deliberately carries no save-time timestamp.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",

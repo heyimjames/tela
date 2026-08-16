@@ -56,7 +56,7 @@ export function migrateDocument(input: Record<string, unknown>): MigrationResult
   if (originalVersion > CURRENT_DOCUMENT_SCHEMA_VERSION) {
     throw telaError(
       'future_schema_version',
-      `this bundle was written by a newer version of Tela (document schema v${originalVersion}; this build understands up to v${CURRENT_DOCUMENT_SCHEMA_VERSION}). Update Tela to open it.`,
+      `this bundle was written by a newer version of Pyrito Design (document schema v${originalVersion}; this build understands up to v${CURRENT_DOCUMENT_SCHEMA_VERSION}). Update Pyrito Design to open it.`,
       String(originalVersion),
     )
   }

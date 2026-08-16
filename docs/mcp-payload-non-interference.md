@@ -1,6 +1,6 @@
 # MCP payload non-interference
 
-The Tela application ships **inside** the certified `clickt-tela` MCP payload. Milestone 2
+The application, then named Tela, ships **inside** the certified `clickt-tela` MCP payload. Milestone 2
 ("HiveMind | Design Workspaces") added a storage-adapter seam, workspace-mode UX, a vendored
 API client and a dormant AI panel to that application — all gated off by default. This
 document records how we prove those additions did not disturb the payload, and what

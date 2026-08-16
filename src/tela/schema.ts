@@ -402,6 +402,7 @@ export type TelaSavedVersion = z.infer<typeof savedVersion>
 // --- Manifest -----------------------------------------------------------------
 
 export const CURRENT_BUNDLE_SCHEMA_VERSION = 1
+// Compatibility identifiers are immutable even though the product is now Pyrito Design.
 export const BUNDLE_SCHEMA_ID = 'https://schemas.clickt.ca/tela/bundle/v1'
 export const DOCUMENT_SCHEMA_ID = 'https://schemas.clickt.ca/tela/document/v1'
 

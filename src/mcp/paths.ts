@@ -38,10 +38,10 @@ import { toolError } from './errors'
 export function defaultApprovedRoot(): string {
   if (platform() === 'win32') {
     const local = process.env.LOCALAPPDATA
-    if (local) return join(local, 'Clickt', 'AdStudio', 'tela')
-    return join(homedir(), 'AppData', 'Local', 'Clickt', 'AdStudio', 'tela')
+    if (local) return join(local, 'Pyrito', 'Design')
+    return join(homedir(), 'AppData', 'Local', 'Pyrito', 'Design')
   }
-  return join(homedir(), 'Library', 'Application Support', 'Clickt', 'AdStudio', 'tela')
+  return join(homedir(), 'Library', 'Application Support', 'Pyrito', 'Design')
 }
 
 /**
@@ -69,7 +69,7 @@ function assertUsableRoot(root: string): void {
     throw toolError(
       'policy_refused',
       'the approved root is a volume or drive root',
-      'point TELA_APPROVED_ROOT at a dedicated directory (for example <home>/Library/Application Support/Clickt/AdStudio/tela) and restart the server',
+      'point TELA_APPROVED_ROOT at a dedicated directory (for example <home>/Library/Application Support/Pyrito/Design) and restart the server',
     )
   }
   let home: string | undefined

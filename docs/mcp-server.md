@@ -1,6 +1,6 @@
-# Tela Design MCP server
+# Pyrito Design MCP server
 
-A local **stdio** MCP server that gives an agent the full Tela authoring surface:
+A local **stdio** MCP server that gives an agent the full Pyrito Design authoring surface:
 create and edit `.tela` designs, compose frames and layers, manage assets, fonts,
 brand context and versions, and render or export finished artwork.
 
@@ -8,7 +8,7 @@ brand context and versions, and render or export finished artwork.
 - Registered plugin/server id: `clickt-tela-design`
 - Transport: local stdio only. **No network access of any kind.**
 
-> The separately registered local `tela` server is Tela Wiki and is unrelated to
+> The separately registered local `tela` server is Pyrito Wiki and is unrelated to
 > this one. They do not share an identity, a process, or any state.
 
 ## Running it
@@ -50,7 +50,7 @@ Both hosts execute the same launcher and see identical tool and resource schemas
 
 | Variable | Meaning |
 | --- | --- |
-| `TELA_APPROVED_ROOT` | The directory every path is confined to. Defaults to `~/Library/Application Support/Clickt/AdStudio/tela` (macOS) or `%LOCALAPPDATA%\Clickt\AdStudio\tela` (Windows). |
+| `TELA_APPROVED_ROOT` | The directory every path is confined to. Defaults to `~/Library/Application Support/Pyrito/Design` (macOS) or `%LOCALAPPDATA%\Pyrito\Design` (Windows). The environment variable retains its name for protocol compatibility. |
 | `TELA_BRIDGE_ROOT` | Location of the bundled application build. Defaults to `dist-bridge/` beside the compiled server. |
 | `TELA_CHROMIUM_EXECUTABLE` | Path to the pinned Chromium shipped with the payload. Falls back to Playwright's own resolution. |
 | `TELA_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error`. Default `info`. |
@@ -138,7 +138,7 @@ bin/tela-mcp.mjs → dist/mcp/tela-mcp.mjs
               ▼  serves the bundled production build — never Vite
          private Playwright Chromium
               ▼  page.evaluate(window.tela.dispatch)
-         Tela renderer and export pipeline
+         Pyrito Design renderer and export pipeline
 ```
 
 **Authoring happens in Node, against the canonical document. The browser renders.**
