@@ -150,14 +150,14 @@ describe('the committed baseline record', () => {
   // The record is the trust anchor: every comparison is made against it rather
   // than against a rebuilt months-old commit. If it can be edited to match a
   // drifted payload, the whole proof launders the change it exists to catch.
-  const record = JSON.parse(readFileSync(new URL('../baselines/mcp-payload-d350c8c.json', import.meta.url), 'utf8'))
+  const record = JSON.parse(readFileSync(new URL('../baselines/mcp-payload-a269442.json', import.meta.url), 'utf8'))
 
   it('is self-consistent: its file hashes reconstruct the published manifest digest', () => {
     expect(verifyBaselineRecord(record, renderSums)).toEqual([])
     // Pinned absolutely, not just "it reconstructs to whatever it claims": this
     // is the digest the baseline release build printed, recorded independently.
-    expect(record.recorded_from.artifact_manifest_sha256).toBe('637445f277fa8eb190dccf8a35d85ab8eefe410bb8d3123e9e99fc9881e20bd3')
-    expect(record.baseline_commit).toBe('d350c8c429030ca0c71eb1b5ad8f16c7ba7cefa2')
+    expect(record.recorded_from.artifact_manifest_sha256).toBe('fbd9d51193701432204439a3a4cb533d8f7f66bb58bc7d5e9ad7d0d35373215b')
+    expect(record.baseline_commit).toBe('a2694423f66fad8f716e88b5253a60221b0054ca')
     expect(Object.keys(record.files)).toHaveLength(135)
   })
 
