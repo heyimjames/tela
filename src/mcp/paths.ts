@@ -30,7 +30,7 @@
 
 import { lstat, mkdir, stat } from 'node:fs/promises'
 import { homedir, platform } from 'node:os'
-import { isAbsolute, join, normalize, resolve, sep, dirname, relative } from 'node:path'
+import { isAbsolute, join, normalize, resolve, sep, dirname, relative, posix, win32 } from 'node:path'
 
 import { toolError } from './errors'
 
@@ -40,10 +40,10 @@ import { toolError } from './errors'
  */
 export function defaultApprovedRootFor(platformName: NodeJS.Platform, home: string, localAppData?: string): string {
   if (platformName === 'win32') {
-    if (localAppData) return join(localAppData, 'Pyrito', 'Design')
-    return join(home, 'AppData', 'Local', 'Pyrito', 'Design')
+    if (localAppData) return win32.join(localAppData, 'Pyrito', 'Design')
+    return win32.join(home, 'AppData', 'Local', 'Pyrito', 'Design')
   }
-  return join(home, 'Library', 'Application Support', 'Pyrito', 'Design')
+  return posix.join(home, 'Library', 'Application Support', 'Pyrito', 'Design')
 }
 
 /** Default runtime roots from the architecture contract. */
