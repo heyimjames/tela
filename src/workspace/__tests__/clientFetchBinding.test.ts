@@ -25,7 +25,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { DesignApiClient } from '@performance-clickt/design-api-client'
+import { DesignApiClient } from '@pyrito-ai/design-api-client'
 import { createDesignApiClient } from '../client'
 
 const CREDENTIALS = { email: 'someone@example.invalid', password: 'not-a-real-password' }

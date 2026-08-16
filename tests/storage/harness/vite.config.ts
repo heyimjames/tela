@@ -33,7 +33,7 @@ export default defineConfig({
     // modules the app does, or it would be testing a different tree.
     alias: {
       '@': path.resolve(repoRoot, 'src'),
-      '@performance-clickt/design-api-client': path.resolve(
+      '@pyrito-ai/design-api-client': path.resolve(
         repoRoot,
         'vendor/design-api-client/src/index.ts',
       ),

@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { DocumentSummary } from '@/storage/StorageAdapter'
-import type { WorkspaceMembership } from '@performance-clickt/design-api-client'
+import type { WorkspaceMembership } from '@pyrito-ai/design-api-client'
 
 export interface WorkspaceLibraryProps {
   readonly email: string

@@ -23,7 +23,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       // The v1 API client is vendored, not installed — see vendor/design-api-client/SOURCE.md.
       // Aliased to its source so the same bytes are typechecked, bundled and tested.
-      "@performance-clickt/design-api-client": path.resolve(
+      "@pyrito-ai/design-api-client": path.resolve(
         __dirname,
         "./vendor/design-api-client/src/index.ts",
       ),

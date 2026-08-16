@@ -24,7 +24,7 @@
  */
 
 import { createHash } from 'node:crypto'
-import type { FetchLike } from '@performance-clickt/design-api-client'
+import type { FetchLike } from '@pyrito-ai/design-api-client'
 
 export interface RecordedRequest {
   readonly method: string
