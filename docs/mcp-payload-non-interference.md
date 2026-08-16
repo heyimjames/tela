@@ -6,23 +6,60 @@ API client and a dormant AI panel to that application — all gated off by defau
 document records how we prove those additions did not disturb the payload, and what
 "undisturbed" is defined to mean.
 
-Issue: **CLI-520**. Harness: `scripts/verify-payload-noninterference.mjs`,
-`scripts/lib/payload-noninterference.mjs`. Baseline record:
-`tests/baselines/mcp-payload-df44d15.json`. CI: `.github/workflows/payload-noninterference.yml`.
+Issue: **CLI-520**, baseline re-recorded on **CLI-561**. Harness:
+`scripts/verify-payload-noninterference.mjs`, `scripts/lib/payload-noninterference.mjs`.
+Baseline record: `tests/baselines/mcp-payload-bb59912.json`.
+CI: `.github/workflows/payload-noninterference.yml`.
 
 ## The baseline
 
 | | |
 |---|---|
-| Baseline commit | `df44d15b0c18cf98c2ef72050c42552555ad633e` |
-| Why this commit | the last commit on `main` before PR #1 (`49fe89d`, CLI-510) — the last pre-Milestone-2 state |
-| Baseline archive sha256 | `b1d7b660465b0bdfe8f08ccb0e3e27d26aadd4c03de88564164d608cb994e5a2` |
-| Baseline manifest sha256 | `d75854c77da603d3cd570c3cc0e0517298fc3610521fc7a90e565cdffa86febe` |
-| Files in the payload | 137 (136 manifested + `SHA256SUMS`) |
+| Baseline commit | `bb59912d317c83db019f484654f0b5bd0d72946c` |
+| Why this commit | the Pyrito Design rebrand (CLI-561) — the first commit at which the payload carries the current brand identity |
+| Baseline archive sha256 | `75646f79596fa2da8ebe541a6b72d8819fcd43bddea6b657fedc9cb3cacef46a` |
+| Baseline manifest sha256 | `c12cac10900230cc9375274aa5f390c4657d0d262d52192d9f387a86fded9b80` |
+| Files in the payload | 139 (138 manifested + `SHA256SUMS`) |
 
-The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produced
-the record once from a release artifact built at `df44d15`; CI compares against the record
-rather than rebuilding a months-old commit on two operating systems every pull request.
+The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
+the record from a release artifact built at the baseline commit; CI compares against the
+record rather than rebuilding an old commit on two operating systems every pull request.
+
+Note the record is necessarily committed *after* the commit it describes: the checker refuses
+a run where `baseline_commit` equals the commit under test ("this run would compare a payload
+with itself"), so a record taken at `X` lands in `X+1`. That refusal is deliberate and was not
+weakened to make the re-record convenient.
+
+### Why the baseline moved (CLI-561)
+
+The original baseline was `df44d15`, chosen as the last pre-Milestone-2 state so that the
+gate read "Milestone 2's additions did not disturb the payload". **CLI-561 changed the
+certified payload on purpose**, and the baseline was re-recorded rather than the check
+weakened.
+
+The change is a rebrand. `src/tela/session.ts` imports `BRAND_PALETTE` to answer
+`tela_set_brand_context`, so the palette and the `BRAND` config compile into
+`dist/mcp/tela-mcp.mjs`; renaming the brand necessarily renames what the MCP server reports.
+The delta was bounded before it was accepted — a line diff of the two bundles is **68 lines,
+all of them brand data** (palette labels and hexes, `productName`, `socialHandle`,
+`displayName`, `productDescription`), with no change to logic, tool schemas, transport, or
+dependencies, and a size delta of +166 bytes. Every palette *key* is unchanged, and
+`session.ts` still exposes every entry, so no `.tela` document and no MCP caller loses a
+colour it addresses by name.
+
+Leaving the old baseline in place was not a neutral option: `df44d15` is itself a CLI-508
+commit, so the retired record has `"HiveMind | Design"` and `"Hive 50"` baked into it. A gate
+comparing against it would have gone on certifying the retired identity as the correct one.
+
+Two things were explicitly **not** done. `APP_CHROME_PATTERNS` was not extended to absorb the
+two new `dist-bridge/assets/pyrito-design-register-*.svg` files — teaching the instrument a
+new exception is the failure mode this document's own "test-of-the-test" section exists to
+prevent, and under the new baseline those assets sit in the byte-identical set where they
+belong. And the self-comparison refusal above was not relaxed.
+
+The previous record (`tests/baselines/mcp-payload-df44d15.json`, manifest `d75854c7…`,
+136 files) is removed rather than kept alongside: two baselines invite a comparison against
+whichever one passes. It remains reviewable in this file's git history.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 
@@ -60,7 +97,11 @@ length, its own commit occurs at exactly those offsets and nowhere else, and the
 blanked bytes hash to the recorded value. The mask is bounded by the record, so a byte that
 moved anywhere else changes the normalised hash and fails.
 
-## Result
+## Result (CLI-520, against the retired `df44d15` baseline)
+
+Kept as the historical record of what the gate proved about Milestone 2. The numbers below
+are measurements against the **previous** baseline and are not re-derivable from the current
+record; the section after it carries the current state.
 
 Comparison of the Milestone 2 integration state against the baseline record:
 
@@ -158,9 +199,9 @@ The record is the trust anchor: every comparison is made against it rather than 
 rebuilt months-old commit, so a record edited to match a drifted payload would launder the
 change this whole document exists to catch. `recorded_from.artifact_manifest_sha256` is the
 digest of the baseline artifact's own `SHA256SUMS` — the value the baseline release build
-printed (`d75854c7…`). Because `SHA256SUMS` is a pure function of the per-file hashes, the
+printed (`c12cac10…`). Because `SHA256SUMS` is a pure function of the per-file hashes, the
 checker **recomputes that digest from the record's own `files` map** and refuses to compare
-anything if it does not match. Editing any one of the 136 recorded hashes breaks it.
+anything if it does not match. Editing any one of the 138 recorded hashes breaks it.
 
 Residual, and stated rather than papered over: the four `stamped` entries (offsets and
 normalised hashes) cannot be reconstructed from anything else available at check time, so
