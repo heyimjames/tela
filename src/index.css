@@ -85,10 +85,11 @@
      ramp steps rather than one, because a fill, a focus ring and a run of body
      text need different contrast against the same ground, and the ramp — not a
      new colour — is where that difference comes from:
-       --primary  teal      the colour of a filled button (white on it, 4.9:1)
-       --ring     teal-300  the focus ring, well clear of the 3:1 non-text floor
-       --link     teal-100  the colour of a word you can click (8:1 on a panel)
-     Teal itself as link text would sit at 3.1:1 on --surface and fail AA; the
+       --primary  teal      the colour of a filled button (white on it, 5.0:1)
+       --ring     teal-300  the focus ring, 5.7:1 on a panel — well clear of the
+                            3:1 non-text floor
+       --link     teal-100  the colour of a word you can click (8.3:1 on a panel)
+     Teal itself as link text would sit at 3.2:1 on --surface and fail AA; the
      `text-primary` that survives elsewhere marks active/selected state, not a
      link.
 
@@ -112,7 +113,8 @@
   --accent: var(--surface-hover);
   --accent-foreground: var(--pyrito-teal-50);
   --destructive: var(--pyrito-ember);
-  /* Ink, not white: Ember is a light warm tone, and white on it is 2.6:1. */
+  /* Ink, not white: Ember is a light warm tone. White on it is 2.9:1, under
+     AA; Ink on it is 6.6:1. */
   --destructive-foreground: var(--pyrito-ink);
   --link: var(--pyrito-teal-100);
   --border: var(--hairline);

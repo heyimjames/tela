@@ -33,22 +33,51 @@ function makeRng(seed: string): () => number {
   }
 }
 
-// Curated anchor hues (OKLCH degrees) — tasteful bands that each read cleanly on
-// their own. Weighted toward the hive teal band the product now lives in, with
-// the sibling Clickt division accents (perf lime, studio violet) and the master
-// ember as alternates, so cards vary without leaving the brand system.
-const ANCHOR_HUES = [
-  195, // hive teal (brand)
-  185, // cyan-teal
-  205, // deep aqua
-  168, // sea green
-  158, // green
-  128, // perf lime (sibling division)
-  300, // studio violet (sibling division)
-  38, // ember (master accent)
-  255, // indigo
-  350, // rose
+/**
+ * Anchor hues (OKLCH degrees) — every one of them measured off a Pyrito ramp
+ * token, not chosen by eye.
+ *
+ * Converting the kit's core ramp to OKLCH puts the whole brand inside a single
+ * narrow band: `teal-300` sits at 180.6°, `teal` at 203.8°, `teal-700` at
+ * 208.5°, `abyss` at 210.1°. These five anchors span that band and nothing else.
+ *
+ * The list this replaces reached well outside it — perf lime at 128°, studio
+ * violet at 300°, indigo at 255°, rose at 350° — carried over from the retired
+ * division system, whose sibling brands were the reason those hues "belonged".
+ * A standalone Pyrito allows exactly two general accents, Teal and Ember
+ * (`color.no-invented-accents`, must_not), so a card washed in violet was the
+ * most visible off-brand surface left in the app.
+ *
+ * Ember is deliberately absent even though it IS an allowed accent: a card's
+ * wash is a dominant background field, and `color.ember-no-fields` (must_not)
+ * rules Ember out of exactly that job. Ember stays where it is sparse — the
+ * destructive control and the smart-guide signal.
+ *
+ * Variety now comes from lightness, chroma depth, blob layout and hue torsion
+ * rather than from hue range, which is the more cohesive look anyway.
+ *
+ * Note these are *not* hex values, which is why the repo's hex-based brand scan
+ * cannot police them: `src/brand/brand.test.ts` asserts this band by calling the
+ * generator and reading the hues it actually emits.
+ */
+export const ANCHOR_HUES = [
+  182, // teal-300 / teal-100 end of the ramp
+  189,
+  196,
+  203, // teal itself
+  209, // teal-700 / abyss end of the ramp
 ]
+
+/** The ramp's own hue span, in OKLCH degrees — the bound the anchors respect. */
+export const BRAND_HUE_BAND = { min: 180.6, max: 210.1 } as const
+
+/**
+ * The most an individual gradient stop may sit off its anchor: ±5° of per-card
+ * jitter plus the ±8° of hue torsion applied across the light→deep ramp below.
+ * Exported so the brand test bounds the *total* excursion rather than trusting
+ * that the torsion constants never widen.
+ */
+export const MAX_HUE_EXCURSION = 13
 
 const okl = (l: number, c: number, h: number) =>
   `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${(((h % 360) + 360) % 360).toFixed(1)})`

@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url'
 import { BRAND } from '@/brand/brand.config'
 import { BRAND_GROUPS, BRAND_PALETTE, AI_BRAND_COLOR_LIST } from '@/brand/palette'
 import { CHROME_ACCENT, CHROME_SIGNAL } from '@/brand/chrome'
+import { ANCHOR_HUES, BRAND_HUE_BAND, MAX_HUE_EXCURSION, cardGradient } from '@/lib/cardGradient'
 import { ACTIVE_BRAND_THEME } from '@/brand/theme'
 
 const read = (relative: string) => readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8')
@@ -262,6 +263,65 @@ describe('the app presents Pyrito and only Pyrito', () => {
     for (const [key, hex] of Object.entries(ramp)) {
       expect(BRAND_PALETTE[key].hex.toLowerCase(), `${key} must be a kit ramp value`).toBe(hex)
     }
+  })
+})
+
+describe('generated colour stays inside the brand band', () => {
+  /**
+   * The hex scan above cannot see this file, and that is the point.
+   * `cardGradient` emits `oklch()` with the hue as a *number of degrees*, so a
+   * library card washed in violet contains no hex at all and every hex-shaped
+   * check in this suite reports clean while the card is plainly off-brand. That
+   * is exactly what happened: the anchor list carried perf lime (128°), studio
+   * violet (300°), indigo (255°) and rose (350°) over from the retired division
+   * system, and the rebrand's grep-based criteria could not have found them.
+   *
+   * So this asserts the property directly, on the generator's real output rather
+   * than on its constants — a renamed or inlined constant cannot dodge it.
+   */
+  const hues = (css: string) =>
+    [...css.matchAll(/oklch\([\d.]+ [\d.]+ ([\d.]+)\)/g)].map(([, degrees]) => Number(degrees))
+
+  const SEEDS = Array.from({ length: 400 }, (_, index) => `card-${index}`)
+
+  it('emits no hue outside the ramp band, across many seeds', () => {
+    const seen = SEEDS.flatMap((seed) => hues(cardGradient(seed)))
+
+    // Non-vacuity: a generator that emitted nothing, or a regex that matched
+    // nothing, would otherwise pass this with an empty set.
+    expect(seen.length).toBeGreaterThan(SEEDS.length * 4)
+
+    const low = BRAND_HUE_BAND.min - MAX_HUE_EXCURSION
+    const high = BRAND_HUE_BAND.max + MAX_HUE_EXCURSION
+    const strays = [...new Set(seen.filter((hue) => hue < low || hue > high))].sort((a, b) => a - b)
+    expect(strays, `hues outside ${low}–${high}°`).toEqual([])
+  })
+
+  it('anchors every band on the documented ramp itself', () => {
+    // The excursion bound above tolerates ±13°, so it alone would accept an
+    // anchor that sits just off the ramp. This pins the anchors themselves.
+    for (const anchor of ANCHOR_HUES) {
+      expect(anchor, `anchor ${anchor}° must sit on the ramp`).toBeGreaterThanOrEqual(BRAND_HUE_BAND.min)
+      expect(anchor, `anchor ${anchor}° must sit on the ramp`).toBeLessThanOrEqual(BRAND_HUE_BAND.max)
+    }
+  })
+
+  it('detects an off-band hue when one is present', () => {
+    // The control. Without it, the empty `strays` above is a fact about the
+    // regex — and the regex is the part that a change of colour syntax breaks.
+    const planted = 'radial-gradient(70% 70% at 1% 2%, oklch(0.670 0.145 300.0) 0%, transparent 48%)'
+    const low = BRAND_HUE_BAND.min - MAX_HUE_EXCURSION
+    const high = BRAND_HUE_BAND.max + MAX_HUE_EXCURSION
+
+    expect(hues(planted)).toEqual([300])
+    expect(hues(planted).filter((hue) => hue < low || hue > high)).toEqual([300])
+  })
+
+  it('still varies the wash, so the band is a constraint and not a flattening', () => {
+    // A generator hard-wired to one colour would satisfy every assertion above.
+    const distinct = new Set(SEEDS.map((seed) => cardGradient(seed)))
+    expect(distinct.size).toBeGreaterThan(SEEDS.length / 2)
+    expect(new Set(SEEDS.flatMap((seed) => hues(cardGradient(seed)))).size).toBeGreaterThan(10)
   })
 })
 

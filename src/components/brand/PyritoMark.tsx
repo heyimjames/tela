@@ -11,9 +11,15 @@
  * hand-simplified silhouette with the interior facets removed.
  *
  * Referenced through `<img>` rather than inlined so the shipped bytes stay the
- * supplied file rather than a transcription of it. The mark carries its own
- * `<title>`, so the element is labelled by the asset and the wrapper stays
- * `alt=""` to avoid announcing the name twice.
+ * supplied file rather than a transcription of it.
+ *
+ * `alt=""` marks it decorative, and that is a deliberate choice rather than an
+ * omission: an `<img>` is an opaque replaced element, so the `<title>` *inside*
+ * the SVG is not exposed to assistive technology and cannot label it. Every
+ * place this component is used sits directly beside the product name in real
+ * text, so the accessible name is already there; giving the image one too would
+ * announce the brand twice. A future use with no adjacent name needs a real
+ * `alt`, not a reliance on the asset.
  *
  * `data-no-outline` is required: `src/index.css` draws a hairline outline on
  * every chrome `<img>`, which around a transparent mark reads as a box the mark
