@@ -8,17 +8,17 @@ document records how we prove those additions did not disturb the payload, and w
 
 Issue: **CLI-520**, baseline re-recorded on **CLI-561**, **PYR-11**, and **PYR-17**. Harness:
 `scripts/verify-payload-noninterference.mjs`, `scripts/lib/payload-noninterference.mjs`.
-Baseline record: `tests/baselines/mcp-payload-a269442.json`.
+Baseline record: `tests/baselines/mcp-payload-45066fb.json`.
 CI: `.github/workflows/payload-noninterference.yml`.
 
 ## The baseline
 
 | | |
 |---|---|
-| Baseline commit | `a2694423f66fad8f716e88b5253a60221b0054ca` |
-| Why this commit | the corrected Pyrito Design v0.1.1 release state: Pyrito product identity and clean-break runtime root, with the existing `.tela` producer family and unrelated Tela Wiki identity preserved |
-| Baseline archive sha256 | `2068988a28f48c839bc0cbb9f288ff6f4a30da3bb34c2c427686f6c78532a044` |
-| Baseline manifest sha256 | `fbd9d51193701432204439a3a4cb533d8f7f66bb58bc7d5e9ad7d0d35373215b` |
+| Baseline commit | `45066fba59ede16ac006315da6ef928539784fa6` |
+| Why this commit | the corrected Pyrito Design v0.1.1 release state: Pyrito product identity and clean-break runtime root, with Windows paths produced by `path.win32` and POSIX paths produced by `path.posix`; the existing `.tela` producer family and unrelated Tela Wiki identity remain preserved |
+| Baseline archive sha256 | `b20417bd7bfa0938fe80f315ff674cbe963a4e5f5e9aa14de74c5ecd2dd74efa` |
+| Baseline manifest sha256 | `0f4f2d03d2cc3b4288f42544450fead213aadc5aaab38fbda6df21863556a2b2` |
 | Files in the payload | 136 (135 manifested + `SHA256SUMS`) |
 
 The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
@@ -99,6 +99,12 @@ change deliberately, treating the previous record as authoritative would reject 
 for the exact identity changes PYR-11 requires. The new record was generated—not
 hand-edited—from the verified artifact built at `a269442`; the previous baseline remains in
 Git history and is removed from the working tree so there is only one active trust anchor.
+
+The final PYR-17 correction at `45066fb` makes that logical cross-platform contract explicit:
+Windows defaults are constructed with `path.win32` and macOS/POSIX defaults with `path.posix`,
+independent of the operating system running the test. Because this behavior compiles into the
+MCP bundle, its release artifact was built and recorded as the new trust anchor in a separate
+commit. The checker and its classified-surface rules were not weakened.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 
