@@ -34,7 +34,7 @@ describe('migration machinery', () => {
     document.schemaVersion = CURRENT_DOCUMENT_SCHEMA_VERSION + 1
     const error = expectTelaError(() => migrateDocument(document), 'future_schema_version')
     // The message has to tell a user what to do, not just that something failed.
-    expect(error.message).toMatch(/Update Tela to open it/)
+    expect(error.message).toMatch(/Update Pyrito Design to open it/)
   })
 
   it('refuses a document with no usable schema version', () => {

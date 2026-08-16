@@ -24,7 +24,7 @@ import { registerLayerTools } from './tools/layers'
 import { registerAssetTools } from './tools/assets'
 import { registerOutputTools } from './tools/output'
 
-const INSTRUCTIONS = `Tela authors finite editable static assets — campaign graphics, ad images, social graphics, and their format variants. Video belongs in Shotcut; landing pages, prototypes, and app UI belong in OpenDesign.
+const INSTRUCTIONS = `Pyrito Design authors finite editable static assets — campaign graphics, ad images, social graphics, and their format variants. Video belongs in Shotcut; landing pages, prototypes, and app UI belong in OpenDesign.
 
 The master artifact is a .tela bundle on disk. Every path you pass is relative to an approved root; absolute paths are refused.
 

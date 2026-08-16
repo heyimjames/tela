@@ -18,8 +18,8 @@
  * mode is inert.
  */
 
-import { DesignApiClient } from '@performance-clickt/design-api-client'
-import type { FetchLike } from '@performance-clickt/design-api-client'
+import { DesignApiClient } from '@pyrito-ai/design-api-client'
+import type { FetchLike } from '@pyrito-ai/design-api-client'
 import { WORKSPACE_API_BASE_URL } from './endpoint'
 import { assertApiResponseShape } from './responseShape'
 

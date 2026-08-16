@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Build the immutable Tela runtime release artifact.
+ * Build the immutable Pyrito Design runtime release artifact.
  *
  * What the artifact is, per the delivery contract: the compiled MCP JavaScript,
- * the production Tela application build the private bridge serves, the portable
+ * the production Pyrito Design application build the private bridge serves, the portable
  * schemas, the exact lockfile, provenance, an SBOM, licence notices, and a
  * SHA-256 manifest covering every byte. Browser binaries are deliberately *not*
  * included — setup downloads the exact Playwright-matched Chromium after the
@@ -58,7 +58,7 @@ const args = parseArgs(process.argv.slice(2))
 const CONTENTS = [
   { from: 'bin', to: 'bin', description: 'host-manifest entry point (`node ./bin/tela-mcp.mjs`)' },
   { from: 'dist/mcp', to: 'dist/mcp', description: 'compiled MCP server' },
-  { from: 'dist-bridge', to: 'dist-bridge', description: 'production Tela application served to the private browser' },
+  { from: 'dist-bridge', to: 'dist-bridge', description: 'production Pyrito Design application served to the private browser' },
   { from: 'schemas', to: 'schemas', description: 'portable `.tela` JSON schemas' },
 ]
 
@@ -107,7 +107,7 @@ async function main() {
     name: packageJson.name,
     version,
     sourceCommit: commit,
-    repository: 'performance-clickt/tela-design',
+    repository: 'Pyrito-ai/pyrito-design',
     toolchain: {
       node: '22',
       typescript: dependencyVersion(lock, 'typescript'),

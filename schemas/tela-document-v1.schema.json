@@ -1,7 +1,7 @@
 {
   "$id": "https://schemas.clickt.ca/tela/document/v1",
-  "title": "Tela portable document, v1",
-  "description": "The complete editable Tela state stored as document.json inside a .tela bundle. Every object is closed: unknown properties are invalid, so a reader can never silently discard a field it does not recognise.",
+  "title": "Pyrito Design portable document, v1",
+  "description": "The complete editable Pyrito Design state stored as document.json inside a .tela compatibility bundle. Every object is closed: unknown properties are invalid, so a reader can never silently discard a field it does not recognise.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {

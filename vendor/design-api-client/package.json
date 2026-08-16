@@ -1,7 +1,7 @@
 {
-  "name": "@performance-clickt/design-api-client",
+  "name": "@pyrito-ai/design-api-client",
   "version": "1.0.0",
-  "description": "Generated TypeScript client for the frozen HiveMind Design Workspaces v1 API.",
+  "description": "Generated TypeScript client for the frozen Pyrito Design Workspaces v1 API.",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
@@ -25,7 +25,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/performance-clickt/hivemind-design-server.git",
+    "url": "git+https://github.com/Pyrito-ai/pyrito-design-server.git",
     "directory": "packages/api-client"
   },
   "scripts": {

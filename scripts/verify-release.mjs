@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Verify a Tela release artifact **without executing any of it**.
+ * Verify a Pyrito Design release artifact **without executing any of it**.
  *
  * That constraint is the whole point, and it is worth being precise about what
  * it rules out: this script never `import`s a file from the artifact, never

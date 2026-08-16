@@ -1,6 +1,6 @@
 # The release artifact
 
-The Tela runtime ships as an immutable artifact that the Clickt plugin's setup
+The Pyrito Design runtime ships as an immutable artifact that Pyrito Ad Ops setup
 downloads, verifies, and installs. This document says what is in it, how to
 check it, and why each rule is the way it is.
 
@@ -11,7 +11,7 @@ check it, and why each rule is the way it is.
 | `bin/tela-mcp.mjs` | The host-manifest entry point. Both Codex and Claude launch exactly this: `node ./bin/tela-mcp.mjs` |
 | `dist/mcp/tela-mcp.mjs` | The compiled MCP server. Plain ESM — no TypeScript, no loader, no `npx` at runtime |
 | `dist/mcp/tela-mcp.mjs.map` | Source map, **mappings only** — see below |
-| `dist-bridge/` | The production Tela application the private loopback server serves to the private browser |
+| `dist-bridge/` | The production Pyrito Design application the private loopback server serves to the private browser |
 | `schemas/` | The portable `.tela` manifest and document JSON schemas |
 | `package.json`, `package-lock.json` | The exact lockfile setup installs from, with lifecycle scripts disabled |
 | `provenance.json` | Source commit, pinned toolchain, browser policy, methodology provenance |

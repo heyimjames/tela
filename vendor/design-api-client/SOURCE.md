@@ -1,16 +1,16 @@
-# Vendored: `@performance-clickt/design-api-client@1.0.0`
+# Vendored: `@pyrito-ai/design-api-client@1.0.0`
 
 This directory is a **verbatim copy** of the generated v1 API client frozen by CLI-516.
 It is vendored rather than installed, and it is not edited here.
 
 | | |
 | --- | --- |
-| Package | `@performance-clickt/design-api-client` |
+| Package | `@pyrito-ai/design-api-client` |
 | Version | `1.0.0` |
 | Source repo | `performance-clickt/hivemind-design-server` |
-| Source commit | `6f4d56dced93c94414f7e73466343ea2fe03f2e3` (short `6f4d56d`) |
+| Source commit | `b716cc2e2d9d1deceb64e98798677849f78742fd` (short `b716cc2`) |
 | Source path | `packages/api-client/` |
-| Vendored on | 2026-08-15 (CLI-517); re-vendored 2026-08-15 (CLI-555) |
+| Vendored on | 2026-08-15 (CLI-517); re-vendored 2026-08-15 (CLI-555) and 2026-08-16 (PYR-15/PYR-11) |
 
 ## Why vendored, and why the source rather than `dist/`
 
@@ -33,7 +33,7 @@ upstream commit.
 
 ## Resolution
 
-The bare specifier `@performance-clickt/design-api-client` is aliased to
+The bare specifier `@pyrito-ai/design-api-client` is aliased to
 `vendor/design-api-client/src/index.ts` in three places, which must stay in
 agreement:
 
@@ -51,7 +51,7 @@ lint-driven edits here would break the byte-for-byte provenance claim below.
 
 sha256 of every vendored file. Each hash equals the corresponding blob at the
 source commit — verified at vendoring time with
-`git show 6f4d56d:packages/api-client/<path> | shasum -a 256`.
+`git show b716cc2:packages/api-client/<path> | shasum -a 256`.
 
 `src/workspace/__tests__/vendoredClient.test.ts` re-checks this table on every test run, so
 an edit to a vendored file, or a version bump away from `1.0.0`, fails a test
@@ -59,9 +59,9 @@ instead of silently invalidating the provenance recorded here.
 
 | sha256 | file |
 | --- | --- |
-| `b4b2b8262a24bc0a0dafcd4ca6a8ac8c3a849bbeee3f12f134292c3234d18f42` | `package.json` |
+| `736679b205cfefa0bf95237f7a8cb18844dd40b7168056eca8c942eec2fa812b` | `package.json` |
 | `89ca7bd7c51ba7b9246e3d400f4cfafce448f7d3dccbd2d34215b5a4c0977f86` | `tsconfig.json` |
-| `ec5ef6582ab3ff2d0566c7896fc678714dd584df9daea63cde851a42ffab67ee` | `README.md` |
+| `ae71bf358bbd8b365d8b2fcdf998747c854e8971323e7b316c40d9739972dab8` | `README.md` |
 | `4ba508cc203d715633cb928694b77a53e81b8184afa708aa3020a92f90fba073` | `src/client.ts` |
 | `3b87d6ad74ff7cc767cc0d7857ce1b63cd23b7fa23a076730de701a9973862ae` | `src/errors.ts` |
 | `55e9ab277b19225cf5ccf1a9086aad43230c66ecf2530632f5ecb06adc4b1cec` | `src/index.ts` |

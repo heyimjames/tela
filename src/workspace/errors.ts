@@ -7,7 +7,7 @@
  * refused these bytes" — and because one of those translations is a trap:
  *
  * **The client's `ConflictError` names its revisions the opposite way round from
- * the storage seam's.** In `@performance-clickt/design-api-client`:
+ * the storage seam's.** In `@pyrito-ai/design-api-client`:
  *
  *   - `expected` — the revision the **server** actually holds
  *   - `actual`   — the base the **caller** sent
@@ -25,8 +25,8 @@
  * `__tests__/conflictMapping.test.ts` pins it in both directions.
  */
 
-import { ApiError, ConflictError as ClientConflictError, ValidationError } from '@performance-clickt/design-api-client'
-import type { BundleRejectionCode } from '@performance-clickt/design-api-client'
+import { ApiError, ConflictError as ClientConflictError, ValidationError } from '@pyrito-ai/design-api-client'
+import type { BundleRejectionCode } from '@pyrito-ai/design-api-client'
 import { ConflictError as StorageConflictError } from '@/storage/StorageAdapter'
 import { UnexpectedResponseError } from './responseShape'
 

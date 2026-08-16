@@ -1,7 +1,7 @@
 /**
  * The build-time half of the AI gate: *is an endpoint configured for this build?*
  *
- * Tela ships with NO backend. AI features are a thin client that POSTs to an endpoint
+ * Pyrito Design ships with NO backend. AI features are a thin client that POSTs to an endpoint
  * you provide, so you can proxy to any provider from your own server and keep API keys
  * out of the browser. Configure:
  *

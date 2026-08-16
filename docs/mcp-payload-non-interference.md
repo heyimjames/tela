@@ -1,24 +1,24 @@
 # MCP payload non-interference
 
-The Tela application ships **inside** the certified `clickt-tela` MCP payload. Milestone 2
+The application, then named Tela, ships **inside** the certified `clickt-tela` MCP payload. Milestone 2
 ("HiveMind | Design Workspaces") added a storage-adapter seam, workspace-mode UX, a vendored
 API client and a dormant AI panel to that application — all gated off by default. This
 document records how we prove those additions did not disturb the payload, and what
 "undisturbed" is defined to mean.
 
-Issue: **CLI-520**, baseline re-recorded on **CLI-561**. Harness:
+Issue: **CLI-520**, baseline re-recorded on **CLI-561**, **PYR-11**, and **PYR-17**. Harness:
 `scripts/verify-payload-noninterference.mjs`, `scripts/lib/payload-noninterference.mjs`.
-Baseline record: `tests/baselines/mcp-payload-bb59912.json`.
+Baseline record: `tests/baselines/mcp-payload-c58eae4.json`.
 CI: `.github/workflows/payload-noninterference.yml`.
 
 ## The baseline
 
 | | |
 |---|---|
-| Baseline commit | `a92383c9e29560bc559011d3d9443be238406fa5` |
-| Why this commit | the removal of the forbidden D20 redraw (PYR-10) — the first commit at which the payload carries the current brand identity *and* nothing the brand kit forbids |
-| Baseline archive sha256 | `07b3be6731c1631f2f27427953ef449a799cbfd70825ccd12da8907a485af9c9` |
-| Baseline manifest sha256 | `303f6b2112d9cc7a388b726b53d8f70db159d6c2c2b63a7e2e94d062ee3d72df` |
+| Baseline commit | `c58eae42f973c0c7830e98697e1206165ba12a38` |
+| Why this commit | the corrected Pyrito Design v0.1.1 release state: Pyrito product identity and clean-break cross-platform runtime root, plus the exact Pyrito-namespaced API client vendored from `hivemind-design-server` merge `b716cc2`; the existing `.tela` producer family and unrelated Tela Wiki identity remain preserved |
+| Baseline archive sha256 | `75fc1cce23c6edb50aef5198ae49704315113e7c8ad8909e14c0f9036c851bfe` |
+| Baseline manifest sha256 | `7b47f2f1f20e6939a2cf3a15a2186105e823153766ac783497077395d38e15ca` |
 | Files in the payload | 136 (135 manifested + `SHA256SUMS`) |
 
 The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
@@ -81,6 +81,36 @@ and `index.css` after the `bb59912` record was taken. That is the invariant work
 designed rather than an anomaly: the application may change, the certified MCP payload may
 not, and the app bundle lives in the chrome set for precisely this reason. Re-recording here
 folds that already-permitted drift into the certified state.
+
+### Why the baseline moved for v0.1.1 (PYR-11)
+
+The release cut intentionally changes certified payload identity rather than application
+chrome alone. It advances the package, MCP handshake, and document-producer version to
+`0.1.1`, records `Pyrito-ai/pyrito-design` as repository provenance, moves the default
+approved root from the retired Clickt AdStudio directory to `Pyrito/Design` under the
+operator's PYR-17 clean-break decision, and replaces current user-facing Tela labels with
+Pyrito Design. The `.tela` extension, `tela_*` tools, `tela-mcp` launcher, schema URLs,
+registered external id, `TELA_*` environment variables, and the existing `tela-design`
+producer-family name remain unchanged compatibility contracts. Existing data is never
+inspected, copied, moved, rewritten, or deleted automatically; the manual move is documented.
+
+Because `package.json`, `package-lock.json`, the JSON schemas, and compiled MCP server all
+change deliberately, treating the previous record as authoritative would reject the release
+for the exact identity changes PYR-11 requires. The new record was generated—not
+hand-edited—from the verified artifact built at `a269442`; the previous baseline remains in
+Git history and is removed from the working tree so there is only one active trust anchor.
+
+The final PYR-17 correction at `45066fb` makes that logical cross-platform contract explicit:
+Windows defaults are constructed with `path.win32` and macOS/POSIX defaults with `path.posix`,
+independent of the operating system running the test. Because this behavior compiles into the
+MCP bundle, its release artifact was built and recorded as the new trust anchor in a separate
+commit. The checker and its classified-surface rules were not weakened.
+
+The coordinated PYR-15 merge then renamed the generated workspace client package to
+`@pyrito-ai/design-api-client`. Commit `c58eae4` re-vendors the exact tracked client files
+from server merge `b716cc2` and updates every local alias and import together. Because the
+vendored package metadata and compiled source map are certified payload inputs, that commit
+was also built and recorded as a new trust anchor. Again, the detector itself was unchanged.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 

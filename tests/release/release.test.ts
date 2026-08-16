@@ -88,7 +88,7 @@ describe('provenance', () => {
       name: 'tela',
       version: '0.1.0',
       sourceCommit: 'a'.repeat(40),
-      repository: 'performance-clickt/tela-design',
+      repository: 'Pyrito-ai/pyrito-design',
       toolchain: { node: '22', playwright: '1.61.1' },
       chromium: '1228',
       contents: [],

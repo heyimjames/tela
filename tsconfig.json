@@ -23,7 +23,7 @@
       "@/*": [
         "./src/*"
       ],
-      "@performance-clickt/design-api-client": [
+      "@pyrito-ai/design-api-client": [
         "./vendor/design-api-client/src/index.ts"
       ]
     }

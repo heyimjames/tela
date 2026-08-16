@@ -1,6 +1,6 @@
 # Mobile web — status & roadmap
 
-Tela is desktop-first today, but the engine and state stores are entirely
+Pyrito Design is desktop-first today, but the engine and state stores are entirely
 platform-agnostic — all the desktop coupling lives in the interaction and chrome
 layer. Mobile is therefore an **additive UI layer over the same core**, not a
 rewrite. This doc tracks where that stands and what's next.

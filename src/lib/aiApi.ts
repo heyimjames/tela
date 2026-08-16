@@ -1,7 +1,7 @@
 /**
  * Fetch helper for the optional AI Assist feature.
  *
- * Tela ships with NO backend. The AI panel is a thin client that POSTs
+ * Pyrito Design ships with NO backend. The AI panel is a thin client that POSTs
  * to an endpoint you provide, so you can proxy to Anthropic, OpenAI, or any
  * provider from your own server and keep API keys out of the browser. The endpoint
  * itself is configured in `@/ai/endpoint` (`VITE_AI_API_ORIGIN` / `VITE_AI_API_PATH`);

@@ -230,6 +230,22 @@ describe('the app presents Pyrito and only Pyrito', () => {
     for (const value of Object.values(BRAND.ai)) expect(value.toLowerCase()).not.toContain('hivemind')
   })
 
+  it('brands the sign-in and repository entry surfaces as Pyrito Design', () => {
+    const login = read('../workspace/components/LoginScreen.tsx')
+    const readme = read('../../README.md')
+    const packageJson = JSON.parse(read('../../package.json')) as {
+      description: string
+      homepage: string
+      repository: { url: string }
+    }
+
+    expect(login).toContain('Pyrito Design workspaces.')
+    expect(readme).toMatch(/^# Pyrito Design$/m)
+    expect(packageJson.description).toContain('Pyrito Design')
+    expect(packageJson.homepage).toBe('https://github.com/Pyrito-ai/pyrito-design')
+    expect(packageJson.repository.url).toBe('https://github.com/Pyrito-ai/pyrito-design.git')
+  })
+
   it('resolves the editor chrome accents to documented brand values', () => {
     expect(CHROME_ACCENT.toLowerCase()).toBe(KIT_TOKENS.teal)
     expect(CHROME_SIGNAL.toLowerCase()).toBe(KIT_TOKENS.ember)

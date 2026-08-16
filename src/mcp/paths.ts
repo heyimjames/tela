@@ -30,18 +30,25 @@
 
 import { lstat, mkdir, stat } from 'node:fs/promises'
 import { homedir, platform } from 'node:os'
-import { isAbsolute, join, normalize, resolve, sep, dirname, relative } from 'node:path'
+import { isAbsolute, join, normalize, resolve, sep, dirname, relative, posix, win32 } from 'node:path'
 
 import { toolError } from './errors'
 
+/**
+ * Pure default-root policy, exported so both platform branches and the clean
+ * break can be proved without mutating or inspecting either location.
+ */
+export function defaultApprovedRootFor(platformName: NodeJS.Platform, home: string, localAppData?: string): string {
+  if (platformName === 'win32') {
+    if (localAppData) return win32.join(localAppData, 'Pyrito', 'Design')
+    return win32.join(home, 'AppData', 'Local', 'Pyrito', 'Design')
+  }
+  return posix.join(home, 'Library', 'Application Support', 'Pyrito', 'Design')
+}
+
 /** Default runtime roots from the architecture contract. */
 export function defaultApprovedRoot(): string {
-  if (platform() === 'win32') {
-    const local = process.env.LOCALAPPDATA
-    if (local) return join(local, 'Clickt', 'AdStudio', 'tela')
-    return join(homedir(), 'AppData', 'Local', 'Clickt', 'AdStudio', 'tela')
-  }
-  return join(homedir(), 'Library', 'Application Support', 'Clickt', 'AdStudio', 'tela')
+  return defaultApprovedRootFor(platform(), homedir(), process.env.LOCALAPPDATA)
 }
 
 /**
@@ -69,7 +76,7 @@ function assertUsableRoot(root: string): void {
     throw toolError(
       'policy_refused',
       'the approved root is a volume or drive root',
-      'point TELA_APPROVED_ROOT at a dedicated directory (for example <home>/Library/Application Support/Clickt/AdStudio/tela) and restart the server',
+      'point TELA_APPROVED_ROOT at a dedicated directory (for example <home>/Library/Application Support/Pyrito/Design) and restart the server',
     )
   }
   let home: string | undefined

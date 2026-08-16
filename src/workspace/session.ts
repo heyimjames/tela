@@ -27,7 +27,7 @@
  * Auto-merge and retry are out of scope by project decision, not by omission.
  */
 
-import type { WorkspaceMembership, User } from '@performance-clickt/design-api-client'
+import type { WorkspaceMembership, User } from '@pyrito-ai/design-api-client'
 import { ConflictError } from '@/storage/StorageAdapter'
 import type { DocumentSummary } from '@/storage/StorageAdapter'
 import { WorkspaceStorageAdapter } from '@/storage/WorkspaceStorageAdapter'

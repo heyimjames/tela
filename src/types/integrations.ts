@@ -1,5 +1,5 @@
 /**
- * Integration architecture for Tela
+ * Integration architecture for Pyrito Design
  *
  * This file maps out the API surface for:
  * 1. MCP (Model Context Protocol) server — allows Claude Code and other agents to control the app

@@ -21,12 +21,12 @@
  * touching the conflict path.
  */
 
-import type { DesignApiClient } from '@performance-clickt/design-api-client'
+import type { DesignApiClient } from '@pyrito-ai/design-api-client'
 import { serverStoredOurBytes } from '@/workspace/bundleHash'
 import { getDesignApiClient } from '@/workspace/client'
 import { mapApiError } from '@/workspace/errors'
 import { requireActiveWorkspaceId } from '@/workspace/activeWorkspace'
-import { ApiError } from '@performance-clickt/design-api-client'
+import { ApiError } from '@pyrito-ai/design-api-client'
 import type { DocumentSummary, StorageAdapter } from './StorageAdapter'
 
 /**

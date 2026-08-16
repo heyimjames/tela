@@ -37,13 +37,13 @@ function manifestFromSourceDoc(): Map<string, string> {
   return entries
 }
 
-describe('vendored @performance-clickt/design-api-client', () => {
+describe('vendored @pyrito-ai/design-api-client', () => {
   it('is pinned at exactly 1.0.0', () => {
     const pkg = JSON.parse(read('package.json').toString('utf8')) as {
       name: string
       version: string
     }
-    expect(pkg.name).toBe('@performance-clickt/design-api-client')
+    expect(pkg.name).toBe('@pyrito-ai/design-api-client')
     expect(pkg.version).toBe('1.0.0')
   })
 

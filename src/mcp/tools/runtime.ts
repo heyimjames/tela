@@ -30,7 +30,7 @@ export function registerRuntimeTools(server: McpServer): void {
     name: 'tela_get_status',
     title: 'Get runtime status',
     description:
-      'Report whether the Tela runtime is ready: server identity, the approved root every path is confined to, whether the private browser bridge has been started, and which designs are currently open. Safe to call first; it never starts the browser.',
+      'Report whether the Pyrito Design runtime is ready: server identity, the approved root every path is confined to, whether the private browser bridge has been started, and which designs are currently open. Safe to call first; it never starts the browser.',
     inputSchema: z.strictObject({ response_format: responseFormatSchema }),
     outputSchema: z.strictObject({
       server_name: z.string(),
@@ -74,7 +74,7 @@ export function registerRuntimeTools(server: McpServer): void {
       }
       return {
         data,
-        text: args.response_format === 'markdown' ? `### Tela runtime\n\n${markdownRecord(data)}` : JSON.stringify(data),
+        text: args.response_format === 'markdown' ? `### Pyrito Design runtime\n\n${markdownRecord(data)}` : JSON.stringify(data),
       }
     },
   })

@@ -10,7 +10,7 @@
 
 export const SERVER_NAME = 'tela-design-mcp-server'
 export const EXTERNAL_ID = 'clickt-tela-design'
-export const SERVER_VERSION = '0.1.0'
+export const SERVER_VERSION = '0.1.1'
 
 /**
  * Provenance for Anthropic's `mcp-builder` skill, which was used as *design and

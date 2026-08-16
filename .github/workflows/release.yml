@@ -1,4 +1,4 @@
-# Build, verify, and publish the immutable Tela runtime release artifact.
+# Build, verify, and publish the immutable Pyrito Design runtime artifact.
 #
 # The ordering here is the whole design. The artifact is built, then verified by
 # a script that never executes any of it, then *rebuilt from scratch* and
@@ -57,7 +57,7 @@ jobs:
       #
       # `--silent` is load-bearing, not tidiness. This step's stdout is redirected
       # into summary.json and then parsed as JSON two lines down, and `npm run`
-      # prints its own `> tela@0.1.0 release:build` banner to stdout. Without
+      # prints its own `> tela@0.1.1 release:build` banner to stdout. Without
       # `--silent` the banner lands at the top of the file and the `require()`
       # below fails to parse it.
       - name: Build the release artifact
@@ -95,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF_NAME}"
-          notes="Immutable Tela runtime artifact.
+          notes="Immutable Pyrito Design runtime artifact (.tela compatibility format).
 
           Source commit: \`${GITHUB_SHA}\`
           Manifest SHA-256: \`${{ steps.build.outputs.manifest_sha256 }}\`

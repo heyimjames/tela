@@ -77,7 +77,10 @@ describe('bundle structure', () => {
   it('records producer, hashes, limits, migration metadata, and a semantic revision', () => {
     const { manifest, document } = readBundle(bytes)
     expect(manifest.format).toBe('tela-bundle')
+    // Portable-format compatibility marker: product copy is Pyrito Design,
+    // but existing .tela bundles already identify this producer family.
     expect(manifest.producer.name).toBe('tela-design')
+    expect(manifest.producer.version).toBe('0.1.1')
     expect(manifest.producer.sourceCommit).toMatch(/^[0-9a-f]{40}$/)
     expect(manifest.document.sha256).toBe(sha256Hex(entries[1].data))
     expect(manifest.document.size).toBe(entries[1].data.length)

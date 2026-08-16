@@ -1,6 +1,6 @@
-# Tela Design MCP server
+# Pyrito Design MCP server
 
-A local **stdio** MCP server that gives an agent the full Tela authoring surface:
+A local **stdio** MCP server that gives an agent the full Pyrito Design authoring surface:
 create and edit `.tela` designs, compose frames and layers, manage assets, fonts,
 brand context and versions, and render or export finished artwork.
 
@@ -50,10 +50,25 @@ Both hosts execute the same launcher and see identical tool and resource schemas
 
 | Variable | Meaning |
 | --- | --- |
-| `TELA_APPROVED_ROOT` | The directory every path is confined to. Defaults to `~/Library/Application Support/Clickt/AdStudio/tela` (macOS) or `%LOCALAPPDATA%\Clickt\AdStudio\tela` (Windows). |
+| `TELA_APPROVED_ROOT` | The directory every path is confined to. Defaults to `~/Library/Application Support/Pyrito/Design` (macOS) or `%LOCALAPPDATA%\Pyrito\Design` (Windows). The environment variable retains its name for protocol compatibility. |
 | `TELA_BRIDGE_ROOT` | Location of the bundled application build. Defaults to `dist-bridge/` beside the compiled server. |
 | `TELA_CHROMIUM_EXECUTABLE` | Path to the pinned Chromium shipped with the payload. Falls back to Playwright's own resolution. |
 | `TELA_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error`. Default `info`. |
+
+#### Existing installs: clean-break root change
+
+Version 0.1.1 changes only the **default** approved root from the former
+`Clickt/AdStudio/tela` location to `Pyrito/Design`. It does not inspect, copy,
+move, rewrite, or delete anything in the former location. Existing files stay
+there until an operator moves them.
+
+To keep using an existing library, stop every Pyrito Design MCP process, create
+the new default directory, and copy the contents of the former directory into
+it with the operating system's ordinary file manager. Keep the former directory
+as a backup until the copied `.tela` files reopen and export successfully. If a
+destination name already exists, stop and resolve the collision manually; do
+not merge or overwrite bundles. Alternatively, set `TELA_APPROVED_ROOT` to a
+dedicated operator-approved directory and leave both defaults untouched.
 
 ## Working model
 
@@ -138,7 +153,7 @@ bin/tela-mcp.mjs → dist/mcp/tela-mcp.mjs
               ▼  serves the bundled production build — never Vite
          private Playwright Chromium
               ▼  page.evaluate(window.tela.dispatch)
-         Tela renderer and export pipeline
+         Pyrito Design renderer and export pipeline
 ```
 
 **Authoring happens in Node, against the canonical document. The browser renders.**

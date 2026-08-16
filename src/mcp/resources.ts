@@ -31,7 +31,7 @@ export function registerResources(server: McpServer): void {
     'status',
     'tela://status',
     {
-      title: 'Tela runtime status',
+      title: 'Pyrito Design runtime status',
       description: 'Server identity, whether the browser bridge is running, and which designs are open. The same data tela_get_status returns.',
       mimeType: JSON_MIME,
     },
@@ -80,7 +80,7 @@ export function registerResources(server: McpServer): void {
             {
               $schema: 'https://json-schema.org/draft/2020-12/schema',
               $id: DOCUMENT_SCHEMA_ID,
-              title: 'Tela portable document v1',
+              title: 'Pyrito Design portable document v1',
               'x-document-schema-version': CURRENT_DOCUMENT_SCHEMA_VERSION,
               'x-bundle-schema-version': CURRENT_BUNDLE_SCHEMA_VERSION,
               'x-producer': PRODUCER,

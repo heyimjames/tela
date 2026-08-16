@@ -24,7 +24,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { FetchLike } from '@performance-clickt/design-api-client'
+import type { FetchLike } from '@pyrito-ai/design-api-client'
 import { WorkspaceStorageAdapter } from '@/storage/WorkspaceStorageAdapter'
 import { createDesignApiClient, setDesignApiClientForTests } from '../client'
 import { UnexpectedResponseError } from '../responseShape'
