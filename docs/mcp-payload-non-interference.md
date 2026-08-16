@@ -8,17 +8,17 @@ document records how we prove those additions did not disturb the payload, and w
 
 Issue: **CLI-520**, baseline re-recorded on **CLI-561**, **PYR-11**, and **PYR-17**. Harness:
 `scripts/verify-payload-noninterference.mjs`, `scripts/lib/payload-noninterference.mjs`.
-Baseline record: `tests/baselines/mcp-payload-45066fb.json`.
+Baseline record: `tests/baselines/mcp-payload-c58eae4.json`.
 CI: `.github/workflows/payload-noninterference.yml`.
 
 ## The baseline
 
 | | |
 |---|---|
-| Baseline commit | `45066fba59ede16ac006315da6ef928539784fa6` |
-| Why this commit | the corrected Pyrito Design v0.1.1 release state: Pyrito product identity and clean-break runtime root, with Windows paths produced by `path.win32` and POSIX paths produced by `path.posix`; the existing `.tela` producer family and unrelated Tela Wiki identity remain preserved |
-| Baseline archive sha256 | `b20417bd7bfa0938fe80f315ff674cbe963a4e5f5e9aa14de74c5ecd2dd74efa` |
-| Baseline manifest sha256 | `0f4f2d03d2cc3b4288f42544450fead213aadc5aaab38fbda6df21863556a2b2` |
+| Baseline commit | `c58eae42f973c0c7830e98697e1206165ba12a38` |
+| Why this commit | the corrected Pyrito Design v0.1.1 release state: Pyrito product identity and clean-break cross-platform runtime root, plus the exact Pyrito-namespaced API client vendored from `hivemind-design-server` merge `b716cc2`; the existing `.tela` producer family and unrelated Tela Wiki identity remain preserved |
+| Baseline archive sha256 | `75fc1cce23c6edb50aef5198ae49704315113e7c8ad8909e14c0f9036c851bfe` |
+| Baseline manifest sha256 | `7b47f2f1f20e6939a2cf3a15a2186105e823153766ac783497077395d38e15ca` |
 | Files in the payload | 136 (135 manifested + `SHA256SUMS`) |
 
 The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
@@ -105,6 +105,12 @@ Windows defaults are constructed with `path.win32` and macOS/POSIX defaults with
 independent of the operating system running the test. Because this behavior compiles into the
 MCP bundle, its release artifact was built and recorded as the new trust anchor in a separate
 commit. The checker and its classified-surface rules were not weakened.
+
+The coordinated PYR-15 merge then renamed the generated workspace client package to
+`@pyrito-ai/design-api-client`. Commit `c58eae4` re-vendors the exact tracked client files
+from server merge `b716cc2` and updates every local alias and import together. Because the
+vendored package metadata and compiled source map are certified payload inputs, that commit
+was also built and recorded as a new trust anchor. Again, the detector itself was unchanged.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 
