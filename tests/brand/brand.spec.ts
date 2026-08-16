@@ -213,10 +213,17 @@ test('the Design Register lockup renders, in the variant the theme calls for', a
     expect(await mark.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
   }
 
-  await testInfo.attach('library-dark.png', {
-    body: await page.screenshot({ fullPage: false }),
-    contentType: 'image/png',
-  })
+  // Written to the output directory, not just attached from memory: with the
+  // `list` reporter nothing persists an in-memory attachment, so the CI step
+  // that uploads these would have uploaded an empty directory forever and the
+  // "screenshot evidence" would have been a step that could not produce any.
+  const surface = testInfo.outputPath('library-dark.png')
+  await page.screenshot({ path: surface })
+  await testInfo.attach('library-dark.png', { path: surface, contentType: 'image/png' })
+
+  const crop = testInfo.outputPath('lockup-dark.png')
+  await lockup.screenshot({ path: crop })
+  await testInfo.attach('lockup-dark.png', { path: crop, contentType: 'image/png' })
 })
 
 test('the lockup renders its own embedded typefaces', async ({ page }) => {
