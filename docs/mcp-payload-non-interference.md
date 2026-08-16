@@ -15,11 +15,11 @@ CI: `.github/workflows/payload-noninterference.yml`.
 
 | | |
 |---|---|
-| Baseline commit | `bb59912d317c83db019f484654f0b5bd0d72946c` |
-| Why this commit | the Pyrito Design rebrand (CLI-561) — the first commit at which the payload carries the current brand identity |
-| Baseline archive sha256 | `75646f79596fa2da8ebe541a6b72d8819fcd43bddea6b657fedc9cb3cacef46a` |
-| Baseline manifest sha256 | `c12cac10900230cc9375274aa5f390c4657d0d262d52192d9f387a86fded9b80` |
-| Files in the payload | 139 (138 manifested + `SHA256SUMS`) |
+| Baseline commit | `a92383c9e29560bc559011d3d9443be238406fa5` |
+| Why this commit | the removal of the forbidden D20 redraw (PYR-10) — the first commit at which the payload carries the current brand identity *and* nothing the brand kit forbids |
+| Baseline archive sha256 | `07b3be6731c1631f2f27427953ef449a799cbfd70825ccd12da8907a485af9c9` |
+| Baseline manifest sha256 | `303f6b2112d9cc7a388b726b53d8f70db159d6c2c2b63a7e2e94d062ee3d72df` |
+| Files in the payload | 136 (135 manifested + `SHA256SUMS`) |
 
 The baseline is **committed**, not re-derived. `scripts/record-payload-baseline.mjs` produces
 the record from a release artifact built at the baseline commit; CI compares against the
@@ -60,6 +60,27 @@ belong. And the self-comparison refusal above was not relaxed.
 The previous record (`tests/baselines/mcp-payload-df44d15.json`, manifest `d75854c7…`,
 136 files) is removed rather than kept alongside: two baselines invite a comparison against
 whichever one passes. It remains reviewable in this file's git history.
+
+### Why the baseline moved a second time (PYR-10)
+
+The `bb59912` record certified a payload that still contained `d20-flat-bold.svg`,
+`d20-bold-16.png`, and `favicon.ico` — the bold D20 *redraw* the brand kit forbids
+(`identity.fixed-mark-colors`), plus the `.ico` whose 16px entry is that redraw. They were
+unlinked from `index.html` but `public/` is copied verbatim into the build, so the forbidden
+art shipped inside the certified payload and was addressable by URL. Deleting them
+(`a92383c`) is the second deliberate change of certified state on this issue, and the
+baseline was re-recorded at it by the same procedure: built at `a92383c`, recorded from that
+artifact, committed at the following commit because the checker refuses to compare a payload
+with itself. **No detector was modified** — `verify-payload-noninterference.mjs` changed by
+one line (the default baseline path) and `APP_CHROME_PATTERNS` was again left alone.
+
+The record went from 138 manifested files to 135: the three deleted assets, exactly. One
+further difference is expected and permitted — the hashed app bundle
+(`dist-bridge/assets/index-*.js`) is renamed, because `2bed73a` changed `cardGradient.ts`
+and `index.css` after the `bb59912` record was taken. That is the invariant working as
+designed rather than an anomaly: the application may change, the certified MCP payload may
+not, and the app bundle lives in the chrome set for precisely this reason. Re-recording here
+folds that already-permitted drift into the certified state.
 
 ## What the invariant is, and why it is not whole-artifact hash equality
 
@@ -199,9 +220,9 @@ The record is the trust anchor: every comparison is made against it rather than 
 rebuilt months-old commit, so a record edited to match a drifted payload would launder the
 change this whole document exists to catch. `recorded_from.artifact_manifest_sha256` is the
 digest of the baseline artifact's own `SHA256SUMS` — the value the baseline release build
-printed (`c12cac10…`). Because `SHA256SUMS` is a pure function of the per-file hashes, the
+printed (`303f6b21…`). Because `SHA256SUMS` is a pure function of the per-file hashes, the
 checker **recomputes that digest from the record's own `files` map** and refuses to compare
-anything if it does not match. Editing any one of the 138 recorded hashes breaks it.
+anything if it does not match. Editing any one of the 135 recorded hashes breaks it.
 
 Residual, and stated rather than papered over: the four `stamped` entries (offsets and
 normalised hashes) cannot be reconstructed from anything else available at check time, so
