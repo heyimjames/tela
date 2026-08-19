@@ -1,7 +1,6 @@
 import { Shuffle } from 'lucide-react'
 import { useDesignStore } from '@/store/useDesignStore'
 import { randomAvatarDataUrl } from '@/brand/avatars'
-// import { SliderField } from '@/components/controls/SliderField'
 
 import type { ImageLayer } from '@/types/design'
 
