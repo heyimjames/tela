@@ -334,7 +334,7 @@ export interface DesignDocument {
 
 // --- Tool modes ---
 
-export type ToolMode = 'select' | 'text' | 'shape' | 'pan' | 'comment' | 'draw' | 'eraser'
+export type ToolMode = 'select' | 'text' | 'shape' | 'pan' | 'draw' | 'eraser'
 
 // --- Auto-resize anchors ---
 

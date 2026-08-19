@@ -6,20 +6,18 @@ import { getBrandColor } from '@/brand/palette'
 import type { DesignDocument } from '@/types/design'
 import { useDesignStore } from '@/store/useDesignStore'
 import { useRouterStore } from '@/store/useRouterStore'
-import { useProjectStore } from '@/store/useProjectStore'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from '@/components/ui/drawer'
 import { Layout, X } from 'lucide-react'
 
 interface Props {
-  projectId?: string
   onClose: () => void
   // When provided (e.g. from the library), take over what "pick a template" does
   // — create a real file from the document instead of the default open-in-editor.
   onPick?: (doc: DesignDocument) => void
 }
 
-export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
+export function TemplateBrowser({ onClose, onPick }: Props) {
   const [category, setCategory] = useState<string>('all')
   const navigate = useRouterStore((s) => s.navigate)
   const isMobile = useIsMobile()
@@ -34,12 +32,7 @@ export function TemplateBrowser({ projectId, onClose, onPick }: Props) {
   const openDoc = (doc: DesignDocument) => {
     if (onPick) { onPick(doc); onClose(); return }
     useDesignStore.setState({ document: doc })
-    if (projectId) {
-      const designId = useProjectStore.getState().addDesign(projectId, doc)
-      navigate({ page: 'editor', projectId, designId })
-    } else {
-      navigate({ page: 'editor-standalone' })
-    }
+    navigate({ page: 'editor-standalone' })
     onClose()
   }
 

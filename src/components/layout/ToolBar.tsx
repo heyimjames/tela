@@ -6,7 +6,7 @@ import { LayoutPicker } from '@/components/panels/LayoutPicker'
 import { useIsProMode } from '@/hooks/useIsProMode'
 import { measureImportedSvg } from '@/engine/svgMeasure'
 import {
-  MousePointer2, Type, ImageIcon, Square, Circle, Triangle, Star, Minus, ArrowRight, Palette, FileCode, Hand, LayoutTemplate, LayoutGrid, MessageCircle, ChevronDown,
+  MousePointer2, Type, ImageIcon, Square, Circle, Triangle, Star, Minus, ArrowRight, Palette, FileCode, Hand, LayoutTemplate, LayoutGrid, ChevronDown,
 } from 'lucide-react'
 import type { ShapeLayer, GradientLayer, ImageLayer, SvgLayer } from '@/types/design'
 
@@ -109,8 +109,6 @@ export function ToolBar() {
     ...(isPro ? [{ id: 'gradient', icon: Palette, label: 'Gradient', action: () => addLayer({ type: 'gradient', name: 'Gradient', visible: true, locked: false, opacity: 1, x: 50, y: 50, width: 500, height: 300, rotation: 0, gradientType: 'linear', angle: 135, grain: 0.1, borderRadius: 0, stops: [{ position: 0, oklchL: 0.55, oklchC: 0.2, oklchH: 265, alpha: 1 }, { position: 1, oklchL: 0.35, oklchC: 0.15, oklchH: 280, alpha: 1 }] }) }] : []),
     { id: 'image', icon: ImageIcon, label: 'Image', action: handleAddImage },
     { id: 'svg', icon: FileCode, label: 'SVG', action: handleAddSvg },
-    { id: 'sep2' },
-    { id: 'comment', icon: MessageCircle, label: 'Comment (C)', active: tool === 'comment', action: () => useDesignStore.getState().setTool(tool === 'comment' ? 'select' : 'comment') },
   ]
 
   return (

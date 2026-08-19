@@ -304,7 +304,6 @@ export function useKeyboardShortcuts() {
         const k = e.key.toLowerCase()
         if (k === 'v') { state.setTool('select'); e.preventDefault(); return }
         if (k === 'h') { state.setTool('pan'); e.preventDefault(); return }
-        if (k === 'c') { state.setTool(state.tool === 'comment' ? 'select' : 'comment'); e.preventDefault(); return }
         if (k === 't') { state.addLayer(createTextLayer()); e.preventDefault(); return }
         if (k === 'r') {
           state.addLayer({

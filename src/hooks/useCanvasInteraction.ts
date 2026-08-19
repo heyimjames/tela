@@ -221,7 +221,7 @@ export function useCanvasInteraction(
       const { x, y } = getDesignCoords(e.clientX, e.clientY)
       // Resolve the layer under the cursor up front: Alt+drag means "duplicate"
       // over a layer, and "pan" only over empty canvas.
-      const hitId = (tool === 'select' || tool === 'comment') ? hitTest(x, y) : null
+      const hitId = tool === 'select' ? hitTest(x, y) : null
 
       // Pan: middle mouse, the pan tool, or Alt+drag on EMPTY canvas.
       if (e.button === 1 || tool === 'pan' || (e.button === 0 && e.altKey && !hitId)) {
@@ -261,7 +261,7 @@ export function useCanvasInteraction(
         return
       }
 
-      if (tool !== 'select' && tool !== 'comment') return
+      if (tool !== 'select') return
 
       if (hitId) {
         // hitTest already skips locked layers (click-through), so the resolved
