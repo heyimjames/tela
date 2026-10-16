@@ -98,6 +98,14 @@ Tela isn't trying to replace Figma or [Paper](https://paper.design) — they're 
 
 ## Quick start
 
+### Run with PicoRunner
+
+[![Launch on PicoRunner](https://picorunner.com/badges/launch.svg)](https://picorunner.com/launch/?repository=https%3A%2F%2Fgithub.com%2Fheyimjames%2Ftela)
+
+[PicoRunner](https://picorunner.com/) opens installation review for this repository on macOS. The included manifest uses Node 24, installs locked npm dependencies, builds Tela, and serves the result on `127.0.0.1` with Vite preview.
+
+Designs and settings stay in your browser's storage, so keep the same browser profile and local address and export work you want to retain. Optional AI Assist remains disabled unless you configure your own endpoint before building; `.env` and `.env.local` are preserved by the manifest.
+
 ```bash
 npm install
 npm run dev
